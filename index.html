@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>加密貨幣掃描器</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#0f121d] text-gray-200 min-h-screen p-4 flex justify-center items-center font-sans">
+
+  <!-- 主容器 -->
+  <div class="w-full max-w-md bg-[#131722] rounded-xl p-4 shadow-2xl border border-gray-800 space-y-4">
+    
+    <!-- 頂部標題區 -->
+    <div class="border-b border-gray-800 pb-3">
+      <div class="flex items-center gap-2 text-xl font-bold text-white">
+        <span class="text-amber-400">⚡</span>
+        <span>加密貨幣掃描</span>
+      </div>
+      <div class="flex justify-between items-center text-xs text-gray-400 mt-1">
+        <span>掃描更新：<span id="update-time">載入中...</span></span>
+        <span>自動更新：每 60 秒</span>
+      </div>
+    </div>
+
+    <!-- 多頭趨勢區塊 -->
+    <div class="bg-[#181c28] rounded-lg p-3 border border-gray-800/60">
+      <div class="flex items-center gap-2 text-amber-400 font-bold mb-3">
+        <span>📈</span>
+        <span>1小時週期多頭趨勢 (前 8 名)</span>
+      </div>
+      
+      <table class="w-full text-xs text-left border-collapse">
+        <thead>
+          <tr class="text-gray-400 border-b border-gray-800 pb-1">
+            <th class="py-1">標的</th>
+            <th class="text-right">價格</th>
+            <th class="text-right">1H漲跌</th>
+            <th class="text-right">24H漲跌</th>
+            <th class="text-right">漲破均線</th>
+            <th class="text-right pr-1">強度</th>
+          </tr>
+        </thead>
+        <tbody id="bull-tbody" class="divide-y divide-gray-800/40">
+          <tr>
+            <td colspan="6" class="text-center py-4 text-gray-500">行情資料載入中...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 空頭趨勢區塊 -->
+    <div class="bg-[#181c28] rounded-lg p-3 border border-gray-800/60">
+      <div class="flex items-center gap-2 text-amber-400 font-bold mb-3">
+        <span>📉</span>
+        <span>1小時週期空頭趨勢 (前 8 名)</span>
+      </div>
+      
+      <table class="w-full text-xs text-left border-collapse">
+        <thead>
+          <tr class="text-gray-400 border-b border-gray-800 pb-1">
+            <th class="py-1">標的</th>
+            <th class="text-right">價格</th>
+            <th class="text-right">1H漲跌</th>
+            <th class="text-right">24H漲跌</th>
+            <th class="text-right">跌破均線</th>
+            <th class="text-right pr-1">強度</th>
+          </tr>
+        </thead>
+        <tbody id="bear-tbody" class="divide-y divide-gray-800/40">
+          <tr>
+            <td colspan="6" class="text-center py-4 text-gray-500">行情資料載入中...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 頁尾免責聲明 -->
+    <div class="text-center text-[10px] text-gray-500 pt-2">
+      資料來源：幣安公開 API。本工具僅供參考，非投資建議。
+    </div>
+
+  </div>
+
+  <!-- 幣安 API 串接腳本 -->
+  <script>
+    const BINANCE_TICKER_URL = 'https://fapi.binance.com/fapi/v1/ticker/24hr';
+    const BINANCE_KLINES_URL = 'https://fapi.binance.com/fapi/v1/klines';
+
+    // 計算簡單移動平均線 (SMA)
+    function calculateSMA(data, period) {
+      if (data.length < period) return null;
+      const slice = data.slice(-period);
+      const sum = slice.reduce((acc, val) => acc + val, 0);
+      return sum / period;
+    }
+
+    // 取得 1H K線並計算突破均線%與 1小時漲跌幅
+    async function fetchSymbolData(symbol, currentPrice, period = 20) {
+      try {
+        const res = await fetch(`${BINANCE_KLINES_URL}?symbol=${symbol}&interval=1h&limit=${period + 1}`);
+        const data = await res.json();
+        
+        const closePrices = data.map(item => parseFloat(item[4]));
+        const maValue = calculateSMA(closePrices, period);
+        
+        // 1H 漲跌幅計算（當前價與上一個 1H K線收盤價相比）
+        const prev1hPrice = closePrices[closePrices.length - 2] || currentPrice;
+        const change1h = ((currentPrice - prev1hPrice) / prev1hPrice) * 100;
+
+        if (!maValue) return { maDiff: 0, change1h };
+        
+        const maDiff = ((currentPrice - maValue) / maValue) * 100;
+        return { maDiff, change1h };
+      } catch (err) {
+        console.error(`無法取得 ${symbol} 資料`, err);
+        return { maDiff: 0, change1h: 0 };
+      }
+    }
+
+    // 核心資料更新流程
+    async function updateMarketScanner() {
+      try {
+        const res = await fetch(BINANCE_TICKER_URL);
+        const tickers = await res.json();
+
+        // 過濾成交量前 30 名 USDT 永續合約標的
+        const usdtPairs = tickers
+          .filter(t => t.symbol.endsWith('USDT') && !t.symbol.startsWith('USDC'))
+          .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
+          .slice(0, 30);
+
+        // 平行抓取 K線並計算指標
+        const marketData = await Promise.all(
+          usdtPairs.map(async (item) => {
+            const symbol = item.symbol.replace('USDT', '');
+            const price = parseFloat(item.lastPrice);
+            const change24h = parseFloat(item.priceChangePercent);
+            
+            const { maDiff, change1h } = await fetchSymbolData(item.symbol, price, 20);
+            
+            return {
+              symbol,
+              price,
+              change1h,
+              change24h,
+              maDiff
+            };
+          })
+        );
+
+        // 多頭排序 (突破均線最高前 8 名)
+        const bullList = [...marketData]
+          .filter(d => d.maDiff > 0)
+          .sort((a, b) => b.maDiff - a.maDiff)
+          .slice(0, 8);
+
+        // 空頭排序 (跌破均線最多前 8 名)
+        const bearList = [...marketData]
+          .filter(d => d.maDiff < 0)
+          .sort((a, b) => a.maDiff - b.maDiff)
+          .slice(0, 8);
+
+        // 渲染畫面
+        renderTable('bull-tbody', bullList, true);
+        renderTable('bear-tbody', bearList, false);
+        
+        // 更新時間戳記
+        document.getElementById('update-time').innerText = new Date().toLocaleTimeString('zh-TW', { hour12: false });
+
+      } catch (error) {
+        console.error('更新行情資料失敗:', error);
+      }
+    }
+
+    // 動態渲染表格內容
+    function renderTable(elementId, dataList, isBull) {
+      const tbody = document.getElementById(elementId);
+      
+      if (dataList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-gray-500">無符合指標標的</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = dataList.map(item => {
+        const c1hClass = item.change1h >= 0 ? 'text-rose-500' : 'text-emerald-400';
+        const c24Class = item.change24h >= 0 ? 'text-rose-500' : 'text-emerald-400';
+        const maClass = item.maDiff >= 0 ? 'text-rose-500' : 'text-emerald-400';
+        
+        const barWidth = Math.min(Math.abs(item.maDiff) * 3, 16);
+        const barBg = isBull ? 'bg-rose-500' : 'bg-emerald-400';
+
+        return `
+          <tr class="hover:bg-gray-800/20 transition-colors">
+            <td class="py-2 font-medium underline underline-offset-2 decoration-gray-600">${item.symbol}</td>
+            <td class="text-right">${item.price < 1 ? item.price.toFixed(4) : item.price.toFixed(2)}</td>
+            <td class="text-right ${c1hClass}">${item.change1h > 0 ? '+' : ''}${item.change1h.toFixed(2)}%</td>
+            <td class="text-right ${c24Class}">${item.change24h > 0 ? '+' : ''}${item.change24h.toFixed(2)}%</td>
+            <td class="text-right ${maClass}">${item.maDiff > 0 ? '+' : ''}${item.maDiff.toFixed(2)}%</td>
+            <td class="text-right pl-2">
+              <span class="inline-block h-1.5 ${barBg} rounded-full" style="width: ${Math.max(barWidth, 6)}px"></span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // 初始化呼叫與自動定時器 (每 60 秒刷新)
+    updateMarketScanner();
+    setInterval(updateMarketScanner, 60000);
+  </script>
+</body>
+</html>
