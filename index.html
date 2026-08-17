@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>加密貨幣掃描器</title>
+  <title>加密貨幣多週期共振掃描器</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-[#0f121d] text-gray-200 min-h-screen p-4 flex justify-center items-center font-sans">
@@ -15,7 +15,7 @@
     <div class="border-b border-gray-800 pb-3">
       <div class="flex items-center gap-2 text-xl font-bold text-white">
         <span class="text-amber-400">⚡</span>
-        <span>加密貨幣掃描</span>
+        <span>加密貨幣共振掃描</span>
       </div>
       <div class="flex justify-between items-center text-xs text-gray-400 mt-1">
         <span>掃描更新：<span id="update-time">載入中...</span></span>
@@ -23,11 +23,14 @@
       </div>
     </div>
 
-    <!-- 多頭趨勢區塊 -->
+    <!-- 1H + 4H 共振多頭區塊 -->
     <div class="bg-[#181c28] rounded-lg p-3 border border-gray-800/60">
-      <div class="flex items-center gap-2 text-amber-400 font-bold mb-3">
-        <span>📈</span>
-        <span>1小時週期多頭趨勢 (前 8 名)</span>
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2 text-amber-400 font-bold">
+          <span>🚀</span>
+          <span>1H + 4H 同步多頭趨勢</span>
+        </div>
+        <span class="text-[10px] bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20">雙週期共振</span>
       </div>
       
       <table class="w-full text-xs text-left border-collapse">
@@ -35,13 +38,13 @@
           <tr class="text-gray-400 border-b border-gray-800 pb-1">
             <th class="py-1">標的</th>
             <th class="text-right">價格</th>
-            <th class="text-right">1H漲跌</th>
+            <th class="text-right">1H突破</th>
+            <th class="text-right">4H突破</th>
             <th class="text-right">24H漲跌</th>
-            <th class="text-right">漲破均線</th>
             <th class="text-right pr-1">強度</th>
           </tr>
         </thead>
-        <tbody id="bull-tbody" class="divide-y divide-gray-800/40">
+        <tbody id="bull-1h4h-tbody" class="divide-y divide-gray-800/40">
           <tr>
             <td colspan="6" class="text-center py-4 text-gray-500">行情資料載入中...</td>
           </tr>
@@ -49,11 +52,14 @@
       </table>
     </div>
 
-    <!-- 空頭趨勢區塊 -->
-    <div class="bg-[#181c28] rounded-lg p-3 border border-gray-800/60">
-      <div class="flex items-center gap-2 text-amber-400 font-bold mb-3">
-        <span>📉</span>
-        <span>1小時週期空頭趨勢 (前 8 名)</span>
+    <!-- 1H + 4H + 8H 共振多頭區塊 -->
+    <div class="bg-[#181c28] rounded-lg p-3 border border-amber-500/30">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2 text-rose-400 font-bold">
+          <span>🔥</span>
+          <span>1H + 4H + 8H 同步多頭趨勢</span>
+        </div>
+        <span class="text-[10px] bg-rose-500/10 text-rose-400 px-2 py-0.5 rounded border border-rose-500/20">三週期強共振</span>
       </div>
       
       <table class="w-full text-xs text-left border-collapse">
@@ -61,13 +67,13 @@
           <tr class="text-gray-400 border-b border-gray-800 pb-1">
             <th class="py-1">標的</th>
             <th class="text-right">價格</th>
-            <th class="text-right">1H漲跌</th>
-            <th class="text-right">24H漲跌</th>
-            <th class="text-right">跌破均線</th>
+            <th class="text-right">1H突破</th>
+            <th class="text-right">4H突破</th>
+            <th class="text-right">8H突破</th>
             <th class="text-right pr-1">強度</th>
           </tr>
         </thead>
-        <tbody id="bear-tbody" class="divide-y divide-gray-800/40">
+        <tbody id="bull-1h4h8h-tbody" class="divide-y divide-gray-800/40">
           <tr>
             <td colspan="6" class="text-center py-4 text-gray-500">行情資料載入中...</td>
           </tr>
@@ -77,12 +83,12 @@
 
     <!-- 頁尾免責聲明 -->
     <div class="text-center text-[10px] text-gray-500 pt-2">
-      資料來源：幣安公開 API。本工具僅供參考，非投資建議。
+      資料來源：幣安公開 API。多週期共振代表 1H/4H/8H 價格皆位於 MA20 之上。
     </div>
 
   </div>
 
-  <!-- 幣安 API 串接腳本 -->
+  <!-- 幣安 API 多週期串接腳本 -->
   <script>
     const BINANCE_TICKER_URL = 'https://fapi.binance.com/fapi/v1/ticker/24hr';
     const BINANCE_KLINES_URL = 'https://fapi.binance.com/fapi/v1/klines';
@@ -95,30 +101,23 @@
       return sum / period;
     }
 
-    // 取得 1H K線並計算突破均線%與 1小時漲跌幅
-    async function fetchSymbolData(symbol, currentPrice, period = 20) {
+    // 取得指定時間週期 (1h, 4h, 8h) 的突破均線幅度 %
+    async function fetchTimeframeMADiff(symbol, currentPrice, interval, period = 20) {
       try {
-        const res = await fetch(`${BINANCE_KLINES_URL}?symbol=${symbol}&interval=1h&limit=${period + 1}`);
+        const res = await fetch(`${BINANCE_KLINES_URL}?symbol=${symbol}&interval=${interval}&limit=${period + 1}`);
         const data = await res.json();
-        
         const closePrices = data.map(item => parseFloat(item[4]));
         const maValue = calculateSMA(closePrices, period);
-        
-        // 1H 漲跌幅計算（當前價與上一個 1H K線收盤價相比）
-        const prev1hPrice = closePrices[closePrices.length - 2] || currentPrice;
-        const change1h = ((currentPrice - prev1hPrice) / prev1hPrice) * 100;
 
-        if (!maValue) return { maDiff: 0, change1h };
-        
-        const maDiff = ((currentPrice - maValue) / maValue) * 100;
-        return { maDiff, change1h };
+        if (!maValue) return 0;
+        return ((currentPrice - maValue) / maValue) * 100;
       } catch (err) {
-        console.error(`無法取得 ${symbol} 資料`, err);
-        return { maDiff: 0, change1h: 0 };
+        console.error(`無法取得 ${symbol} ${interval} 資料`, err);
+        return 0;
       }
     }
 
-    // 核心資料更新流程
+    // 核心數據分析與篩選
     async function updateMarketScanner() {
       try {
         const res = await fetch(BINANCE_TICKER_URL);
@@ -130,82 +129,111 @@
           .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
           .slice(0, 30);
 
-        // 平行抓取 K線並計算指標
+        // 同步並行查詢各週期 K 線
         const marketData = await Promise.all(
           usdtPairs.map(async (item) => {
             const symbol = item.symbol.replace('USDT', '');
             const price = parseFloat(item.lastPrice);
             const change24h = parseFloat(item.priceChangePercent);
             
-            const { maDiff, change1h } = await fetchSymbolData(item.symbol, price, 20);
+            // 多週期平行請求：1h, 4h, 8h
+            const [maDiff1h, maDiff4h, maDiff8h] = await Promise.all([
+              fetchTimeframeMADiff(item.symbol, price, '1h', 20),
+              fetchTimeframeMADiff(item.symbol, price, '4h', 20),
+              fetchTimeframeMADiff(item.symbol, price, '8h', 20)
+            ]);
             
             return {
               symbol,
               price,
-              change1h,
               change24h,
-              maDiff
+              maDiff1h,
+              maDiff4h,
+              maDiff8h
             };
           })
         );
 
-        // 多頭排序 (突破均線最高前 8 名)
-        const bullList = [...marketData]
-          .filter(d => d.maDiff > 0)
-          .sort((a, b) => b.maDiff - a.maDiff)
+        // 條件 1：1H + 4H 同時多頭 (突破均線 % > 0)
+        const list1h4h = marketData
+          .filter(d => d.maDiff1h > 0 && d.maDiff4h > 0)
+          .sort((a, b) => (b.maDiff1h + b.maDiff4h) - (a.maDiff1h + a.maDiff4h))
           .slice(0, 8);
 
-        // 空頭排序 (跌破均線最多前 8 名)
-        const bearList = [...marketData]
-          .filter(d => d.maDiff < 0)
-          .sort((a, b) => a.maDiff - b.maDiff)
+        // 條件 2：1H + 4H + 8H 三者同時多頭 (突破均線 % > 0)
+        const list1h4h8h = marketData
+          .filter(d => d.maDiff1h > 0 && d.maDiff4h > 0 && d.maDiff8h > 0)
+          .sort((a, b) => (b.maDiff1h + b.maDiff4h + b.maDiff8h) - (a.maDiff1h + a.maDiff4h + a.maDiff8h))
           .slice(0, 8);
 
         // 渲染畫面
-        renderTable('bull-tbody', bullList, true);
-        renderTable('bear-tbody', bearList, false);
+        render1h4hTable(list1h4h);
+        render1h4h8hTable(list1h4h8h);
         
-        // 更新時間戳記
+        // 更新時間
         document.getElementById('update-time').innerText = new Date().toLocaleTimeString('zh-TW', { hour12: false });
 
       } catch (error) {
-        console.error('更新行情資料失敗:', error);
+        console.error('更新多週期資料失敗:', error);
       }
     }
 
-    // 動態渲染表格內容
-    function renderTable(elementId, dataList, isBull) {
-      const tbody = document.getElementById(elementId);
-      
+    // 渲染 1H + 4H 表格
+    function render1h4hTable(dataList) {
+      const tbody = document.getElementById('bull-1h4h-tbody');
       if (dataList.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-gray-500">無符合指標標的</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-gray-500">無雙週期共振標的</td></tr>`;
         return;
       }
 
       tbody.innerHTML = dataList.map(item => {
-        const c1hClass = item.change1h >= 0 ? 'text-rose-500' : 'text-emerald-400';
         const c24Class = item.change24h >= 0 ? 'text-rose-500' : 'text-emerald-400';
-        const maClass = item.maDiff >= 0 ? 'text-rose-500' : 'text-emerald-400';
-        
-        const barWidth = Math.min(Math.abs(item.maDiff) * 3, 16);
-        const barBg = isBull ? 'bg-rose-500' : 'bg-emerald-400';
+        const avgScore = (item.maDiff1h + item.maDiff4h) / 2;
+        const barWidth = Math.min(avgScore * 3, 16);
 
         return `
           <tr class="hover:bg-gray-800/20 transition-colors">
             <td class="py-2 font-medium underline underline-offset-2 decoration-gray-600">${item.symbol}</td>
             <td class="text-right">${item.price < 1 ? item.price.toFixed(4) : item.price.toFixed(2)}</td>
-            <td class="text-right ${c1hClass}">${item.change1h > 0 ? '+' : ''}${item.change1h.toFixed(2)}%</td>
+            <td class="text-right text-rose-500">+${item.maDiff1h.toFixed(2)}%</td>
+            <td class="text-right text-rose-500">+${item.maDiff4h.toFixed(2)}%</td>
             <td class="text-right ${c24Class}">${item.change24h > 0 ? '+' : ''}${item.change24h.toFixed(2)}%</td>
-            <td class="text-right ${maClass}">${item.maDiff > 0 ? '+' : ''}${item.maDiff.toFixed(2)}%</td>
             <td class="text-right pl-2">
-              <span class="inline-block h-1.5 ${barBg} rounded-full" style="width: ${Math.max(barWidth, 6)}px"></span>
+              <span class="inline-block h-1.5 bg-rose-500 rounded-full" style="width: ${Math.max(barWidth, 6)}px"></span>
             </td>
           </tr>
         `;
       }).join('');
     }
 
-    // 初始化呼叫與自動定時器 (每 60 秒刷新)
+    // 渲染 1H + 4H + 8H 表格
+    function render1h4h8hTable(dataList) {
+      const tbody = document.getElementById('bull-1h4h8h-tbody');
+      if (dataList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-gray-500">無三週期強共振標的</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = dataList.map(item => {
+        const avgScore = (item.maDiff1h + item.maDiff4h + item.maDiff8h) / 3;
+        const barWidth = Math.min(avgScore * 3, 16);
+
+        return `
+          <tr class="hover:bg-gray-800/20 transition-colors">
+            <td class="py-2 font-medium underline underline-offset-2 decoration-gray-600">${item.symbol}</td>
+            <td class="text-right">${item.price < 1 ? item.price.toFixed(4) : item.price.toFixed(2)}</td>
+            <td class="text-right text-rose-500">+${item.maDiff1h.toFixed(2)}%</td>
+            <td class="text-right text-rose-500">+${item.maDiff4h.toFixed(2)}%</td>
+            <td class="text-right text-rose-500">+${item.maDiff8h.toFixed(2)}%</td>
+            <td class="text-right pl-2">
+              <span class="inline-block h-1.5 bg-amber-400 rounded-full" style="width: ${Math.max(barWidth, 6)}px"></span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // 啟動分析程序 (每 60 秒刷新一次)
     updateMarketScanner();
     setInterval(updateMarketScanner, 60000);
   </script>
