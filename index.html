@@ -112,7 +112,7 @@
 
     <!-- 頁尾免責聲明 -->
     <div class="text-center text-[10px] text-gray-500 pt-2">
-      資料來源：幣安公開 API。點擊標的名稱可直接拉起幣安 App 開啟交易頁面。
+      資料來源：幣安公開 API。點擊標的名稱可開啟幣安 App 或網頁版交易介面。
     </div>
 
   </div>
@@ -185,7 +185,7 @@
         // 1. 1M + 2M + 15M 同步多頭
         const list1m2m15m = marketData
           .filter(d => d.maDiff1m > 0 && d.maDiff2m > 0 && d.maDiff15m > 0)
-          .sort((a, b) => (b.maDiff1m + b.maDiff1m + b.maDiff15m) - (a.maDiff1m + a.maDiff1m + a.maDiff15m))
+          .sort((a, b) => (b.maDiff1m + b.maDiff2m + b.maDiff15m) - (a.maDiff1m + a.maDiff2m + a.maDiff15m))
           .slice(0, 8);
 
         // 2. 3M + 5M + 15M 同步多頭
@@ -225,13 +225,13 @@
         const val3 = item[k3];
         const avgScore = (val1 + val2 + val3) / 3;
         const barWidth = Math.min(avgScore * 3, 16);
-        // 使用幣安 App 原生協議 Deep Link（永續合約）
-        const binanceAppUrl = `bnc://app.binance.com/futures/deal?symbol=${item.fullSymbol}`;
+        // 改用標準HTTPS通用網址（Universal Link），支援App自動喚起且不會跳出錯誤彈窗
+        const binanceUrl = `https://www.binance.com/zh-TC/futures/${item.fullSymbol}`;
 
         return `
           <tr class="hover:bg-gray-800/20 transition-colors">
             <td class="py-2 font-medium">
-              <a href="${binanceAppUrl}" class="text-gray-200 hover:text-amber-400 underline underline-offset-2 decoration-gray-600 hover:decoration-amber-400 transition-colors">
+              <a href="${binanceUrl}" target="_blank" rel="noopener noreferrer" class="text-gray-200 hover:text-amber-400 underline underline-offset-2 decoration-gray-600 hover:decoration-amber-400 transition-colors">
                 ${item.symbol}
               </a>
             </td>
