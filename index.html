@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>加密貨幣超短線多週期共振掃描器</title>
+  <title>加密貨幣超短線雙MA共振掃描器</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-[#0f121d] text-gray-200 min-h-screen p-4 flex justify-center items-center font-sans">
@@ -15,7 +15,7 @@
     <div class="border-b border-gray-800 pb-3">
       <div class="flex items-center gap-2 text-xl font-bold text-white">
         <span class="text-amber-400">⚡</span>
-        <span>加密貨幣共振掃描</span>
+        <span>5MA + 20MA 雙均線突破掃描</span>
       </div>
       <div class="flex justify-between items-center text-xs text-gray-400 mt-1">
         <span>掃描更新：<span id="update-time">載入中...</span></span>
@@ -28,7 +28,7 @@
       <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2 text-cyan-400 font-bold">
           <span>⚡</span>
-          <span>1M + 2M + 15M 同步多頭趨勢</span>
+          <span>1M + 2M + 15M 雙MA同步突破</span>
         </div>
         <span class="text-[10px] bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded border border-cyan-500/20">極短線極速</span>
       </div>
@@ -57,7 +57,7 @@
       <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2 text-amber-400 font-bold">
           <span>🚀</span>
-          <span>3M + 5M + 15M 同步多頭趨勢</span>
+          <span>3M + 5M + 15M 雙MA同步突破</span>
         </div>
         <span class="text-[10px] bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20">極短線進階</span>
       </div>
@@ -86,7 +86,7 @@
       <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2 text-rose-400 font-bold">
           <span>🔥</span>
-          <span>5M + 15M + 30M 同步多頭趨勢</span>
+          <span>5M + 15M + 30M 雙MA同步突破</span>
         </div>
         <span class="text-[10px] bg-rose-500/10 text-rose-400 px-2 py-0.5 rounded border border-rose-500/20">當沖強共振</span>
       </div>
@@ -112,7 +112,7 @@
 
     <!-- 頁尾免責聲明 -->
     <div class="text-center text-[10px] text-gray-500 pt-2">
-      資料來源：幣安公開 API。點擊標的名稱可開啟幣安 App 或網頁版交易介面。
+      資料來源：幣安公開 API。須同時突破 5MA 與 20MA 方可入選。
     </div>
 
   </div>
@@ -129,18 +129,66 @@
       return sum / period;
     }
 
-    async function fetchTimeframeMADiff(symbol, currentPrice, interval, period = 20) {
+    // 模擬 2m 週期：將 1m K線兩兩合併
+    async function fetchCustomIntervalData(symbol, currentPrice, targetMinutes, period = 20) {
       try {
-        const res = await fetch(`${BINANCE_KLINES_URL}?symbol=${symbol}&interval=${interval}&limit=${period + 1}`);
+        const limit = period * targetMinutes + 5;
+        const res = await fetch(`${BINANCE_KLINES_URL}?symbol=${symbol}&interval=1m&limit=${limit}`);
         const data = await res.json();
-        const closePrices = data.map(item => parseFloat(item[4]));
-        const maValue = calculateSMA(closePrices, period);
-
-        if (!maValue) return 0;
-        return ((currentPrice - maValue) / maValue) * 100;
+        
+        const candles = data.map(item => ({
+          close: parseFloat(item[4])
+        }));
+        
+        const aggregatedCloses = [];
+        for (let i = 0; i <= candles.length - targetMinutes; i += targetMinutes) {
+          const chunk = candles.slice(i, i + targetMinutes);
+          if (chunk.length === targetMinutes) {
+            aggregatedCloses.push(chunk[chunk.length - 1].close);
+          }
+        }
+        
+        if (aggregatedCloses.length < period) return { valid: false, ma20Diff: 0 };
+        
+        const ma5 = calculateSMA(aggregatedCloses, 5);
+        const ma20 = calculateSMA(aggregatedCloses, 20);
+        
+        if (!ma5 || !ma20) return { valid: false, ma20Diff: 0 };
+        
+        const ma5Diff = ((currentPrice - ma5) / ma5) * 100;
+        const ma20Diff = ((currentPrice - ma20) / ma20) * 100;
+        
+        // 必須同時突破 5MA 與 20MA (即價格高於兩者)
+        const valid = currentPrice > ma5 && currentPrice > ma20;
+        
+        return { valid, ma20Diff };
       } catch (err) {
-        console.error(`無法取得 ${symbol} ${interval} 資料`, err);
-        return 0;
+        return { valid: false, ma20Diff: 0 };
+      }
+    }
+
+    async function fetchIntervalMA(symbol, currentPrice, interval) {
+      try {
+        if (interval === '2m') {
+          return await fetchCustomIntervalData(symbol, currentPrice, 2, 20);
+        } else {
+          const res = await fetch(`${BINANCE_KLINES_URL}?symbol=${symbol}&interval=${interval}&limit=25`);
+          const data = await res.json();
+          const closePrices = data.map(item => parseFloat(item[4]));
+          const ma5 = calculateSMA(closePrices, 5);
+          const ma20 = calculateSMA(closePrices, 20);
+          
+          if (!ma5 || !ma20) return { valid: false, ma20Diff: 0 };
+          
+          const ma5Diff = ((currentPrice - ma5) / ma5) * 100;
+          const ma20Diff = ((currentPrice - ma20) / ma20) * 100;
+          
+          const valid = currentPrice > ma5 && currentPrice > ma20;
+          
+          return { valid, ma20Diff };
+        }
+      } catch (err) {
+        return { valid: false, ma20Diff: 0 };
       }
     }
 
@@ -159,51 +207,51 @@
             const symbol = item.symbol.replace('USDT', '');
             const price = parseFloat(item.lastPrice);
             
-            const [maDiff1m, maDiff2m, maDiff3m, maDiff5m, maDiff15m, maDiff30m] = await Promise.all([
-              fetchTimeframeMADiff(item.symbol, price, '1m', 20),
-              fetchTimeframeMADiff(item.symbol, price, '3m', 20),
-              fetchTimeframeMADiff(item.symbol, price, '3m', 20),
-              fetchTimeframeMADiff(item.symbol, price, '5m', 20),
-              fetchTimeframeMADiff(item.symbol, price, '15m', 20),
-              fetchTimeframeMADiff(item.symbol, price, '30m', 20)
+            const [res1m, res2m, res3m, res5m, res15m, res30m] = await Promise.all([
+              fetchIntervalMA(item.symbol, price, '1m'),
+              fetchIntervalMA(item.symbol, price, '2m'),
+              fetchIntervalMA(item.symbol, price, '3m'),
+              fetchIntervalMA(item.symbol, price, '5m'),
+              fetchIntervalMA(item.symbol, price, '15m'),
+              fetchIntervalMA(item.symbol, price, '30m')
             ]);
             
             return {
               symbol,
               fullSymbol: item.symbol,
               price,
-              maDiff1m,
-              maDiff2m,
-              maDiff3m,
-              maDiff5m,
-              maDiff15m,
-              maDiff30m
+              res1m,
+              res2m,
+              res3m,
+              res5m,
+              res15m,
+              res30m
             };
           })
         );
 
-        // 1. 1M + 2M + 15M 同步多頭
+        // 1. 1M + 2M + 15M 雙MA同步突破
         const list1m2m15m = marketData
-          .filter(d => d.maDiff1m > 0 && d.maDiff2m > 0 && d.maDiff15m > 0)
-          .sort((a, b) => (b.maDiff1m + b.maDiff2m + b.maDiff15m) - (a.maDiff1m + a.maDiff2m + a.maDiff15m))
+          .filter(d => d.res1m.valid && d.res2m.valid && d.res15m.valid)
+          .sort((a, b) => (b.res1m.ma20Diff + b.res2m.ma20Diff + b.res15m.ma20Diff) - (a.res1m.ma20Diff + a.res2m.ma20Diff + a.res15m.ma20Diff))
           .slice(0, 8);
 
-        // 2. 3M + 5M + 15M 同步多頭
+        // 2. 3M + 5M + 15M 雙MA同步突破
         const list3m5m15m = marketData
-          .filter(d => d.maDiff3m > 0 && d.maDiff5m > 0 && d.maDiff15m > 0)
-          .sort((a, b) => (b.maDiff3m + b.maDiff5m + b.maDiff15m) - (a.maDiff3m + a.maDiff5m + a.maDiff15m))
+          .filter(d => d.res3m.valid && d.res5m.valid && d.res15m.valid)
+          .sort((a, b) => (b.res3m.ma20Diff + b.res5m.ma20Diff + b.res15m.ma20Diff) - (a.res3m.ma20Diff + a.res5m.ma20Diff + a.res15m.ma20Diff))
           .slice(0, 8);
 
-        // 3. 5M + 15M + 30M 同步多頭
+        // 3. 5M + 15M + 30M 雙MA同步突破
         const list5m15m30m = marketData
-          .filter(d => d.maDiff5m > 0 && d.maDiff15m > 0 && d.maDiff30m > 0)
-          .sort((a, b) => (b.maDiff5m + b.maDiff15m + b.maDiff30m) - (a.maDiff5m + a.maDiff15m + a.maDiff30m))
+          .filter(d => d.res5m.valid && d.res15m.valid && d.res30m.valid)
+          .sort((a, b) => (b.res5m.ma20Diff + b.res15m.ma20Diff + b.res30m.ma20Diff) - (a.res5m.ma20Diff + a.res15m.ma20Diff + a.res30m.ma20Diff))
           .slice(0, 8);
 
         // 渲染表格
-        renderTripleTable('bull-1m2m15m-tbody', list1m2m15m, 'maDiff1m', 'maDiff2m', 'maDiff15m', 'bg-cyan-400');
-        renderTripleTable('bull-3m5m15m-tbody', list3m5m15m, 'maDiff3m', 'maDiff5m', 'maDiff15m', 'bg-amber-400');
-        renderTripleTable('bull-5m15m30m-tbody', list5m15m30m, 'maDiff5m', 'maDiff15m', 'maDiff30m', 'bg-rose-500');
+        renderTripleTable('bull-1m2m15m-tbody', list1m2m15m, 'res1m', 'res2m', 'res15m', 'bg-cyan-400');
+        renderTripleTable('bull-3m5m15m-tbody', list3m5m15m, 'res3m', 'res5m', 'res15m', 'bg-amber-400');
+        renderTripleTable('bull-5m15m30m-tbody', list5m15m30m, 'res5m', 'res15m', 'res30m', 'bg-rose-500');
         
         document.getElementById('update-time').innerText = new Date().toLocaleTimeString('zh-TW', { hour12: false });
 
@@ -220,12 +268,11 @@
       }
 
       tbody.innerHTML = dataList.map(item => {
-        const val1 = item[k1];
-        const val2 = item[k2];
-        const val3 = item[k3];
+        const val1 = item[k1].ma20Diff;
+        const val2 = item[k2].ma20Diff;
+        const val3 = item[k3].ma20Diff;
         const avgScore = (val1 + val2 + val3) / 3;
         const barWidth = Math.min(avgScore * 3, 16);
-        // 改用標準HTTPS通用網址（Universal Link），支援App自動喚起且不會跳出錯誤彈窗
         const binanceUrl = `https://www.binance.com/zh-TC/futures/${item.fullSymbol}`;
 
         return `
