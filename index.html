@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>加密貨幣超短線雙MA共振掃描器</title>
+  <title>加密貨幣全週期雙MA共振掃描器</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-[#0f121d] text-gray-200 min-h-screen p-4 flex justify-center items-center font-sans">
@@ -15,7 +15,7 @@
     <div class="border-b border-gray-800 pb-3">
       <div class="flex items-center gap-2 text-xl font-bold text-white">
         <span class="text-amber-400">⚡</span>
-        <span>5MA + 20MA 雙均線突破掃描</span>
+        <span>加密貨幣 6 週期共振掃描</span>
       </div>
       <div class="flex justify-between items-center text-xs text-gray-400 mt-1">
         <span>掃描更新：<span id="update-time">載入中...</span></span>
@@ -23,89 +23,156 @@
       </div>
     </div>
 
-    <!-- 1. 1分 + 2分 + 15分 共振多頭區塊 -->
+    <!-- 1. 1M + 2M + 15M -->
     <div class="bg-[#181c28] rounded-lg p-3 border border-gray-800/60">
-      <div class="flex items-center justify-between mb-3">
-        <div class="flex items-center gap-2 text-cyan-400 font-bold">
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2 text-cyan-400 font-bold text-xs">
           <span>⚡</span>
-          <span>1M + 2M + 15M 雙MA同步突破</span>
+          <span>1M + 2M + 15M 雙MA突破</span>
         </div>
-        <span class="text-[10px] bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded border border-cyan-500/20">極短線極速</span>
+        <span class="text-[10px] bg-cyan-500/10 text-cyan-400 px-1.5 py-0.5 rounded border border-cyan-500/20">極短線極速</span>
       </div>
-      
       <table class="w-full text-xs text-left border-collapse">
         <thead>
           <tr class="text-gray-400 border-b border-gray-800 pb-1">
             <th class="py-1">標的</th>
             <th class="text-right">價格</th>
-            <th class="text-right">1M突破</th>
-            <th class="text-right">2M突破</th>
-            <th class="text-right">15M突破</th>
+            <th class="text-right">1M</th>
+            <th class="text-right">2M</th>
+            <th class="text-right">15M</th>
             <th class="text-right pr-1">強度</th>
           </tr>
         </thead>
         <tbody id="bull-1m2m15m-tbody" class="divide-y divide-gray-800/40">
-          <tr>
-            <td colspan="6" class="text-center py-4 text-gray-500">行情資料載入中...</td>
-          </tr>
+          <tr><td colspan="6" class="text-center py-3 text-gray-500">載入中...</td></tr>
         </tbody>
       </table>
     </div>
 
-    <!-- 2. 3分 + 5分 + 15分 共振多頭區塊 -->
+    <!-- 2. 3M + 5M + 15M -->
     <div class="bg-[#181c28] rounded-lg p-3 border border-gray-800/60">
-      <div class="flex items-center justify-between mb-3">
-        <div class="flex items-center gap-2 text-amber-400 font-bold">
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2 text-amber-400 font-bold text-xs">
           <span>🚀</span>
-          <span>3M + 5M + 15M 雙MA同步突破</span>
+          <span>3M + 5M + 15M 雙MA突破</span>
         </div>
-        <span class="text-[10px] bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20">極短線進階</span>
+        <span class="text-[10px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded border border-amber-500/20">極短線進階</span>
       </div>
-      
       <table class="w-full text-xs text-left border-collapse">
         <thead>
           <tr class="text-gray-400 border-b border-gray-800 pb-1">
             <th class="py-1">標的</th>
             <th class="text-right">價格</th>
-            <th class="text-right">3M突破</th>
-            <th class="text-right">5M突破</th>
-            <th class="text-right">15M突破</th>
+            <th class="text-right">3M</th>
+            <th class="text-right">5M</th>
+            <th class="text-right">15M</th>
             <th class="text-right pr-1">強度</th>
           </tr>
         </thead>
         <tbody id="bull-3m5m15m-tbody" class="divide-y divide-gray-800/40">
-          <tr>
-            <td colspan="6" class="text-center py-4 text-gray-500">行情資料載入中...</td>
-          </tr>
+          <tr><td colspan="6" class="text-center py-3 text-gray-500">載入中...</td></tr>
         </tbody>
       </table>
     </div>
 
-    <!-- 3. 5分 + 15分 + 30分 共振多頭區塊 -->
-    <div class="bg-[#181c28] rounded-lg p-3 border border-amber-500/30">
-      <div class="flex items-center justify-between mb-3">
-        <div class="flex items-center gap-2 text-rose-400 font-bold">
+    <!-- 3. 5M + 15M + 30M -->
+    <div class="bg-[#181c28] rounded-lg p-3 border border-gray-800/60">
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2 text-rose-400 font-bold text-xs">
           <span>🔥</span>
-          <span>5M + 15M + 30M 雙MA同步突破</span>
+          <span>5M + 15M + 30M 雙MA突破</span>
         </div>
-        <span class="text-[10px] bg-rose-500/10 text-rose-400 px-2 py-0.5 rounded border border-rose-500/20">當沖強共振</span>
+        <span class="text-[10px] bg-rose-500/10 text-rose-400 px-1.5 py-0.5 rounded border border-rose-500/20">當沖強共振</span>
       </div>
-      
       <table class="w-full text-xs text-left border-collapse">
         <thead>
           <tr class="text-gray-400 border-b border-gray-800 pb-1">
             <th class="py-1">標的</th>
             <th class="text-right">價格</th>
-            <th class="text-right">5M突破</th>
-            <th class="text-right">15M突破</th>
-            <th class="text-right">30M突破</th>
+            <th class="text-right">5M</th>
+            <th class="text-right">15M</th>
+            <th class="text-right">30M</th>
             <th class="text-right pr-1">強度</th>
           </tr>
         </thead>
         <tbody id="bull-5m15m30m-tbody" class="divide-y divide-gray-800/40">
-          <tr>
-            <td colspan="6" class="text-center py-4 text-gray-500">行情資料載入中...</td>
+          <tr><td colspan="6" class="text-center py-3 text-gray-500">載入中...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 4. 15M + 1H -->
+    <div class="bg-[#181c28] rounded-lg p-3 border border-gray-800/60">
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2 text-emerald-400 font-bold text-xs">
+          <span>📈</span>
+          <span>15M + 1H 雙MA突破</span>
+        </div>
+        <span class="text-[10px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20">短線趨勢</span>
+      </div>
+      <table class="w-full text-xs text-left border-collapse">
+        <thead>
+          <tr class="text-gray-400 border-b border-gray-800 pb-1">
+            <th class="py-1">標的</th>
+            <th class="text-right">價格</th>
+            <th class="text-right">15M</th>
+            <th class="text-right">1H</th>
+            <th class="text-right pr-1">強度</th>
           </tr>
+        </thead>
+        <tbody id="bull-15m1h-tbody" class="divide-y divide-gray-800/40">
+          <tr><td colspan="5" class="text-center py-3 text-gray-500">載入中...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 5. 1H + 4H -->
+    <div class="bg-[#181c28] rounded-lg p-3 border border-gray-800/60">
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2 text-indigo-400 font-bold text-xs">
+          <span>🌟</span>
+          <span>1H + 4H 雙MA突破</span>
+        </div>
+        <span class="text-[10px] bg-indigo-500/10 text-indigo-400 px-1.5 py-0.5 rounded border border-indigo-500/20">中線波段</span>
+      </div>
+      <table class="w-full text-xs text-left border-collapse">
+        <thead>
+          <tr class="text-gray-400 border-b border-gray-800 pb-1">
+            <th class="py-1">標的</th>
+            <th class="text-right">價格</th>
+            <th class="text-right">1H</th>
+            <th class="text-right">4H</th>
+            <th class="text-right pr-1">強度</th>
+          </tr>
+        </thead>
+        <tbody id="bull-1h4h-tbody" class="divide-y divide-gray-800/40">
+          <tr><td colspan="5" class="text-center py-3 text-gray-500">載入中...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 6. 1H + 4H + 8H -->
+    <div class="bg-[#181c28] rounded-lg p-3 border border-amber-500/30">
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2 text-purple-400 font-bold text-xs">
+          <span>👑</span>
+          <span>1H + 4H + 8H 雙MA突破</span>
+        </div>
+        <span class="text-[10px] bg-purple-500/10 text-purple-400 px-1.5 py-0.5 rounded border border-purple-500/20">長線大趨勢</span>
+      </div>
+      <table class="w-full text-xs text-left border-collapse">
+        <thead>
+          <tr class="text-gray-400 border-b border-gray-800 pb-1">
+            <th class="py-1">標的</th>
+            <th class="text-right">價格</th>
+            <th class="text-right">1H</th>
+            <th class="text-right">4H</th>
+            <th class="text-right">8H</th>
+            <th class="text-right pr-1">強度</th>
+          </tr>
+        </thead>
+        <tbody id="bull-1h4h8h-tbody" class="divide-y divide-gray-800/40">
+          <tr><td colspan="6" class="text-center py-3 text-gray-500">載入中...</td></tr>
         </tbody>
       </table>
     </div>
@@ -129,17 +196,13 @@
       return sum / period;
     }
 
-    // 模擬 2m 週期：將 1m K線兩兩合併
     async function fetchCustomIntervalData(symbol, currentPrice, targetMinutes, period = 20) {
       try {
         const limit = period * targetMinutes + 5;
         const res = await fetch(`${BINANCE_KLINES_URL}?symbol=${symbol}&interval=1m&limit=${limit}`);
         const data = await res.json();
         
-        const candles = data.map(item => ({
-          close: parseFloat(item[4])
-        }));
-        
+        const candles = data.map(item => ({ close: parseFloat(item[4]) }));
         const aggregatedCloses = [];
         for (let i = 0; i <= candles.length - targetMinutes; i += targetMinutes) {
           const chunk = candles.slice(i, i + targetMinutes);
@@ -154,11 +217,7 @@
         const ma20 = calculateSMA(aggregatedCloses, 20);
         
         if (!ma5 || !ma20) return { valid: false, ma20Diff: 0 };
-        
-        const ma5Diff = ((currentPrice - ma5) / ma5) * 100;
         const ma20Diff = ((currentPrice - ma20) / ma20) * 100;
-        
-        // 必須同時突破 5MA 與 20MA (即價格高於兩者)
         const valid = currentPrice > ma5 && currentPrice > ma20;
         
         return { valid, ma20Diff };
@@ -179,10 +238,7 @@
           const ma20 = calculateSMA(closePrices, 20);
           
           if (!ma5 || !ma20) return { valid: false, ma20Diff: 0 };
-          
-          const ma5Diff = ((currentPrice - ma5) / ma5) * 100;
           const ma20Diff = ((currentPrice - ma20) / ma20) * 100;
-          
           const valid = currentPrice > ma5 && currentPrice > ma20;
           
           return { valid, ma20Diff };
@@ -207,51 +263,70 @@
             const symbol = item.symbol.replace('USDT', '');
             const price = parseFloat(item.lastPrice);
             
-            const [res1m, res2m, res3m, res5m, res15m, res30m] = await Promise.all([
+            const [res1m, res2m, res3m, res5m, res15m, res30m, res1h, res4h, res8h] = await Promise.all([
               fetchIntervalMA(item.symbol, price, '1m'),
               fetchIntervalMA(item.symbol, price, '2m'),
               fetchIntervalMA(item.symbol, price, '3m'),
               fetchIntervalMA(item.symbol, price, '5m'),
               fetchIntervalMA(item.symbol, price, '15m'),
-              fetchIntervalMA(item.symbol, price, '30m')
+              fetchIntervalMA(item.symbol, price, '30m'),
+              fetchIntervalMA(item.symbol, price, '1h'),
+              fetchIntervalMA(item.symbol, price, '4h'),
+              fetchIntervalMA(item.symbol, price, '8h')
             ]);
             
             return {
               symbol,
               fullSymbol: item.symbol,
               price,
-              res1m,
-              res2m,
-              res3m,
-              res5m,
-              res15m,
-              res30m
+              res1m, res2m, res3m, res5m, res15m, res30m, res1h, res4h, res8h
             };
           })
         );
 
-        // 1. 1M + 2M + 15M 雙MA同步突破
+        // 1. 1M + 2M + 15M
         const list1m2m15m = marketData
           .filter(d => d.res1m.valid && d.res2m.valid && d.res15m.valid)
           .sort((a, b) => (b.res1m.ma20Diff + b.res2m.ma20Diff + b.res15m.ma20Diff) - (a.res1m.ma20Diff + a.res2m.ma20Diff + a.res15m.ma20Diff))
-          .slice(0, 8);
+          .slice(0, 5);
 
-        // 2. 3M + 5M + 15M 雙MA同步突破
+        // 2. 3M + 5M + 15M
         const list3m5m15m = marketData
           .filter(d => d.res3m.valid && d.res5m.valid && d.res15m.valid)
           .sort((a, b) => (b.res3m.ma20Diff + b.res5m.ma20Diff + b.res15m.ma20Diff) - (a.res3m.ma20Diff + a.res5m.ma20Diff + a.res15m.ma20Diff))
-          .slice(0, 8);
+          .slice(0, 5);
 
-        // 3. 5M + 15M + 30M 雙MA同步突破
+        // 3. 5M + 15M + 30M
         const list5m15m30m = marketData
           .filter(d => d.res5m.valid && d.res15m.valid && d.res30m.valid)
           .sort((a, b) => (b.res5m.ma20Diff + b.res15m.ma20Diff + b.res30m.ma20Diff) - (a.res5m.ma20Diff + a.res15m.ma20Diff + a.res30m.ma20Diff))
-          .slice(0, 8);
+          .slice(0, 5);
+
+        // 4. 15M + 1H
+        const list15m1h = marketData
+          .filter(d => d.res15m.valid && d.res1h.valid)
+          .sort((a, b) => (b.res15m.ma20Diff + b.res1h.ma20Diff) - (a.res15m.ma20Diff + a.res1h.ma20Diff))
+          .slice(0, 5);
+
+        // 5. 1H + 4H
+        const list1h4h = marketData
+          .filter(d => d.res1h.valid && d.res4h.valid)
+          .sort((a, b) => (b.res1h.ma20Diff + b.res4h.ma20Diff) - (a.res1h.ma20Diff + a.res4h.ma20Diff))
+          .slice(0, 5);
+
+        // 6. 1H + 4H + 8H
+        const list1h4h8h = marketData
+          .filter(d => d.res1h.valid && d.res4h.valid && d.res8h.valid)
+          .sort((a, b) => (b.res1h.ma20Diff + b.res4h.ma20Diff + b.res8h.ma20Diff) - (a.res1h.ma20Diff + a.res4h.ma20Diff + a.res8h.ma20Diff))
+          .slice(0, 5);
 
         // 渲染表格
-        renderTripleTable('bull-1m2m15m-tbody', list1m2m15m, 'res1m', 'res2m', 'res15m', 'bg-cyan-400');
-        renderTripleTable('bull-3m5m15m-tbody', list3m5m15m, 'res3m', 'res5m', 'res15m', 'bg-amber-400');
-        renderTripleTable('bull-5m15m30m-tbody', list5m15m30m, 'res5m', 'res15m', 'res30m', 'bg-rose-500');
+        renderTable('bull-1m2m15m-tbody', list1m2m15m, ['res1m', 'res2m', 'res15m'], 'bg-cyan-400');
+        renderTable('bull-3m5m15m-tbody', list3m5m15m, ['res3m', 'res5m', 'res15m'], 'bg-amber-400');
+        renderTable('bull-5m15m30m-tbody', list5m15m30m, ['res5m', 'res15m', 'res30m'], 'bg-rose-500');
+        renderTable('bull-15m1h-tbody', list15m1h, ['res15m', 'res1h'], 'bg-emerald-400');
+        renderTable('bull-1h4h-tbody', list1h4h, ['res1h', 'res4h'], 'bg-indigo-400');
+        renderTable('bull-1h4h8h-tbody', list1h4h8h, ['res1h', 'res4h', 'res8h'], 'bg-purple-400');
         
         document.getElementById('update-time').innerText = new Date().toLocaleTimeString('zh-TW', { hour12: false });
 
@@ -260,32 +335,31 @@
       }
     }
 
-    function renderTripleTable(elementId, dataList, k1, k2, k3, barColorClass) {
+    function renderTable(elementId, dataList, keys, barColorClass) {
       const tbody = document.getElementById(elementId);
+      const colSpan = keys.length + 3;
       if (dataList.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-gray-500">無符合共振標的</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="${colSpan}" class="text-center py-2.5 text-gray-500">無符合標的</td></tr>`;
         return;
       }
 
       tbody.innerHTML = dataList.map(item => {
-        const val1 = item[k1].ma20Diff;
-        const val2 = item[k2].ma20Diff;
-        const val3 = item[k3].ma20Diff;
-        const avgScore = (val1 + val2 + val3) / 3;
+        const values = keys.map(k => item[k].ma20Diff);
+        const avgScore = values.reduce((a, b) => a + b, 0) / values.length;
         const barWidth = Math.min(avgScore * 3, 16);
         const binanceUrl = `https://www.binance.com/zh-TC/futures/${item.fullSymbol}`;
 
+        const diffTds = values.map(val => `<td class="text-right text-rose-500">+${val.toFixed(2)}%</td>`).join('');
+
         return `
           <tr class="hover:bg-gray-800/20 transition-colors">
-            <td class="py-2 font-medium">
+            <td class="py-1.5 font-medium">
               <a href="${binanceUrl}" target="_blank" rel="noopener noreferrer" class="text-gray-200 hover:text-amber-400 underline underline-offset-2 decoration-gray-600 hover:decoration-amber-400 transition-colors">
                 ${item.symbol}
               </a>
             </td>
             <td class="text-right">${item.price < 1 ? item.price.toFixed(4) : item.price.toFixed(2)}</td>
-            <td class="text-right text-rose-500">+${val1.toFixed(2)}%</td>
-            <td class="text-right text-rose-500">+${val2.toFixed(2)}%</td>
-            <td class="text-right text-rose-500">+${val3.toFixed(2)}%</td>
+            ${diffTds}
             <td class="text-right pl-2">
               <span class="inline-block h-1.5 ${barColorClass} rounded-full" style="width: ${Math.max(barWidth, 6)}px"></span>
             </td>
