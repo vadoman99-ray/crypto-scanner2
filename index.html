@@ -35,11 +35,11 @@
       </div>
     </div>
 
-    <!-- 1. 1M + 2M + 15M -->
+    <!-- 1. 1M + 2M + 15M (全部列出) -->
     <div class="bg-[#181c28] rounded-lg p-3 border border-gray-800/60">
       <div class="flex items-center justify-between mb-2">
         <span class="text-cyan-400 font-bold text-xs flex items-center gap-1">⚡ 1M + 2M + 15M 共振</span>
-        <span class="text-[10px] bg-cyan-500/10 text-cyan-400 px-1.5 py-0.5 rounded border border-cyan-500/20">Top 5</span>
+        <span class="text-[10px] bg-cyan-500/10 text-cyan-400 px-1.5 py-0.5 rounded border border-cyan-500/20">全部列出</span>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-xs text-left">
@@ -49,11 +49,11 @@
       </div>
     </div>
 
-    <!-- 2. 3M + 5M + 15M -->
+    <!-- 2. 3M + 5M + 15M (全部列出) -->
     <div class="bg-[#181c28] rounded-lg p-3 border border-gray-800/60">
       <div class="flex items-center justify-between mb-2">
         <span class="text-amber-400 font-bold text-xs flex items-center gap-1">🚀 3M + 5M + 15M 共振</span>
-        <span class="text-[10px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded border border-amber-500/20">Top 5</span>
+        <span class="text-[10px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded border border-amber-500/20">全部列出</span>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-xs text-left">
@@ -63,11 +63,11 @@
       </div>
     </div>
 
-    <!-- 3. 5M + 15M + 30M -->
+    <!-- 3. 5M + 15M + 30M (全部列出) -->
     <div class="bg-[#181c28] rounded-lg p-3 border border-gray-800/60">
       <div class="flex items-center justify-between mb-2">
         <span class="text-rose-400 font-bold text-xs flex items-center gap-1">🔥 5M + 15M + 30M 共振</span>
-        <span class="text-[10px] bg-rose-500/10 text-rose-400 px-1.5 py-0.5 rounded border border-rose-500/20">Top 5</span>
+        <span class="text-[10px] bg-rose-500/10 text-rose-400 px-1.5 py-0.5 rounded border border-rose-500/20">全部列出</span>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-xs text-left">
@@ -278,12 +278,10 @@
           return { ...item, res1m, res2m, res3m, res5m, res30m, res4h, res8h };
         }));
 
-        // 前三個極短線訊號取前 5 筆
-        const list1m2m15m = fullMarketData.filter(d => d.basePassed && d.res1m.valid && d.res2m.valid).slice(0, 5);
-        const list3m5m15m = fullMarketData.filter(d => d.basePassed && d.res3m.valid && d.res5m.valid).slice(0, 5);
-        const list5m15m30m = fullMarketData.filter(d => d.basePassed && d.res5m.valid && d.res30m.valid).slice(0, 5);
-
-        // 後三個訊號：只要篩選到就全部列出 (移除 slice 限制)
+        // 所有區塊：只要篩選到就全部列出 (不限制筆數)
+        const list1m2m15m = fullMarketData.filter(d => d.basePassed && d.res1m.valid && d.res2m.valid);
+        const list3m5m15m = fullMarketData.filter(d => d.basePassed && d.res3m.valid && d.res5m.valid);
+        const list5m15m30m = fullMarketData.filter(d => d.basePassed && d.res5m.valid && d.res30m.valid);
         const list15m1h = fullMarketData.filter(d => d.basePassed);
         const list1h4h = fullMarketData.filter(d => d.res1h.valid && d.res4h.valid);
         const list1h4h8h = fullMarketData.filter(d => d.res1h.valid && d.res4h.valid && d.res8h.valid);
