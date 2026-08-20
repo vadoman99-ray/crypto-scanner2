@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>加密貨幣多週期共振掃描器</title>
+  <title>加密貨幣多週期 DIF 共振掃描器</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-[#0f121d] text-gray-200 min-h-screen p-4 flex justify-center items-center font-sans">
@@ -15,7 +15,7 @@
     <div class="border-b border-gray-800 pb-3">
       <div class="flex items-center gap-2 text-xl font-bold text-white">
         <span class="text-amber-400">⚡</span>
-        <span>加密貨幣共振掃描 (永續合約)</span>
+        <span>加密貨幣共振掃描 (DIF > 0)</span>
       </div>
       <div class="flex justify-between items-center text-xs text-gray-400 mt-1">
         <span>掃描更新：<span id="update-time">載入中...</span></span>
@@ -28,7 +28,7 @@
       <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2 text-amber-400 font-bold">
           <span>🚀</span>
-          <span>1H + 4H 同步多頭趨勢</span>
+          <span>1H + 4H DIF 多頭共振</span>
         </div>
         <span class="text-[10px] bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20">雙週期共振</span>
       </div>
@@ -39,8 +39,8 @@
             <tr class="text-gray-400 border-b border-gray-800 pb-1">
               <th class="py-1">標的</th>
               <th class="text-right">價格</th>
-              <th class="text-right">1H突破</th>
-              <th class="text-right">4H突破</th>
+              <th class="text-right">1H DIF</th>
+              <th class="text-right">4H DIF</th>
               <th class="text-right">24H漲跌</th>
               <th class="text-center">狀態</th>
             </tr>
@@ -59,7 +59,7 @@
       <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2 text-rose-400 font-bold">
           <span>🔥</span>
-          <span>1H + 4H + 8H 同步多頭趨勢</span>
+          <span>1H + 4H + 8H DIF 多頭共振</span>
         </div>
         <span class="text-[10px] bg-rose-500/10 text-rose-400 px-2 py-0.5 rounded border border-rose-500/20">三週期強共振</span>
       </div>
@@ -70,9 +70,9 @@
             <tr class="text-gray-400 border-b border-gray-800 pb-1">
               <th class="py-1">標的</th>
               <th class="text-right">價格</th>
-              <th class="text-right">1H突破</th>
-              <th class="text-right">4H突破</th>
-              <th class="text-right">8H突破</th>
+              <th class="text-right">1H DIF</th>
+              <th class="text-right">4H DIF</th>
+              <th class="text-right">8H DIF</th>
               <th class="text-center">狀態</th>
             </tr>
           </thead>
@@ -87,48 +87,58 @@
 
     <!-- 頁尾免責聲明 -->
     <div class="text-center text-[10px] text-gray-500 pt-2 space-y-0.5">
-      <div>💡 <b>圖示說明：</b> <span class="text-amber-400">💥 爆量</span> (當前成交量 > 前一根 1.5 倍)</div>
-      <div>資料來源：幣安 USDT 永續合約 API。突破 % 代表高於 MA20 幅度。</div>
+      <div>💡 <b>篩選條件：</b> 各週期 DIF (EMA12 - EMA26) 皆大於 0；<span class="text-amber-400">💥 爆量</span> (當前成交量 > 前一根 1.5 倍)</div>
+      <div>資料來源：幣安 USDT 永續合約 API。</div>
     </div>
 
   </div>
 
-  <!-- 幣安 API 多週期串接腳本 -->
+  <!-- 幣安 API 多週期 DIF 計算與串接腳本 -->
   <script>
     const BINANCE_TICKER_URL = 'https://fapi.binance.com/fapi/v1/ticker/24hr';
     const BINANCE_KLINES_URL = 'https://fapi.binance.com/fapi/v1/klines';
 
-    // 計算簡單移動平均線 (SMA)
-    function calculateSMA(data, period) {
-      if (data.length < period) return null;
-      const slice = data.slice(-period);
-      const sum = slice.reduce((acc, val) => acc + val, 0);
-      return sum / period;
+    // 計算指數移動平均線 (EMA)
+    function calculateEMA(data, period) {
+      if (data.length < period) return [];
+      const k = 2 / (period + 1);
+      let emaArray = [data[0]];
+      for (let i = 1; i < data.length; i++) {
+        emaArray.push(data[i] * k + emaArray[i - 1] * (1 - k));
+      }
+      return emaArray;
     }
 
-    // 取得指定時間週期的 MA20 突破幅度 % 與爆量狀態 (成交量 > 前一根 1.5 倍)
-    async function fetchTimeframeData(symbol, currentPrice, interval, period = 20) {
+    // 計算 MACD DIF (EMA12 - EMA26)
+    function calculateDIF(closePrices) {
+      if (closePrices.length < 26) return 0;
+      const ema12 = calculateEMA(closePrices, 12);
+      const ema26 = calculateEMA(closePrices, 26);
+      const latestEMA12 = ema12[ema12.length - 1];
+      const latestEMA26 = ema26[ema26.length - 1];
+      return latestEMA12 - latestEMA26;
+    }
+
+    // 取得指定時間週期的 DIF 與爆量狀態
+    async function fetchTimeframeData(symbol, interval, limit = 35) {
       try {
-        const res = await fetch(`${BINANCE_KLINES_URL}?symbol=${symbol}&interval=${interval}&limit=${period + 1}`);
+        const res = await fetch(`${BINANCE_KLINES_URL}?symbol=${symbol}&interval=${interval}&limit=${limit}`);
         const data = await res.json();
         
         const closePrices = data.map(item => parseFloat(item[4]));
         const volumes = data.map(item => parseFloat(item[5]));
         
-        const maValue = calculateSMA(closePrices, period);
-        if (!maValue) return { maDiff: 0, isHighVol: false };
+        const dif = calculateDIF(closePrices);
 
-        const maDiff = ((currentPrice - maValue) / maValue) * 100;
-
-        // 判斷當前 K 線是否為爆量 (當前量 > 前一根 1.5 倍)
+        // 判斷當前 K 線是否爆量 (當前量 > 前一根 1.5 倍)
         const currVol = volumes[volumes.length - 1];
         const prevVol = volumes[volumes.length - 2];
         const isHighVol = prevVol > 0 ? (currVol > prevVol * 1.5) : false;
 
-        return { maDiff, isHighVol };
+        return { dif, isHighVol };
       } catch (err) {
         console.error(`無法取得 ${symbol} ${interval} 資料`, err);
-        return { maDiff: 0, isHighVol: false };
+        return { dif: 0, isHighVol: false };
       }
     }
 
@@ -152,11 +162,11 @@
             const price = parseFloat(item.lastPrice);
             const change24h = parseFloat(item.priceChangePercent);
             
-            // 多週期平行請求：1h, 4h, 8h
+            // 多週期平行請求：1h, 4h, 8h (取得 DIF 值)
             const [tf1h, tf4h, tf8h] = await Promise.all([
-              fetchTimeframeData(item.symbol, price, '1h', 20),
-              fetchTimeframeData(item.symbol, price, '4h', 20),
-              fetchTimeframeData(item.symbol, price, '8h', 20)
+              fetchTimeframeData(item.symbol, '1h'),
+              fetchTimeframeData(item.symbol, '4h'),
+              fetchTimeframeData(item.symbol, '8h')
             ]);
             
             return {
@@ -164,24 +174,24 @@
               fullSymbol,
               price,
               change24h,
-              maDiff1h: tf1h.maDiff,
-              maDiff4h: tf4h.maDiff,
-              maDiff8h: tf8h.maDiff,
+              dif1h: tf1h.dif,
+              dif4h: tf4h.dif,
+              dif8h: tf8h.dif,
               isHighVol: tf1h.isHighVol || tf4h.isHighVol || tf8h.isHighVol
             };
           })
         );
 
-        // 條件 1：1H + 4H 同時多頭 (突破均線 % > 0)
+        // 條件 1：1H 與 4H 的 DIF 皆 > 0
         const list1h4h = marketData
-          .filter(d => d.maDiff1h > 0 && d.maDiff4h > 0)
-          .sort((a, b) => (b.maDiff1h + b.maDiff4h) - (a.maDiff1h + a.maDiff4h))
+          .filter(d => d.dif1h > 0 && d.dif4h > 0)
+          .sort((a, b) => (b.dif1h + b.dif4h) - (a.dif1h + a.dif4h))
           .slice(0, 8);
 
-        // 條件 2：1H + 4H + 8H 三者同時多頭 (突破均線 % > 0)
+        // 條件 2：1H、4H 與 8H 的 DIF 皆 > 0
         const list1h4h8h = marketData
-          .filter(d => d.maDiff1h > 0 && d.maDiff4h > 0 && d.maDiff8h > 0)
-          .sort((a, b) => (b.maDiff1h + b.maDiff4h + b.maDiff8h) - (a.maDiff1h + a.maDiff4h + a.maDiff8h))
+          .filter(d => d.dif1h > 0 && d.dif4h > 0 && d.dif8h > 0)
+          .sort((a, b) => (b.dif1h + b.dif4h + b.dif8h) - (a.dif1h + a.dif4h + a.dif8h))
           .slice(0, 8);
 
         // 渲染畫面
@@ -200,7 +210,7 @@
     function render1h4hTable(dataList) {
       const tbody = document.getElementById('bull-1h4h-tbody');
       if (dataList.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-gray-500">無雙週期共振標的</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-gray-500">無雙週期 DIF 共振標的</td></tr>`;
         return;
       }
 
@@ -216,8 +226,8 @@
               </a>
             </td>
             <td class="text-right font-mono">${item.price < 1 ? item.price.toFixed(4) : item.price.toFixed(2)}</td>
-            <td class="text-right text-rose-500">+${item.maDiff1h.toFixed(2)}%</td>
-            <td class="text-right text-rose-500">+${item.maDiff4h.toFixed(2)}%</td>
+            <td class="text-right text-rose-500 font-mono">+${item.dif1h.toFixed(3)}</td>
+            <td class="text-right text-rose-500 font-mono">+${item.dif4h.toFixed(3)}</td>
             <td class="text-right ${c24Class}">${item.change24h > 0 ? '+' : ''}${item.change24h.toFixed(2)}%</td>
             <td class="text-center">${item.isHighVol ? '💥' : '-'}</td>
           </tr>
@@ -229,7 +239,7 @@
     function render1h4h8hTable(dataList) {
       const tbody = document.getElementById('bull-1h4h8h-tbody');
       if (dataList.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-gray-500">無三週期強共振標的</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-gray-500">無三週期 DIF 強共振標的</td></tr>`;
         return;
       }
 
@@ -244,9 +254,9 @@
               </a>
             </td>
             <td class="text-right font-mono">${item.price < 1 ? item.price.toFixed(4) : item.price.toFixed(2)}</td>
-            <td class="text-right text-rose-500">+${item.maDiff1h.toFixed(2)}%</td>
-            <td class="text-right text-rose-500">+${item.maDiff4h.toFixed(2)}%</td>
-            <td class="text-right text-rose-500">+${item.maDiff8h.toFixed(2)}%</td>
+            <td class="text-right text-rose-500 font-mono">+${item.dif1h.toFixed(3)}</td>
+            <td class="text-right text-rose-500 font-mono">+${item.dif4h.toFixed(3)}</td>
+            <td class="text-right text-rose-500 font-mono">+${item.dif8h.toFixed(3)}</td>
             <td class="text-center">${item.isHighVol ? '💥' : '-'}</td>
           </tr>
         `;
