@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>幣安 U本位合約 MA20 共振掃描器</title>
+  <title>幣安永續合約 MA20 共振掃描器</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-[#0f121d] text-gray-200 min-h-screen p-2 sm:p-4 font-sans flex justify-center items-center">
@@ -15,7 +15,7 @@
       <div class="flex justify-between items-center">
         <div class="flex items-center gap-2">
           <span class="text-amber-400 text-xl">⚡</span>
-          <h1 class="text-lg font-bold text-white">U本位合約 MA20 掃描器</h1>
+          <h1 class="text-lg font-bold text-white">永續合約 MA20 掃描器</h1>
         </div>
         <!-- 多空切換按鈕 -->
         <button id="mode-toggle-btn" onclick="toggleMode()" class="px-3 py-1 rounded-lg text-xs font-bold transition-all bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/30">
@@ -122,15 +122,14 @@
     <!-- 底部說明 -->
     <div class="text-[10px] text-gray-500 space-y-1 bg-[#181c28]/50 p-2 rounded">
       <div>💡 <b>圖示說明：</b> <span class="text-amber-400">💥 爆量</span> (當前成交量 > 前一根 1.5 倍) | <span class="text-rose-400">⚠️ 乖離大</span> (距離MA20 > 3% 謹防追高)</div>
-      <div>🎯 <b>資料來源：</b> 幣安 U 本位永續合約 (USDT-M Futures)</div>
+      <div>🎯 <b>資料來源：</b> 幣安永續合約 (Binance Perpetual Futures)</div>
     </div>
 
   </div>
 
   <script>
-    // 幣安 U 本位合約 (USDT-M Futures) API Endpoint
-    const BINANCE_UM_FUTURES_TICKER = 'https://fapi.binance.com/fapi/v1/ticker/24hr';
-    const BINANCE_UM_FUTURES_KLINES = 'https://fapi.binance.com/fapi/v1/klines';
+    const BINANCE_FUTURES_TICKER = 'https://fapi.binance.com/fapi/v1/ticker/24hr';
+    const BINANCE_FUTURES_KLINES = 'https://fapi.binance.com/fapi/v1/klines';
 
     let isLongMode = true;
     let customWatchlist = [];
@@ -182,7 +181,7 @@
       try {
         let candles = [];
         if (interval === '2m') {
-          const res = await fetch(`${BINANCE_UM_FUTURES_KLINES}?symbol=${symbol}&interval=1m&limit=40`);
+          const res = await fetch(`${BINANCE_FUTURES_KLINES}?symbol=${symbol}&interval=1m&limit=40`);
           const data = await res.json();
           const aggregated = [];
           for (let i = 0; i <= data.length - 2; i += 2) {
@@ -193,7 +192,7 @@
           }
           candles = aggregated;
         } else {
-          const res = await fetch(`${BINANCE_UM_FUTURES_KLINES}?symbol=${symbol}&interval=${interval}&limit=20`);
+          const res = await fetch(`${BINANCE_FUTURES_KLINES}?symbol=${symbol}&interval=${interval}&limit=20`);
           const data = await res.json();
           candles = data.map(d => ({ close: parseFloat(d[4]), volume: parseFloat(d[5]) }));
         }
@@ -224,10 +223,10 @@
 
     async function updateMarketScanner() {
       try {
-        const res = await fetch(BINANCE_UM_FUTURES_TICKER);
+        const res = await fetch(BINANCE_FUTURES_TICKER);
         const tickers = await res.json();
 
-        // 嚴格過濾幣安 U 本位永續合約 (USDT 結算，排除交割合約與槓桿代幣)
+        // 過濾條件：僅保留永續合約 (Perpetual Futures)，排除含有底線的交割合約（如 _241227）
         let topPairs = tickers
           .filter(t => t.symbol.endsWith('USDT') && !t.symbol.includes('_'))
           .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
@@ -328,7 +327,7 @@
       }
 
       tbody.innerHTML = dataList.map(item => {
-        // 直達幣安 U 本位合約交易介面
+        // 直達幣安永續合約 K 線頁面
         const binanceUrl = `https://www.binance.com/zh-TC/futures/${item.fullSymbol}`;
         const changeColor = item.priceChange >= 0 ? 'text-emerald-400' : 'text-rose-400';
         const changeSign = item.priceChange >= 0 ? '+' : '';
