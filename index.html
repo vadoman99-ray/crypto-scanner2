@@ -2,211 +2,258 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>幣安 USDT 永續合約掃描器 (1H 20MA+)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>幣安 1H 20MA 合約掃描器</title>
     <style>
         :root {
             --bg-color: #12161c;
             --card-bg: #1e2329;
+            --card-border: #2b313a;
             --text-main: #eaecef;
             --text-sub: #848e9c;
-            --green: #0ecb81;
             --yellow: #f0b90b;
-            --border: #2b313a;
+            --green: #0ecb81;
+            --green-bg: rgba(14, 203, 129, 0.12);
+            --orange: #f6465d;
+            --orange-bg: rgba(246, 70, 93, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-main);
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            padding-bottom: 70px; /* 預留底部導覽列空間 */
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .header {
+        /* 頂部固定標題列 */
+        .app-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--card-border);
+            padding: 12px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            background: var(--card-bg);
-            padding: 15px 20px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
         }
 
-        h1 {
-            font-size: 1.2rem;
-            margin: 0;
-        }
-
-        .controls {
+        .app-title {
+            font-size: 1.05rem;
+            font-weight: bold;
             display: flex;
-            gap: 15px;
             align-items: center;
+            gap: 8px;
         }
 
-        button {
+        .scan-btn {
             background-color: var(--yellow);
             color: #000;
             border: none;
             padding: 8px 16px;
-            border-radius: 4px;
+            border-radius: 20px;
             font-weight: bold;
+            font-size: 0.85rem;
             cursor: pointer;
-            transition: opacity 0.2s;
         }
 
-        button:disabled {
+        .scan-btn:disabled {
             opacity: 0.5;
-            cursor: not-allowed;
         }
 
-        .filter-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .filter-btn {
-            background: var(--card-bg);
-            color: var(--text-sub);
-            border: 1px solid var(--border);
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .filter-btn.active {
-            color: var(--text-main);
-            border-color: var(--yellow);
-            background: #2b313a;
-        }
-
+        /* 進度條 */
         .progress-bar {
+            height: 3px;
+            background: var(--card-border);
             width: 100%;
-            height: 4px;
-            background: var(--border);
-            margin-bottom: 20px;
-            border-radius: 2px;
-            overflow: hidden;
         }
 
         .progress-fill {
             height: 100%;
             width: 0%;
             background: var(--yellow);
-            transition: width 0.1s;
+            transition: width 0.2s;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: var(--card-bg);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
-        }
-
-        th {
-            background-color: #181a20;
-            color: var(--text-sub);
-            font-size: 0.85rem;
-        }
-
-        .badge {
-            padding: 4px 8px;
-            border-radius: 4px;
+        /* 狀態與統計資訊 */
+        .status-bar {
+            padding: 10px 16px;
             font-size: 0.8rem;
+            color: var(--text-sub);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(30, 35, 41, 0.5);
+        }
+
+        /* 內容容器 */
+        .container {
+            padding: 12px 16px;
+        }
+
+        /* 列表卡片樣式 (手機最佳化) */
+        .symbol-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .symbol-card:active {
+            background-color: #2b313a;
+        }
+
+        .symbol-info .name {
+            font-size: 1.1rem;
             font-weight: bold;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .symbol-info .price-sub {
+            font-size: 0.75rem;
+            color: var(--text-sub);
+        }
+
+        .symbol-metrics {
+            text-align: right;
+        }
+
+        .symbol-metrics .price {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 4px;
+            font-family: monospace;
+        }
+
+        /* 標籤元件 */
+        .badge {
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            display: inline-block;
         }
 
         .badge-above {
-            background-color: rgba(14, 203, 129, 0.15);
+            background-color: var(--green-bg);
             color: var(--green);
-            border: 1px solid var(--green);
         }
 
         .badge-below {
-            background-color: rgba(240, 185, 11, 0.15);
-            color: var(--yellow);
-            border: 1px solid var(--yellow);
+            background-color: var(--yellow);
+            color: #000;
         }
 
-        .symbol-link {
-            color: var(--text-main);
-            text-decoration: none;
+        /* 空狀態 */
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--text-sub);
+            font-size: 0.9rem;
+        }
+
+        /* 底部分頁導覽列 (Mobile Bottom Nav) */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background-color: var(--card-bg);
+            border-top: 1px solid var(--card-border);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-sub);
+            font-size: 0.75rem;
+            border: none;
+            background: none;
+            padding: 6px 0;
+            cursor: pointer;
+        }
+
+        .nav-item.active {
+            color: var(--yellow);
             font-weight: bold;
         }
 
-        .symbol-link:hover {
-            color: var(--yellow);
-        }
-
-        .stat {
-            font-size: 0.9rem;
-            color: var(--text-sub);
+        .nav-icon {
+            font-size: 1.2rem;
+            margin-bottom: 2px;
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <h1>幣安 USDT 永續合約 (1H MA20 條件篩選)</h1>
-        <div class="controls">
-            <span id="status" class="stat">準備就緒</span>
-            <button id="scanBtn" onclick="startScan()">開始掃描</button>
-        </div>
+    <!-- 頂部列 -->
+    <div class="app-header">
+        <div class="app-title">⚡ 1H 20MA 掃描器</div>
+        <button id="scanBtn" class="scan-btn" onclick="startScan()">開始掃描</button>
     </div>
 
-    <div class="filter-group">
-        <button class="filter-btn active" onclick="setFilter('ALL')">全部 (大於 20MA)</button>
-        <button class="filter-btn" onclick="setFilter('ABOVE_5MA')">🟢 在 5MA 上方</button>
-        <button class="filter-btn" onclick="setFilter('BELOW_5MA')">🟡 在 5MA 下方 (回踩)</button>
-    </div>
-
+    <!-- 進度條 -->
     <div class="progress-bar"><div id="progress" class="progress-fill"></div></div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>幣種名稱</th>
-                <th>最新價格</th>
-                <th>1H 20MA</th>
-                <th>1H 5MA</th>
-                <th>5MA 狀態濾網</th>
-                <th>操作</th>
-            </tr>
-        </thead>
-        <tbody id="resultTable">
-            <tr>
-                <td colspan="6" style="text-align: center; color: var(--text-sub);">點擊「開始掃描」以獲取資料...</td>
-            </tr>
-        </tbody>
-    </table>
-</div>
+    <!-- 狀態列 -->
+    <div class="status-bar">
+        <span id="statusText">請點擊右上方「開始掃描」</span>
+        <span id="countText">共 0 筆標的</span>
+    </div>
+
+    <!-- 幣種卡片列表區塊 -->
+    <div class="container" id="symbolList">
+        <div class="empty-state">點擊開始掃描，自動過濾幣安 USDT 永續合約</div>
+    </div>
+
+    <!-- 底部導覽選單 -->
+    <div class="bottom-nav">
+        <button class="nav-item active" onclick="setFilter('ALL', this)">
+            <div class="nav-icon">🌐</div>
+            <div>全部 (20MA+)</div>
+        </button>
+        <button class="nav-item" onclick="setFilter('ABOVE_5MA', this)">
+            <div class="nav-icon">🟢</div>
+            <div>5MA 上方</div>
+        </button>
+        <button class="nav-item" onclick="setFilter('BELOW_5MA', this)">
+            <div class="nav-icon">🟡</div>
+            <div>5MA 下方 (回踩)</div>
+        </button>
+    </div>
 
 <script>
     let rawResults = [];
     let currentFilter = 'ALL';
 
-    // 計算簡單移動平均 (SMA)
     function calculateSMA(data, count) {
-        const avg = data.slice(-count).reduce((sum, val) => sum + val, 0) / count;
-        return avg;
+        return data.slice(-count).reduce((sum, val) => sum + val, 0) / count;
     }
 
-    // 取得所有 USDT 永續合約幣種
     async function getUSDTFuturesSymbols() {
         const res = await fetch('https://fapi.binance.com/fapi/v1/exchangeInfo');
         const data = await res.json();
@@ -215,20 +262,18 @@
             .map(s => s.symbol);
     }
 
-    // 獲取單一幣種 K 線並計算 MA
     async function fetchKlineData(symbol) {
         try {
             const res = await fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=30`);
             const data = await res.json();
             
-            // 取得收盤價陣列
             const closes = data.map(k => parseFloat(k[4]));
             const currentClose = closes[closes.length - 1];
             
             const ma20 = calculateSMA(closes, 20);
             const ma5 = calculateSMA(closes, 5);
 
-            // 核心篩選條件：1H 收盤價必須在 20MA 上方
+            // 核心條件：1H 收盤價在 20MA 上方
             if (currentClose > ma20) {
                 return {
                     symbol: symbol,
@@ -244,20 +289,20 @@
         }
     }
 
-    // 開始掃描任務
     async function startScan() {
         const scanBtn = document.getElementById('scanBtn');
-        const statusEl = document.getElementById('status');
+        const statusText = document.getElementById('statusText');
         const progressEl = document.getElementById('progress');
         
         scanBtn.disabled = true;
+        scanBtn.innerText = "掃描中...";
         rawResults = [];
-        renderTable();
+        renderList();
 
-        statusEl.innerText = "獲取合約清單...";
+        statusText.innerText = "正在取得標的清單...";
         const symbols = await getUSDTFuturesSymbols();
         
-        const batchSize = 10; // 控制併發請求量，防止 Binance API 限流
+        const batchSize = 12; // 併發控制
         let processed = 0;
 
         for (let i = 0; i < symbols.length; i += batchSize) {
@@ -272,25 +317,25 @@
             processed += batch.length;
             const pct = Math.floor((processed / symbols.length) * 100);
             progressEl.style.width = `${pct}%`;
-            statusEl.innerText = `掃描中: ${processed} / ${symbols.length}`;
+            statusText.innerText = `掃描進度: ${processed}/${symbols.length}`;
+            renderList(); // 即時渲染
         }
 
-        statusEl.innerText = `掃描完成！符合條件: ${rawResults.length} 個`;
+        statusText.innerText = `掃描完成！`;
         scanBtn.disabled = false;
-        renderTable();
+        scanBtn.innerText = "重新掃描";
     }
 
-    // 切換濾網頁籤
-    function setFilter(filter) {
+    function setFilter(filter, el) {
         currentFilter = filter;
-        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
-        renderTable();
+        document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+        el.classList.add('active');
+        renderList();
     }
 
-    // 渲染表格內容
-    function renderTable() {
-        const tbody = document.getElementById('resultTable');
+    function renderList() {
+        const container = document.getElementById('symbolList');
+        const countText = document.getElementById('countText');
         
         let filtered = rawResults.filter(item => {
             if (currentFilter === 'ABOVE_5MA') return item.isAboveMa5;
@@ -298,28 +343,35 @@
             return true;
         });
 
-        // 優先依據距離 20MA 比例或 5MA 狀態排序
+        // 排序：以溢價率或狀態排序
         filtered.sort((a, b) => (b.price / b.ma20) - (a.price / a.ma20));
 
+        countText.innerText = `符合: ${filtered.length} 筆`;
+
         if (filtered.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-sub);">無符合條件的數據</td></tr>`;
+            container.innerHTML = `<div class="empty-state">尚無符合條件的標的</div>`;
             return;
         }
 
-        tbody.innerHTML = filtered.map(item => `
-            <tr>
-                <td><a class="symbol-link" href="https://www.binance.com/zh-TC/futures/${item.symbol}" target="_blank">${item.symbol}</a></td>
-                <td>${item.price}</td>
-                <td>${item.ma20.toFixed(4)}</td>
-                <td>${item.ma5.toFixed(4)}</td>
-                <td>
-                    ${item.isAboveMa5 
-                        ? `<span class="badge badge-above">在 5MA 上方 (強勢)</span>` 
-                        : `<span class="badge badge-below">在 5MA 下方 (回踩)</span>`}
-                </td>
-                <td><a href="https://www.binance.com/zh-TC/futures/${item.symbol}" target="_blank" style="color: var(--yellow);">開啟 K 線</a></td>
-            </tr>
-        `).map(row => row).join('');
+        container.innerHTML = filtered.map(item => `
+            <a class="symbol-card" href="https://www.binance.com/zh-TC/futures/${item.symbol}" target="_blank">
+                <div class="symbol-info">
+                    <div class="name">
+                        ${item.symbol.replace('USDT', '')}
+                        <span style="font-size: 0.7rem; color: var(--text-sub);">/USDT</span>
+                    </div>
+                    <div>
+                        ${item.isAboveMa5 
+                            ? `<span class="badge badge-above">5MA 上方 (強勢)</span>` 
+                            : `<span class="badge badge-below">5MA 下方 (回踩)</span>`}
+                    </div>
+                </div>
+                <div class="symbol-metrics">
+                    <div class="price">${item.price}</div>
+                    <div class="price-sub">20MA: ${item.ma20.toFixed(4)}</div>
+                </div>
+            </a>
+        `).join('');
     }
 </script>
 
