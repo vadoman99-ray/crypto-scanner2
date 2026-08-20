@@ -133,7 +133,7 @@
     <!-- 底部說明 -->
     <div class="text-[10px] text-gray-500 space-y-1 bg-[#181c28]/50 p-2 rounded">
       <div>💡 <b>圖示說明：</b> <span class="text-amber-400">💥 爆量</span> (當前成交量 > MA20均量1.2倍) | <span class="text-rose-400">⚠️ 乖離大</span> (距離MA20 > 3% 謹防追高)</div>
-      <div>⚡ <b>階層過濾：</b>前三項極短線訊號自動過濾「15M + 1H 均站上 MA20 且斜率符合」，減少 70% 無效 API 請求。</div>
+      <div>⚡ <b>階層過濾：</b>前三項極短線訊號自動過濾「15M + 1H 均站上 MA20」，減少 70% 無效 API 請求。</div>
     </div>
 
   </div>
@@ -202,12 +202,12 @@
       return arr.reduce((a, b) => a + b, 0) / arr.length;
     }
 
-    // 計算 K 線數據：包含 MA20、斜率 (Slope)、成交量 (Volume) 與乖離率 (Bias)
+    // 計算 K 線數據：純判斷價格是否突破 MA20
     async function fetchKlinesData(symbol, currentPrice, interval) {
       try {
         let candles = [];
         if (interval === '2m') {
-          const res = await fetch(`${BINANCE_KLINES_URL}?symbol=${symbol}&interval=1m&limit=50`);
+          const res = await fetch(`${BINANCE_KLINES_URL}?symbol=${symbol}&interval=1m&limit=40`);
           const data = await res.json();
           const aggregated = [];
           for (let i = 0; i <= data.length - 2; i += 2) {
@@ -218,22 +218,17 @@
           }
           candles = aggregated;
         } else {
-          const res = await fetch(`${BINANCE_KLINES_URL}?symbol=${symbol}&interval=${interval}&limit=25`);
+          const res = await fetch(`${BINANCE_KLINES_URL}?symbol=${symbol}&interval=${interval}&limit=20`);
           const data = await res.json();
           candles = data.map(d => ({ close: parseFloat(d[4]), volume: parseFloat(d[5]) }));
         }
 
-        if (candles.length < 21) return { valid: false, diff: 0, highVol: false, overbought: false };
+        if (candles.length < 20) return { valid: false, diff: 0, highVol: false, overbought: false };
 
         const closes = candles.map(c => c.close);
         const volumes = candles.map(c => c.volume);
 
-        const currCloses = closes.slice(-20);
-        const prevCloses = closes.slice(-21, -1);
-        
-        const ma20Curr = calculateSMA(currCloses);
-        const ma20Prev = calculateSMA(prevCloses);
-
+        const ma20Curr = calculateSMA(closes.slice(-20));
         const currVol = volumes[volumes.length - 1];
         const volMA20 = calculateSMA(volumes.slice(-20));
 
@@ -241,14 +236,8 @@
         const ma20Diff = ((currentPrice - ma20Curr) / ma20Curr) * 100;
         const isOverbought = Math.abs(ma20Diff) > 3.0;
 
-        let valid = false;
-        if (isLongMode) {
-          // 多頭：價格高於 MA20 且 MA20 斜率向上
-          valid = (currentPrice > ma20Curr) && (ma20Curr >= ma20Prev);
-        } else {
-          // 空頭：價格低於 MA20 且 MA20 斜率向下
-          valid = (currentPrice < ma20Curr) && (ma20Curr <= ma20Prev);
-        }
+        // 僅判斷價格高於（多頭）或低於（空頭）MA20，不檢查斜率
+        const valid = isLongMode ? (currentPrice > ma20Curr) : (currentPrice < ma20Curr);
 
         return { valid, diff: ma20Diff, highVol: isHighVol, overbought: isOverbought };
 
@@ -378,7 +367,6 @@
         const changeColor = item.priceChange >= 0 ? 'text-emerald-400' : 'text-rose-400';
         const changeSign = item.priceChange >= 0 ? '+' : '';
 
-        // 檢查是否有爆量或超買/超賣警示
         const hasHighVol = keys.some(k => item[k].highVol);
         const hasOverbought = keys.some(k => item[k].overbought);
 
