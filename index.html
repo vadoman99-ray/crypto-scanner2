@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>加密貨幣全週期 MA20 共振實戰掃描器</title>
+  <title>幣安 USDT 合約全週期 MA20 共振掃描器</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-[#0f121d] text-gray-200 min-h-screen p-2 sm:p-4 font-sans flex justify-center items-center">
@@ -15,7 +15,7 @@
       <div class="flex justify-between items-center">
         <div class="flex items-center gap-2">
           <span class="text-amber-400 text-xl">⚡</span>
-          <h1 class="text-lg font-bold text-white">MA20 共振掃描器</h1>
+          <h1 class="text-lg font-bold text-white">USDT 合約 MA20 掃描器</h1>
         </div>
         <!-- 多空切換按鈕 -->
         <button id="mode-toggle-btn" onclick="toggleMode()" class="px-3 py-1 rounded-lg text-xs font-bold transition-all bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/30">
@@ -35,7 +35,7 @@
       </div>
     </div>
 
-    <!-- 1. 1M + 2M + 15M (全部列出) -->
+    <!-- 1. 1M + 2M + 15M -->
     <div class="bg-[#181c28] rounded-lg p-3 border border-gray-800/60">
       <div class="flex items-center justify-between mb-2">
         <span class="text-cyan-400 font-bold text-xs flex items-center gap-1">⚡ 1M + 2M + 15M 共振</span>
@@ -49,7 +49,7 @@
       </div>
     </div>
 
-    <!-- 2. 3M + 5M + 15M (全部列出) -->
+    <!-- 2. 3M + 5M + 15M -->
     <div class="bg-[#181c28] rounded-lg p-3 border border-gray-800/60">
       <div class="flex items-center justify-between mb-2">
         <span class="text-amber-400 font-bold text-xs flex items-center gap-1">🚀 3M + 5M + 15M 共振</span>
@@ -63,7 +63,7 @@
       </div>
     </div>
 
-    <!-- 3. 5M + 15M + 30M (全部列出) -->
+    <!-- 3. 5M + 15M + 30M -->
     <div class="bg-[#181c28] rounded-lg p-3 border border-gray-800/60">
       <div class="flex items-center justify-between mb-2">
         <span class="text-rose-400 font-bold text-xs flex items-center gap-1">🔥 5M + 15M + 30M 共振</span>
@@ -77,7 +77,7 @@
       </div>
     </div>
 
-    <!-- 4. 15M + 1H (全部列出) -->
+    <!-- 4. 15M + 1H -->
     <div class="bg-[#181c28] rounded-lg p-3 border border-emerald-500/30">
       <div class="flex items-center justify-between mb-2">
         <span class="text-emerald-400 font-bold text-xs flex items-center gap-1">📈 15M + 1H (當沖核心濾網)</span>
@@ -91,7 +91,7 @@
       </div>
     </div>
 
-    <!-- 5. 1H + 4H (全部列出) -->
+    <!-- 5. 1H + 4H -->
     <div class="bg-[#181c28] rounded-lg p-3 border border-gray-800/60">
       <div class="flex items-center justify-between mb-2">
         <span class="text-indigo-400 font-bold text-xs flex items-center gap-1">🌟 1H + 4H (中線波段)</span>
@@ -105,7 +105,7 @@
       </div>
     </div>
 
-    <!-- 6. 1H + 4H + 8H (全部列出) -->
+    <!-- 6. 1H + 4H + 8H -->
     <div class="bg-[#181c28] rounded-lg p-3 border border-purple-500/30">
       <div class="flex items-center justify-between mb-2">
         <span class="text-purple-400 font-bold text-xs flex items-center gap-1">👑 1H + 4H + 8H (長線大趨勢)</span>
@@ -122,16 +122,17 @@
     <!-- 底部說明 -->
     <div class="text-[10px] text-gray-500 space-y-1 bg-[#181c28]/50 p-2 rounded">
       <div>💡 <b>圖示說明：</b> <span class="text-amber-400">💥 爆量</span> (當前成交量 > MA20均量1.2倍) | <span class="text-rose-400">⚠️ 乖離大</span> (距離MA20 > 3% 謹防追高)</div>
-      <div>⚡ <b>階層過濾：</b>前三項極短線訊號自動過濾「15M + 1H 均站上 MA20」，減少 70% 無效 API 請求。</div>
+      <div>🎯 <b>資料來源：</b> 幣安 USDT 永續合約 (fapi.binance.com)</div>
     </div>
 
   </div>
 
   <script>
-    const BINANCE_TICKER_URL = 'https://fapi.binance.com/fapi/v1/ticker/24hr';
-    const BINANCE_KLINES_URL = 'https://fapi.binance.com/fapi/v1/klines';
+    // 幣安 USDT 永續合約專用 API 介面
+    const BINANCE_FUTURES_TICKER = 'https://fapi.binance.com/fapi/v1/ticker/24hr';
+    const BINANCE_FUTURES_KLINES = 'https://fapi.binance.com/fapi/v1/klines';
 
-    let isLongMode = true; // true: 多頭, false: 空頭
+    let isLongMode = true;
     let customWatchlist = [];
     let previousMatchedSymbols = new Set();
     let isFirstLoad = true;
@@ -181,7 +182,7 @@
       try {
         let candles = [];
         if (interval === '2m') {
-          const res = await fetch(`${BINANCE_KLINES_URL}?symbol=${symbol}&interval=1m&limit=40`);
+          const res = await fetch(`${BINANCE_FUTURES_KLINES}?symbol=${symbol}&interval=1m&limit=40`);
           const data = await res.json();
           const aggregated = [];
           for (let i = 0; i <= data.length - 2; i += 2) {
@@ -192,7 +193,7 @@
           }
           candles = aggregated;
         } else {
-          const res = await fetch(`${BINANCE_KLINES_URL}?symbol=${symbol}&interval=${interval}&limit=20`);
+          const res = await fetch(`${BINANCE_FUTURES_KLINES}?symbol=${symbol}&interval=${interval}&limit=20`);
           const data = await res.json();
           candles = data.map(d => ({ close: parseFloat(d[4]), volume: parseFloat(d[5]) }));
         }
@@ -221,13 +222,14 @@
 
     async function updateMarketScanner() {
       try {
-        const res = await fetch(BINANCE_TICKER_URL);
+        const res = await fetch(BINANCE_FUTURES_TICKER);
         const tickers = await res.json();
 
+        // 精準過濾：僅保留以 USDT 結算之永續合約 (排除 USDC、以太坊/比特幣結算及下架合約)
         let topPairs = tickers
-          .filter(t => t.symbol.endsWith('USDT') && !t.symbol.startsWith('USDC'))
+          .filter(t => t.symbol.endsWith('USDT') && !t.symbol.includes('_'))
           .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
-          .slice(0, 25);
+          .slice(0, 30);
 
         if (customWatchlist.length > 0) {
           const customTickers = tickers.filter(t => customWatchlist.includes(t.symbol));
@@ -278,7 +280,7 @@
           return { ...item, res1m, res2m, res3m, res5m, res30m, res4h, res8h };
         }));
 
-        // 所有區塊：只要篩選到就全部列出 (不限制筆數)
+        // 篩選符合條件標的（全部完整列出）
         const list1m2m15m = fullMarketData.filter(d => d.basePassed && d.res1m.valid && d.res2m.valid);
         const list3m5m15m = fullMarketData.filter(d => d.basePassed && d.res3m.valid && d.res5m.valid);
         const list5m15m30m = fullMarketData.filter(d => d.basePassed && d.res5m.valid && d.res30m.valid);
@@ -286,7 +288,7 @@
         const list1h4h = fullMarketData.filter(d => d.res1h.valid && d.res4h.valid);
         const list1h4h8h = fullMarketData.filter(d => d.res1h.valid && d.res4h.valid && d.res8h.valid);
 
-        // 新訊號發出音效
+        // 音效提醒
         const currentMatched = new Set([
           ...list1m2m15m.map(i => i.symbol),
           ...list3m5m15m.map(i => i.symbol),
@@ -329,6 +331,7 @@
       }
 
       tbody.innerHTML = dataList.map(item => {
+        // 直達幣安 USDT 永續合約交易頁面
         const binanceUrl = `https://www.binance.com/zh-TC/futures/${item.fullSymbol}`;
         const changeColor = item.priceChange >= 0 ? 'text-emerald-400' : 'text-rose-400';
         const changeSign = item.priceChange >= 0 ? '+' : '';
