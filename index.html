@@ -35,11 +35,11 @@
       </div>
     </div>
 
-    <!-- 1. 1M + 2M + 15M (基於 15M+1H) -->
+    <!-- 1. 1M + 2M + 15M -->
     <div class="bg-[#181c28] rounded-lg p-3 border border-gray-800/60">
       <div class="flex items-center justify-between mb-2">
         <span class="text-cyan-400 font-bold text-xs flex items-center gap-1">⚡ 1M + 2M + 15M 共振</span>
-        <span class="text-[10px] bg-cyan-500/10 text-cyan-400 px-1.5 py-0.5 rounded border border-cyan-500/20">須滿足 15M+1H</span>
+        <span class="text-[10px] bg-cyan-500/10 text-cyan-400 px-1.5 py-0.5 rounded border border-cyan-500/20">Top 5</span>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-xs text-left">
@@ -49,11 +49,11 @@
       </div>
     </div>
 
-    <!-- 2. 3M + 5M + 15M (基於 15M+1H) -->
+    <!-- 2. 3M + 5M + 15M -->
     <div class="bg-[#181c28] rounded-lg p-3 border border-gray-800/60">
       <div class="flex items-center justify-between mb-2">
         <span class="text-amber-400 font-bold text-xs flex items-center gap-1">🚀 3M + 5M + 15M 共振</span>
-        <span class="text-[10px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded border border-amber-500/20">須滿足 15M+1H</span>
+        <span class="text-[10px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded border border-amber-500/20">Top 5</span>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-xs text-left">
@@ -63,11 +63,11 @@
       </div>
     </div>
 
-    <!-- 3. 5M + 15M + 30M (基於 15M+1H) -->
+    <!-- 3. 5M + 15M + 30M -->
     <div class="bg-[#181c28] rounded-lg p-3 border border-gray-800/60">
       <div class="flex items-center justify-between mb-2">
         <span class="text-rose-400 font-bold text-xs flex items-center gap-1">🔥 5M + 15M + 30M 共振</span>
-        <span class="text-[10px] bg-rose-500/10 text-rose-400 px-1.5 py-0.5 rounded border border-rose-500/20">須滿足 15M+1H</span>
+        <span class="text-[10px] bg-rose-500/10 text-rose-400 px-1.5 py-0.5 rounded border border-rose-500/20">Top 5</span>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-xs text-left">
@@ -77,11 +77,11 @@
       </div>
     </div>
 
-    <!-- 4. 15M + 1H (當沖核心濾網) -->
+    <!-- 4. 15M + 1H (全部列出) -->
     <div class="bg-[#181c28] rounded-lg p-3 border border-emerald-500/30">
       <div class="flex items-center justify-between mb-2">
         <span class="text-emerald-400 font-bold text-xs flex items-center gap-1">📈 15M + 1H (當沖核心濾網)</span>
-        <span class="text-[10px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20">基礎濾網</span>
+        <span class="text-[10px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20">全部列出</span>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-xs text-left">
@@ -91,10 +91,11 @@
       </div>
     </div>
 
-    <!-- 5. 1H + 4H (中線波段) -->
+    <!-- 5. 1H + 4H (全部列出) -->
     <div class="bg-[#181c28] rounded-lg p-3 border border-gray-800/60">
       <div class="flex items-center justify-between mb-2">
         <span class="text-indigo-400 font-bold text-xs flex items-center gap-1">🌟 1H + 4H (中線波段)</span>
+        <span class="text-[10px] bg-indigo-500/10 text-indigo-400 px-1.5 py-0.5 rounded border border-indigo-500/20">全部列出</span>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-xs text-left">
@@ -104,10 +105,11 @@
       </div>
     </div>
 
-    <!-- 6. 1H + 4H + 8H (長線大趨勢) -->
+    <!-- 6. 1H + 4H + 8H (全部列出) -->
     <div class="bg-[#181c28] rounded-lg p-3 border border-purple-500/30">
       <div class="flex items-center justify-between mb-2">
         <span class="text-purple-400 font-bold text-xs flex items-center gap-1">👑 1H + 4H + 8H (長線大趨勢)</span>
+        <span class="text-[10px] bg-purple-500/10 text-purple-400 px-1.5 py-0.5 rounded border border-purple-500/20">全部列出</span>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-xs text-left">
@@ -232,7 +234,7 @@
           topPairs = [...customTickers, ...topPairs.filter(t => !customWatchlist.includes(t.symbol))];
         }
 
-        // 第一階段（階層式過濾）：先抓 15M 與 1H
+        // 第一階段：先抓 15M 與 1H
         const stage1Data = await Promise.all(topPairs.map(async (item) => {
           const symbol = item.symbol.replace('USDT', '');
           const price = parseFloat(item.lastPrice);
@@ -247,7 +249,7 @@
           return { symbol, fullSymbol: item.symbol, price, priceChange, res15m, res1h, basePassed };
         }));
 
-        // 第二階段：通過 15M+1H 的標的才請求短線 K 線
+        // 第二階段：抓取其他週期 K 線
         const fullMarketData = await Promise.all(stage1Data.map(async (item) => {
           const [res4h, res8h] = await Promise.all([
             fetchKlinesData(item.fullSymbol, item.price, '4h'),
@@ -276,12 +278,15 @@
           return { ...item, res1m, res2m, res3m, res5m, res30m, res4h, res8h };
         }));
 
+        // 前三個極短線訊號取前 5 筆
         const list1m2m15m = fullMarketData.filter(d => d.basePassed && d.res1m.valid && d.res2m.valid).slice(0, 5);
         const list3m5m15m = fullMarketData.filter(d => d.basePassed && d.res3m.valid && d.res5m.valid).slice(0, 5);
         const list5m15m30m = fullMarketData.filter(d => d.basePassed && d.res5m.valid && d.res30m.valid).slice(0, 5);
-        const list15m1h = fullMarketData.filter(d => d.basePassed).slice(0, 5);
-        const list1h4h = fullMarketData.filter(d => d.res1h.valid && d.res4h.valid).slice(0, 5);
-        const list1h4h8h = fullMarketData.filter(d => d.res1h.valid && d.res4h.valid && d.res8h.valid).slice(0, 5);
+
+        // 後三個訊號：只要篩選到就全部列出 (移除 slice 限制)
+        const list15m1h = fullMarketData.filter(d => d.basePassed);
+        const list1h4h = fullMarketData.filter(d => d.res1h.valid && d.res4h.valid);
+        const list1h4h8h = fullMarketData.filter(d => d.res1h.valid && d.res4h.valid && d.res8h.valid);
 
         // 新訊號發出音效
         const currentMatched = new Set([
