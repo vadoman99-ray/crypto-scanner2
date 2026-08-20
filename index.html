@@ -121,14 +121,13 @@
 
     <!-- 底部說明 -->
     <div class="text-[10px] text-gray-500 space-y-1 bg-[#181c28]/50 p-2 rounded">
-      <div>💡 <b>圖示說明：</b> <span class="text-amber-400">💥 爆量</span> (當前成交量 > MA20均量1.2倍) | <span class="text-rose-400">⚠️ 乖離大</span> (距離MA20 > 3% 謹防追高)</div>
+      <div>💡 <b>圖示說明：</b> <span class="text-amber-400">💥 爆量</span> (當前成交量 > 前一根 K 線成交量 1.5 倍) | <span class="text-rose-400">⚠️ 乖離大</span> (距離MA20 > 3% 謹防追高)</div>
       <div>🎯 <b>資料來源：</b> 幣安 USDT 永續合約 (fapi.binance.com)</div>
     </div>
 
   </div>
 
   <script>
-    // 幣安 USDT 永續合約專用 API 介面
     const BINANCE_FUTURES_TICKER = 'https://fapi.binance.com/fapi/v1/ticker/24hr';
     const BINANCE_FUTURES_KLINES = 'https://fapi.binance.com/fapi/v1/klines';
 
@@ -204,10 +203,12 @@
         const volumes = candles.map(c => c.volume);
 
         const ma20Curr = calculateSMA(closes.slice(-20));
+        
+        // 爆量判斷：當前 K 線量 > 前一根 K 線量的 1.5 倍
         const currVol = volumes[volumes.length - 1];
-        const volMA20 = calculateSMA(volumes.slice(-20));
+        const prevVol = volumes[volumes.length - 2];
+        const isHighVol = prevVol > 0 ? (currVol > prevVol * 1.5) : false;
 
-        const isHighVol = currVol > (volMA20 * 1.2);
         const ma20Diff = ((currentPrice - ma20Curr) / ma20Curr) * 100;
         const isOverbought = Math.abs(ma20Diff) > 3.0;
 
@@ -225,7 +226,6 @@
         const res = await fetch(BINANCE_FUTURES_TICKER);
         const tickers = await res.json();
 
-        // 精準過濾：僅保留以 USDT 結算之永續合約 (排除 USDC、以太坊/比特幣結算及下架合約)
         let topPairs = tickers
           .filter(t => t.symbol.endsWith('USDT') && !t.symbol.includes('_'))
           .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
@@ -236,7 +236,6 @@
           topPairs = [...customTickers, ...topPairs.filter(t => !customWatchlist.includes(t.symbol))];
         }
 
-        // 第一階段：先抓 15M 與 1H
         const stage1Data = await Promise.all(topPairs.map(async (item) => {
           const symbol = item.symbol.replace('USDT', '');
           const price = parseFloat(item.lastPrice);
@@ -251,7 +250,6 @@
           return { symbol, fullSymbol: item.symbol, price, priceChange, res15m, res1h, basePassed };
         }));
 
-        // 第二階段：抓取其他週期 K 線
         const fullMarketData = await Promise.all(stage1Data.map(async (item) => {
           const [res4h, res8h] = await Promise.all([
             fetchKlinesData(item.fullSymbol, item.price, '4h'),
@@ -280,7 +278,6 @@
           return { ...item, res1m, res2m, res3m, res5m, res30m, res4h, res8h };
         }));
 
-        // 篩選符合條件標的（全部完整列出）
         const list1m2m15m = fullMarketData.filter(d => d.basePassed && d.res1m.valid && d.res2m.valid);
         const list3m5m15m = fullMarketData.filter(d => d.basePassed && d.res3m.valid && d.res5m.valid);
         const list5m15m30m = fullMarketData.filter(d => d.basePassed && d.res5m.valid && d.res30m.valid);
@@ -288,7 +285,6 @@
         const list1h4h = fullMarketData.filter(d => d.res1h.valid && d.res4h.valid);
         const list1h4h8h = fullMarketData.filter(d => d.res1h.valid && d.res4h.valid && d.res8h.valid);
 
-        // 音效提醒
         const currentMatched = new Set([
           ...list1m2m15m.map(i => i.symbol),
           ...list3m5m15m.map(i => i.symbol),
@@ -306,7 +302,6 @@
         previousMatchedSymbols = currentMatched;
         isFirstLoad = false;
 
-        // 渲染表格
         renderTable('tb-1m2m15m', list1m2m15m, ['res1m', 'res2m', 'res15m']);
         renderTable('tb-3m5m15m', list3m5m15m, ['res3m', 'res5m', 'res15m']);
         renderTable('tb-5m15m30m', list5m15m30m, ['res5m', 'res15m', 'res30m']);
@@ -331,7 +326,6 @@
       }
 
       tbody.innerHTML = dataList.map(item => {
-        // 直達幣安 USDT 永續合約交易頁面
         const binanceUrl = `https://www.binance.com/zh-TC/futures/${item.fullSymbol}`;
         const changeColor = item.priceChange >= 0 ? 'text-emerald-400' : 'text-rose-400';
         const changeSign = item.priceChange >= 0 ? '+' : '';
@@ -340,8 +334,8 @@
         const hasOverbought = keys.some(k => item[k].overbought);
 
         let statusBadges = '';
-        if (hasHighVol) statusBadges += '<span title="當前週期爆量突破">💥</span>';
-        if (hasOverbought) statusBadges += '<span title="價格距離MA20過遠，謹防追高">⚠️</span>';
+        if (hasHighVol) statusBadges += '<span title="成交量 > 前一根 1.5 倍">💥</span>';
+        if (hasOverbought) statusBadges += '<span title="距離 MA20 過遠，謹防追高">⚠️</span>';
 
         const diffTds = keys.map(k => {
           const val = item[k].diff;
