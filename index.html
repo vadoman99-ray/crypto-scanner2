@@ -26,7 +26,7 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding-bottom: 75px; }
         
-        /* 頂部標頭 */
+        /* 頂部標頭 - 毛玻璃質感 */
         .app-header { 
             position: sticky; top: 0; z-index: 100; 
             background-color: rgba(30, 35, 41, 0.95); 
@@ -68,7 +68,7 @@
         .symbol-metrics { text-align: right; }
         .symbol-metrics .price { font-size: 1rem; font-weight: 700; margin-bottom: 4px; font-family: "SF Mono", Roboto, monospace; }
         
-        /* 標籤基礎樣式 */
+        /* 標籤 */
         .badge { font-size: 0.68rem; padding: 3px 7px; border-radius: 5px; font-weight: 600; display: inline-block; margin-right: 4px; margin-top: 4px; }
         .badge-above { background-color: var(--green-bg); color: var(--green); border: 1px solid var(--green); }
         .badge-below { background-color: rgba(240, 185, 11, 0.15); color: var(--yellow); border: 1px solid var(--yellow); }
@@ -88,7 +88,7 @@
         .nav-item.active { color: var(--yellow); font-weight: bold; }
         .nav-icon { font-size: 1.1rem; margin-bottom: 2px; }
 
-        /* 說明頁卡片 */
+        /* 說明頁卡片優化 */
         .about-card { 
             background-color: var(--card-bg); 
             border: 1px solid var(--card-border); 
@@ -102,21 +102,6 @@
         .about-content { font-size: 0.88rem; color: var(--text-main); line-height: 1.65; }
         .about-content ul { padding-left: 18px; margin: 6px 0; }
         .about-content li { margin-bottom: 10px; color: #d1d5db; }
-        .about-content li:last-child { margin-bottom: 0; }
-        
-        /* 說明內頁標籤 */
-        .doc-badge {
-            font-size: 0.75rem;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: 700;
-            display: inline-block;
-            margin-right: 2px;
-        }
-        .doc-badge-green { background-color: var(--green-bg); color: var(--green); border: 1px solid var(--green); }
-        .doc-badge-yellow { background-color: rgba(240, 185, 11, 0.15); color: var(--yellow); border: 1px solid var(--yellow); }
-        .doc-badge-purple { background-color: var(--breakout-bg); color: var(--breakout); border: 1px solid var(--breakout); }
-        .doc-badge-fire { background-color: var(--fire-bg); color: var(--fire); border: 1px solid var(--fire); }
     </style>
 </head>
 <body>
@@ -213,47 +198,27 @@
     function setFilter(filter, el) { currentFilter = filter; document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active')); el.classList.add('active'); if (filter === 'INFO') { document.getElementById('statusBar').style.display = 'none'; document.getElementById('toolbar').style.display = 'none'; renderInfoPage(); } else { document.getElementById('statusBar').style.display = 'flex'; document.getElementById('toolbar').style.display = 'flex'; renderList(); } }
     function getFilteredData() { const query = document.getElementById('searchInput').value.toUpperCase(); return rawResults.filter(item => item.symbol.includes(query)).filter(item => { if (currentFilter === 'ABOVE_5MA') return item.isAboveMa5; if (currentFilter === 'BELOW_5MA') return !item.isAboveMa5; if (currentFilter === 'BREAKOUT') return item.isJustBreakout15mBB; if (currentFilter === 'ABOVE_BB') return item.isAbove15mBB; return true; }); }
     
+    // 更新說明頁為圖片內容
     function renderInfoPage() {
         const container = document.getElementById('symbolList');
         container.innerHTML = `
             <div class="about-card">
+                <div class="about-title">📈 VCP 形態實戰教學 (Mark Minervini)</div>
+                <div class="about-content">
+                    VCP (Volatility Contraction Pattern) 是尋找「低風險、高回報」爆發點的心法：
+                    <ul>
+                        <li><b>1. 確認趨勢：</b>利用掃描器篩選出 1H 位於 20MA 之上的多頭幣種。</li>
+                        <li><b>2. 波動收縮：</b>觀察 K 線，波幅是否由「寬」轉「窄」。多次回調幅度若一次比一次小，代表賣壓竭盡。</li>
+                        <li><b>3. 成交量乾涸 (Dry Up)：</b>觀察在收縮區間內，成交量是否顯著萎縮。這是主力洗盤、散戶離場的訊號。</li>
+                        <li><b>4. 關鍵 Pivot：</b>價格在縮量後，帶量突破收縮區間的高點，即為最佳進場 Pivot 點。</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="about-card">
                 <div class="about-title">🎯 工具核心設計理念</div>
                 <div class="about-content">
-                    本工具專為<b>幣安 USDT 永續合約</b>打造，旨在協助交易者迅速篩選出具備<b>多頭趨勢慣性</b>與<b>短期爆發潛力</b>的標的，省去逐一翻圖的時間。
-                </div>
-            </div>
-
-            <div class="about-card">
-                <div class="about-title">📊 基礎篩選條件 (主濾網)</div>
-                <div class="about-content">
-                    <ul>
-                        <li><b>1H 20MA 多頭站上：</b>當前 1 小時 K 線收盤價高於 20MA，確保標的處於中短期多頭格局，不作逆勢空頭標的。</li>
-                        <li><b>24H 漲幅排序：</b>自動由高至低排列，優先聚焦於全市場資金最關注的熱門動能幣種。</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="about-card">
-                <div class="about-title">🏷️ 分頁標籤與策略說明</div>
-                <div class="about-content">
-                    <ul>
-                        <li><span class="doc-badge">🌐 全部</span>：列出所有符合 1H 20MA 上方的合約標的。</li>
-                        <li><span class="doc-badge doc-badge-green">🟢 5MA 上</span>：1H 價格站上 5MA，代表極短期多頭強勢推升中。</li>
-                        <li><span class="doc-badge doc-badge-yellow">🟡 5MA 下</span>：1H 價格位於 5MA 下方但仍在 20MA 之上，代表<b>多頭回踩修正</b>，為潛在的逢低布局觀察點。</li>
-                        <li><span class="doc-badge doc-badge-purple">⚡ 剛突破</span>：前一根 15m K 線收盤於布林上軌下，當前 15m 剛好<b>突破並站上布林上軌</b>。代表波動度展開、發動攻擊的瞬間。</li>
-                        <li><span class="doc-badge doc-badge-fire">🔥 上軌之上</span>：15m 收盤價持續穩在布林上軌上方，屬於強烈單邊擠壓行情。</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="about-card">
-                <div class="about-title">💡 實戰交易操作建議</div>
-                <div class="about-content">
-                    <ul>
-                        <li><b>動能突破流：</b>優先切換至 <span class="doc-badge doc-badge-purple">⚡ 剛突破</span> 分頁，尋找成交量放大的標的順勢跟進。</li>
-                        <li><b>回踩拉回流：</b>切換至 <span class="doc-badge doc-badge-yellow">🟡 5MA 下</span> 分頁，尋找大趨勢向上但短線拉回至 20MA 附近的支撐買點。</li>
-                        <li>點擊任意幣種卡片可直接跳轉至幣安 App / 網頁進行即時下單與深度圖表確認。</li>
-                    </ul>
+                    本工具專為<b>幣安 USDT 永續合約</b>打造，協助篩選出具備<b>多頭趨勢慣性</b>的標的。
                 </div>
             </div>
         `;
