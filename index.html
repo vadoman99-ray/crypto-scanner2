@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>幣安 1H 20MA 合約掃描器</title>
+    <title>幣安 1H 20MA 合約掃描器 (按漲幅排序)</title>
     <style>
         :root {
             --bg-color: #12161c;
@@ -14,8 +14,8 @@
             --yellow: #f0b90b;
             --green: #0ecb81;
             --green-bg: rgba(14, 203, 129, 0.12);
-            --orange: #f6465d;
-            --orange-bg: rgba(246, 70, 93, 0.12);
+            --red: #f6465d;
+            --red-bg: rgba(246, 70, 93, 0.12);
         }
 
         * {
@@ -29,10 +29,10 @@
             color: var(--text-main);
             margin: 0;
             padding: 0;
-            padding-bottom: 70px; /* 預留底部導覽列空間 */
+            padding-bottom: 70px;
         }
 
-        /* 頂部固定標題列 */
+        /* 頂部列 */
         .app-header {
             position: sticky;
             top: 0;
@@ -48,9 +48,6 @@
         .app-title {
             font-size: 1.05rem;
             font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
 
         .scan-btn {
@@ -82,7 +79,7 @@
             transition: width 0.2s;
         }
 
-        /* 狀態與統計資訊 */
+        /* 狀態與排序說明列 */
         .status-bar {
             padding: 10px 16px;
             font-size: 0.8rem;
@@ -93,12 +90,11 @@
             background: rgba(30, 35, 41, 0.5);
         }
 
-        /* 內容容器 */
         .container {
             padding: 12px 16px;
         }
 
-        /* 列表卡片樣式 (手機最佳化) */
+        /* 卡片佈局 */
         .symbol-card {
             background-color: var(--card-bg);
             border: 1px solid var(--card-border);
@@ -128,6 +124,7 @@
         .symbol-info .price-sub {
             font-size: 0.75rem;
             color: var(--text-sub);
+            margin-top: 4px;
         }
 
         .symbol-metrics {
@@ -135,17 +132,37 @@
         }
 
         .symbol-metrics .price {
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             font-weight: bold;
             margin-bottom: 4px;
             font-family: monospace;
         }
 
-        /* 標籤元件 */
+        /* 漲跌幅標籤 */
+        .change-badge {
+            font-size: 0.85rem;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            font-family: monospace;
+        }
+
+        .change-up {
+            color: var(--green);
+            background-color: var(--green-bg);
+        }
+
+        .change-down {
+            color: var(--red);
+            background-color: var(--red-bg);
+        }
+
+        /* 5MA 濾網標籤 */
         .badge {
             font-size: 0.7rem;
-            padding: 3px 8px;
-            border-radius: 6px;
+            padding: 2px 6px;
+            border-radius: 4px;
             font-weight: 600;
             display: inline-block;
         }
@@ -156,11 +173,10 @@
         }
 
         .badge-below {
-            background-color: var(--yellow);
-            color: #000;
+            background-color: rgba(240, 185, 11, 0.15);
+            color: var(--yellow);
         }
 
-        /* 空狀態 */
         .empty-state {
             text-align: center;
             padding: 50px 20px;
@@ -168,7 +184,7 @@
             font-size: 0.9rem;
         }
 
-        /* 底部分頁導覽列 (Mobile Bottom Nav) */
+        /* 底部導覽列 */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -210,27 +226,22 @@
 </head>
 <body>
 
-    <!-- 頂部列 -->
     <div class="app-header">
         <div class="app-title">⚡ 1H 20MA 掃描器</div>
         <button id="scanBtn" class="scan-btn" onclick="startScan()">開始掃描</button>
     </div>
 
-    <!-- 進度條 -->
     <div class="progress-bar"><div id="progress" class="progress-fill"></div></div>
 
-    <!-- 狀態列 -->
     <div class="status-bar">
-        <span id="statusText">請點擊右上方「開始掃描」</span>
-        <span id="countText">共 0 筆標的</span>
+        <span id="statusText">請點擊「開始掃描」</span>
+        <span id="countText">排序：24H 漲幅 ⬇</span>
     </div>
 
-    <!-- 幣種卡片列表區塊 -->
     <div class="container" id="symbolList">
-        <div class="empty-state">點擊開始掃描，自動過濾幣安 USDT 永續合約</div>
+        <div class="empty-state">點擊開始掃描，自動掃描並依 24H 漲幅排序標的</div>
     </div>
 
-    <!-- 底部導覽選單 -->
     <div class="bottom-nav">
         <button class="nav-item active" onclick="setFilter('ALL', this)">
             <div class="nav-icon">🌐</div>
@@ -249,9 +260,25 @@
 <script>
     let rawResults = [];
     let currentFilter = 'ALL';
+    let ticker24hMap = {};
 
     function calculateSMA(data, count) {
         return data.slice(-count).reduce((sum, val) => sum + val, 0) / count;
+    }
+
+    // 先獲取所有 24小時 漲跌幅數據
+    async function fetch24hTickers() {
+        try {
+            const res = await fetch('https://fapi.binance.com/fapi/v1/ticker/24hr');
+            const data = await res.json();
+            const map = {};
+            data.forEach(item => {
+                map[item.symbol] = parseFloat(item.priceChangePercent);
+            });
+            return map;
+        } catch(e) {
+            return {};
+        }
     }
 
     async function getUSDTFuturesSymbols() {
@@ -280,7 +307,8 @@
                     price: currentClose,
                     ma20: ma20,
                     ma5: ma5,
-                    isAboveMa5: currentClose >= ma5
+                    isAboveMa5: currentClose >= ma5,
+                    priceChange24h: ticker24hMap[symbol] || 0
                 };
             }
             return null;
@@ -299,10 +327,13 @@
         rawResults = [];
         renderList();
 
-        statusText.innerText = "正在取得標的清單...";
+        statusText.innerText = "載入 24H 漲跌數據...";
+        ticker24hMap = await fetch24hTickers();
+
+        statusText.innerText = "取得合約清單...";
         const symbols = await getUSDTFuturesSymbols();
         
-        const batchSize = 12; // 併發控制
+        const batchSize = 12;
         let processed = 0;
 
         for (let i = 0; i < symbols.length; i += batchSize) {
@@ -317,8 +348,8 @@
             processed += batch.length;
             const pct = Math.floor((processed / symbols.length) * 100);
             progressEl.style.width = `${pct}%`;
-            statusText.innerText = `掃描進度: ${processed}/${symbols.length}`;
-            renderList(); // 即時渲染
+            statusText.innerText = `進度: ${processed}/${symbols.length}`;
+            renderList();
         }
 
         statusText.innerText = `掃描完成！`;
@@ -343,17 +374,21 @@
             return true;
         });
 
-        // 排序：以溢價率或狀態排序
-        filtered.sort((a, b) => (b.price / b.ma20) - (a.price / a.ma20));
+        // ⭐ 核心改動：依照 24 小時漲幅由高到低（降序）進行排序
+        filtered.sort((a, b) => b.priceChange24h - a.priceChange24h);
 
-        countText.innerText = `符合: ${filtered.length} 筆`;
+        countText.innerText = `符合: ${filtered.length} 筆 (依24H漲幅排序)`;
 
         if (filtered.length === 0) {
             container.innerHTML = `<div class="empty-state">尚無符合條件的標的</div>`;
             return;
         }
 
-        container.innerHTML = filtered.map(item => `
+        container.innerHTML = filtered.map(item => {
+            const isPositive = item.priceChange24h >= 0;
+            const changeFormatted = (isPositive ? '+' : '') + item.priceChange24h.toFixed(2) + '%';
+            
+            return `
             <a class="symbol-card" href="https://www.binance.com/zh-TC/futures/${item.symbol}" target="_blank">
                 <div class="symbol-info">
                     <div class="name">
@@ -362,16 +397,20 @@
                     </div>
                     <div>
                         ${item.isAboveMa5 
-                            ? `<span class="badge badge-above">5MA 上方 (強勢)</span>` 
+                            ? `<span class="badge badge-above">5MA 上方</span>` 
                             : `<span class="badge badge-below">5MA 下方 (回踩)</span>`}
                     </div>
                 </div>
                 <div class="symbol-metrics">
                     <div class="price">${item.price}</div>
-                    <div class="price-sub">20MA: ${item.ma20.toFixed(4)}</div>
+                    <span class="change-badge ${isPositive ? 'change-up' : 'change-down'}">
+                        ${changeFormatted}
+                    </span>
+                    <div class="symbol-info"><div class="price-sub">20MA: ${item.ma20.toFixed(4)}</div></div>
                 </div>
             </a>
-        `).join('');
+            `;
+        }).join('');
     }
 </script>
 
