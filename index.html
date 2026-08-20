@@ -3,247 +3,257 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>加密貨幣全週期 MA20 多頭共振掃描器</title>
+  <title>加密貨幣全週期共振實戰掃描器 Pro</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-[#0f121d] text-gray-200 min-h-screen p-4 flex justify-center items-center font-sans">
+<body class="bg-[#0f121d] text-gray-200 min-h-screen p-2 sm:p-4 font-sans">
 
-  <!-- 主容器 -->
-  <div class="w-full max-w-md bg-[#131722] rounded-xl p-4 shadow-2xl border border-gray-800 space-y-4">
+  <div class="max-w-xl mx-auto bg-[#131722] rounded-xl p-4 shadow-2xl border border-gray-800 space-y-4">
     
-    <!-- 頂部標題區 -->
-    <div class="border-b border-gray-800 pb-3">
-      <div class="flex items-center gap-2 text-xl font-bold text-white">
-        <span class="text-amber-400">⚡</span>
-        <span>加密貨幣 6 週期 MA20 共振掃描</span>
-      </div>
-      <div class="flex justify-between items-center text-xs text-gray-400 mt-1">
-        <span>掃描更新：<span id="update-time">載入中...</span></span>
-        <span>自動更新：每 60 秒</span>
-      </div>
-    </div>
-
-    <!-- 1. 1M + 2M + 15M (基於 15M+1H) -->
-    <div class="bg-[#181c28] rounded-lg p-3 border border-gray-800/60">
-      <div class="flex items-center justify-between mb-2">
-        <div class="flex items-center gap-2 text-cyan-400 font-bold text-xs">
-          <span>⚡</span>
-          <span>1M + 2M + 15M 站上 MA20</span>
+    <!-- 頂部控制列 -->
+    <div class="border-b border-gray-800 pb-3 space-y-3">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center gap-2">
+          <span class="text-amber-400 text-xl">⚡</span>
+          <h1 class="text-lg font-bold text-white">MA20 共振掃描器 Pro</h1>
         </div>
-        <span class="text-[10px] bg-cyan-500/10 text-cyan-400 px-1.5 py-0.5 rounded border border-cyan-500/20">須滿足 15M+1H</span>
+        <!-- 多空切換按鈕 -->
+        <button id="mode-toggle-btn" onclick="toggleMode()" class="px-3 py-1 rounded-lg text-xs font-bold transition-all bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/30">
+          📈 多頭模式 (Long)
+        </button>
       </div>
-      <table class="w-full text-xs text-left border-collapse">
-        <thead>
-          <tr class="text-gray-400 border-b border-gray-800 pb-1">
-            <th class="py-1">標的</th>
-            <th class="text-right">價格</th>
-            <th class="text-right">1M</th>
-            <th class="text-right">2M</th>
-            <th class="text-right">15M</th>
-            <th class="text-right pr-1">強度</th>
-          </tr>
-        </thead>
-        <tbody id="bull-1m2m15m-tbody" class="divide-y divide-gray-800/40">
-          <tr><td colspan="6" class="text-center py-3 text-gray-500">載入中...</td></tr>
-        </tbody>
-      </table>
-    </div>
 
-    <!-- 2. 3M + 5M + 15M (基於 15M+1H) -->
-    <div class="bg-[#181c28] rounded-lg p-3 border border-gray-800/60">
-      <div class="flex items-center justify-between mb-2">
-        <div class="flex items-center gap-2 text-amber-400 font-bold text-xs">
-          <span>🚀</span>
-          <span>3M + 5M + 15M 站上 MA20</span>
+      <!-- 自訂觀察清單 & 更新時間 -->
+      <div class="flex flex-col sm:flex-row justify-between items-center gap-2 text-xs">
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <input type="text" id="watchlist-input" placeholder="新增自訂幣種 (例: BTC,ETH,SOL)" class="bg-[#181c28] border border-gray-700 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-amber-400 w-full sm:w-64" />
+          <button onclick="updateWatchlist()" class="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2 py-1 rounded hover:bg-amber-500/30 whitespace-nowrap">套用</button>
         </div>
-        <span class="text-[10px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded border border-amber-500/20">須滿足 15M+1H</span>
-      </div>
-      <table class="w-full text-xs text-left border-collapse">
-        <thead>
-          <tr class="text-gray-400 border-b border-gray-800 pb-1">
-            <th class="py-1">標的</th>
-            <th class="text-right">價格</th>
-            <th class="text-right">3M</th>
-            <th class="text-right">5M</th>
-            <th class="text-right">15M</th>
-            <th class="text-right pr-1">強度</th>
-          </tr>
-        </thead>
-        <tbody id="bull-3m5m15m-tbody" class="divide-y divide-gray-800/40">
-          <tr><td colspan="6" class="text-center py-3 text-gray-500">載入中...</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- 3. 5M + 15M + 30M (基於 15M+1H) -->
-    <div class="bg-[#181c28] rounded-lg p-3 border border-gray-800/60">
-      <div class="flex items-center justify-between mb-2">
-        <div class="flex items-center gap-2 text-rose-400 font-bold text-xs">
-          <span>🔥</span>
-          <span>5M + 15M + 30M 站上 MA20</span>
+        <div class="text-gray-400 text-[11px] self-end sm:self-auto whitespace-nowrap">
+          更新：<span id="update-time">載入中...</span>
         </div>
-        <span class="text-[10px] bg-rose-500/10 text-rose-400 px-1.5 py-0.5 rounded border border-rose-500/20">須滿足 15M+1H</span>
       </div>
-      <table class="w-full text-xs text-left border-collapse">
-        <thead>
-          <tr class="text-gray-400 border-b border-gray-800 pb-1">
-            <th class="py-1">標的</th>
-            <th class="text-right">價格</th>
-            <th class="text-right">5M</th>
-            <th class="text-right">15M</th>
-            <th class="text-right">30M</th>
-            <th class="text-right pr-1">強度</th>
-          </tr>
-        </thead>
-        <tbody id="bull-5m15m30m-tbody" class="divide-y divide-gray-800/40">
-          <tr><td colspan="6" class="text-center py-3 text-gray-500">載入中...</td></tr>
-        </tbody>
-      </table>
     </div>
 
-    <!-- 4. 15M + 1H (基礎趨勢) -->
-    <div class="bg-[#181c28] rounded-lg p-3 border border-emerald-500/30">
-      <div class="flex items-center justify-between mb-2">
-        <div class="flex items-center gap-2 text-emerald-400 font-bold text-xs">
-          <span>📈</span>
-          <span>15M + 1H 站上 MA20 (短線核心)</span>
+    <!-- Tab 頁籤切換 -->
+    <div class="flex border-b border-gray-800 text-xs font-semibold">
+      <button id="tab-btn-1" onclick="switchTab(1)" class="flex-1 py-2 text-center text-amber-400 border-b-2 border-amber-400 transition-colors">⚡ 極短線共振</button>
+      <button id="tab-btn-2" onclick="switchTab(2)" class="flex-1 py-2 text-center text-gray-400 border-b-2 border-transparent hover:text-gray-200 transition-colors">🎯 當沖與短線</button>
+      <button id="tab-btn-3" onclick="switchTab(3)" class="flex-1 py-2 text-center text-gray-400 border-b-2 border-transparent hover:text-gray-200 transition-colors">👑 中長線趨勢</button>
+    </div>
+
+    <!-- Tab 內容 1：極短線 -->
+    <div id="tab-content-1" class="space-y-4">
+      <!-- 1M + 2M + 15M -->
+      <div class="bg-[#181c28] rounded-lg p-3 border border-gray-800/60">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-cyan-400 font-bold text-xs flex items-center gap-1">⚡ 1M + 2M + 15M 共振</span>
+          <span class="text-[10px] bg-cyan-500/10 text-cyan-400 px-1.5 py-0.5 rounded border border-cyan-500/20">須滿足 15M+1H</span>
         </div>
-        <span class="text-[10px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20">基礎濾網</span>
-      </div>
-      <table class="w-full text-xs text-left border-collapse">
-        <thead>
-          <tr class="text-gray-400 border-b border-gray-800 pb-1">
-            <th class="py-1">標的</th>
-            <th class="text-right">價格</th>
-            <th class="text-right">15M</th>
-            <th class="text-right">1H</th>
-            <th class="text-right pr-1">強度</th>
-          </tr>
-        </thead>
-        <tbody id="bull-15m1h-tbody" class="divide-y divide-gray-800/40">
-          <tr><td colspan="5" class="text-center py-3 text-gray-500">載入中...</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- 5. 1H + 4H -->
-    <div class="bg-[#181c28] rounded-lg p-3 border border-gray-800/60">
-      <div class="flex items-center justify-between mb-2">
-        <div class="flex items-center gap-2 text-indigo-400 font-bold text-xs">
-          <span>🌟</span>
-          <span>1H + 4H 站上 MA20</span>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left">
+            <thead><tr class="text-gray-400 border-b border-gray-800 pb-1"><th class="py-1">標的/24H</th><th class="text-right">價格</th><th class="text-right">1M</th><th class="text-right">2M</th><th class="text-right">15M</th><th class="text-center">狀態</th></tr></thead>
+            <tbody id="tb-1m2m15m" class="divide-y divide-gray-800/40"><tr><td colspan="6" class="text-center py-3 text-gray-500">載入中...</td></tr></tbody>
+          </table>
         </div>
-        <span class="text-[10px] bg-indigo-500/10 text-indigo-400 px-1.5 py-0.5 rounded border border-indigo-500/20">中線波段</span>
       </div>
-      <table class="w-full text-xs text-left border-collapse">
-        <thead>
-          <tr class="text-gray-400 border-b border-gray-800 pb-1">
-            <th class="py-1">標的</th>
-            <th class="text-right">價格</th>
-            <th class="text-right">1H</th>
-            <th class="text-right">4H</th>
-            <th class="text-right pr-1">強度</th>
-          </tr>
-        </thead>
-        <tbody id="bull-1h4h-tbody" class="divide-y divide-gray-800/40">
-          <tr><td colspan="5" class="text-center py-3 text-gray-500">載入中...</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- 6. 1H + 4H + 8H -->
-    <div class="bg-[#181c28] rounded-lg p-3 border border-amber-500/30">
-      <div class="flex items-center justify-between mb-2">
-        <div class="flex items-center gap-2 text-purple-400 font-bold text-xs">
-          <span>👑</span>
-          <span>1H + 4H + 8H 站上 MA20</span>
+      <!-- 3M + 5M + 15M -->
+      <div class="bg-[#181c28] rounded-lg p-3 border border-gray-800/60">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-amber-400 font-bold text-xs flex items-center gap-1">🚀 3M + 5M + 15M 共振</span>
+          <span class="text-[10px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded border border-amber-500/20">須滿足 15M+1H</span>
         </div>
-        <span class="text-[10px] bg-purple-500/10 text-purple-400 px-1.5 py-0.5 rounded border border-purple-500/20">長線大趨勢</span>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left">
+            <thead><tr class="text-gray-400 border-b border-gray-800 pb-1"><th class="py-1">標的/24H</th><th class="text-right">價格</th><th class="text-right">3M</th><th class="text-right">5M</th><th class="text-right">15M</th><th class="text-center">狀態</th></tr></thead>
+            <tbody id="tb-3m5m15m" class="divide-y divide-gray-800/40"><tr><td colspan="6" class="text-center py-3 text-gray-500">載入中...</td></tr></tbody>
+          </table>
+        </div>
       </div>
-      <table class="w-full text-xs text-left border-collapse">
-        <thead>
-          <tr class="text-gray-400 border-b border-gray-800 pb-1">
-            <th class="py-1">標的</th>
-            <th class="text-right">價格</th>
-            <th class="text-right">1H</th>
-            <th class="text-right">4H</th>
-            <th class="text-right">8H</th>
-            <th class="text-right pr-1">強度</th>
-          </tr>
-        </thead>
-        <tbody id="bull-1h4h8h-tbody" class="divide-y divide-gray-800/40">
-          <tr><td colspan="6" class="text-center py-3 text-gray-500">載入中...</td></tr>
-        </tbody>
-      </table>
     </div>
 
-    <!-- 頁尾免責聲明 -->
-    <div class="text-center text-[10px] text-gray-500 pt-2">
-      資料來源：幣安公開 API。前三項極短線訊號皆已過濾「15M + 1H 站上 MA20」條件。
+    <!-- Tab 內容 2：當沖短線 -->
+    <div id="tab-content-2" class="space-y-4 hidden">
+      <!-- 5M + 15M + 30M -->
+      <div class="bg-[#181c28] rounded-lg p-3 border border-gray-800/60">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-rose-400 font-bold text-xs flex items-center gap-1">🔥 5M + 15M + 30M 共振</span>
+          <span class="text-[10px] bg-rose-500/10 text-rose-400 px-1.5 py-0.5 rounded border border-rose-500/20">須滿足 15M+1H</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left">
+            <thead><tr class="text-gray-400 border-b border-gray-800 pb-1"><th class="py-1">標的/24H</th><th class="text-right">價格</th><th class="text-right">5M</th><th class="text-right">15M</th><th class="text-right">30M</th><th class="text-center">狀態</th></tr></thead>
+            <tbody id="tb-5m15m30m" class="divide-y divide-gray-800/40"><tr><td colspan="6" class="text-center py-3 text-gray-500">載入中...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- 15M + 1H -->
+      <div class="bg-[#181c28] rounded-lg p-3 border border-emerald-500/30">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-emerald-400 font-bold text-xs flex items-center gap-1">📈 15M + 1H (當沖核心濾網)</span>
+          <span class="text-[10px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20">大趨勢保護</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left">
+            <thead><tr class="text-gray-400 border-b border-gray-800 pb-1"><th class="py-1">標的/24H</th><th class="text-right">價格</th><th class="text-right">15M</th><th class="text-right">1H</th><th class="text-center">狀態</th></tr></thead>
+            <tbody id="tb-15m1h" class="divide-y divide-gray-800/40"><tr><td colspan="5" class="text-center py-3 text-gray-500">載入中...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 內容 3：中長線趨勢 -->
+    <div id="tab-content-3" class="space-y-4 hidden">
+      <!-- 1H + 4H -->
+      <div class="bg-[#181c28] rounded-lg p-3 border border-gray-800/60">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-indigo-400 font-bold text-xs flex items-center gap-1">🌟 1H + 4H (中線波段)</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left">
+            <thead><tr class="text-gray-400 border-b border-gray-800 pb-1"><th class="py-1">標的/24H</th><th class="text-right">價格</th><th class="text-right">1H</th><th class="text-right">4H</th><th class="text-center">狀態</th></tr></thead>
+            <tbody id="tb-1h4h" class="divide-y divide-gray-800/40"><tr><td colspan="5" class="text-center py-3 text-gray-500">載入中...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- 1H + 4H + 8H -->
+      <div class="bg-[#181c28] rounded-lg p-3 border border-purple-500/30">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-purple-400 font-bold text-xs flex items-center gap-1">👑 1H + 4H + 8H (長線大趨勢)</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left">
+            <thead><tr class="text-gray-400 border-b border-gray-800 pb-1"><th class="py-1">標的/24H</th><th class="text-right">價格</th><th class="text-right">1H</th><th class="text-right">4H</th><th class="text-right">8H</th><th class="text-center">狀態</th></tr></thead>
+            <tbody id="tb-1h4h8h" class="divide-y divide-gray-800/40"><tr><td colspan="6" class="text-center py-3 text-gray-500">載入中...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部說明 -->
+    <div class="text-[10px] text-gray-500 space-y-1 bg-[#181c28]/50 p-2 rounded">
+      <div>💡 <b>圖示說明：</b> <span class="text-amber-400">💥 爆量</span> (當前成交量 > MA20均量1.2倍) | <span class="text-rose-400">⚠️ 乖離大</span> (距離MA20 > 3% 謹防追高)</div>
+      <div>⚡ <b>階層過濾：</b>前三項極短線訊號自動過濾「15M + 1H 均站上 MA20 且斜率符合」，減少 70% 無效 API 請求。</div>
     </div>
 
   </div>
 
-  <!-- 幣安 API 腳本 -->
   <script>
     const BINANCE_TICKER_URL = 'https://fapi.binance.com/fapi/v1/ticker/24hr';
     const BINANCE_KLINES_URL = 'https://fapi.binance.com/fapi/v1/klines';
 
-    function calculateSMA(data, period) {
-      if (data.length < period) return null;
-      const slice = data.slice(-period);
-      const sum = slice.reduce((acc, val) => acc + val, 0);
-      return sum / period;
+    let isLongMode = true; // true: 多頭, false: 空頭
+    let customWatchlist = [];
+    let previousMatchedSymbols = new Set();
+    let isFirstLoad = true;
+
+    function toggleMode() {
+      isLongMode = !isLongMode;
+      const btn = document.getElementById('mode-toggle-btn');
+      if (isLongMode) {
+        btn.className = "px-3 py-1 rounded-lg text-xs font-bold transition-all bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/30";
+        btn.innerText = "📈 多頭模式 (Long)";
+      } else {
+        btn.className = "px-3 py-1 rounded-lg text-xs font-bold transition-all bg-rose-500/20 text-rose-400 border border-rose-500/40 hover:bg-rose-500/30";
+        btn.innerText = "📉 空頭模式 (Short)";
+      }
+      updateMarketScanner();
     }
 
-    async function fetchCustomIntervalData(symbol, currentPrice, targetMinutes, period = 20) {
-      try {
-        const limit = period * targetMinutes + 5;
-        const res = await fetch(`${BINANCE_KLINES_URL}?symbol=${symbol}&interval=1m&limit=${limit}`);
-        const data = await res.json();
-        
-        const candles = data.map(item => ({ close: parseFloat(item[4]) }));
-        const aggregatedCloses = [];
-        for (let i = 0; i <= candles.length - targetMinutes; i += targetMinutes) {
-          const chunk = candles.slice(i, i + targetMinutes);
-          if (chunk.length === targetMinutes) {
-            aggregatedCloses.push(chunk[chunk.length - 1].close);
-          }
+    function switchTab(tabIndex) {
+      for (let i = 1; i <= 3; i++) {
+        const tabBtn = document.getElementById(`tab-btn-${i}`);
+        const tabContent = document.getElementById(`tab-content-${i}`);
+        if (i === tabIndex) {
+          tabBtn.className = "flex-1 py-2 text-center text-amber-400 border-b-2 border-amber-400 transition-colors";
+          tabContent.classList.remove('hidden');
+        } else {
+          tabBtn.className = "flex-1 py-2 text-center text-gray-400 border-b-2 border-transparent hover:text-gray-200 transition-colors";
+          tabContent.classList.add('hidden');
         }
-        
-        if (aggregatedCloses.length < period) return { valid: false, ma20Diff: 0 };
-        
-        const ma20 = calculateSMA(aggregatedCloses, 20);
-        if (!ma20) return { valid: false, ma20Diff: 0 };
-        
-        const ma20Diff = ((currentPrice - ma20) / ma20) * 100;
-        const valid = currentPrice > ma20;
-        
-        return { valid, ma20Diff };
-      } catch (err) {
-        return { valid: false, ma20Diff: 0 };
       }
     }
 
-    async function fetchIntervalMA(symbol, currentPrice, interval) {
+    function updateWatchlist() {
+      const val = document.getElementById('watchlist-input').value.trim();
+      if (!val) customWatchlist = [];
+      else {
+        customWatchlist = val.split(',').map(s => s.trim().toUpperCase().replace('USDT', '') + 'USDT');
+      }
+      updateMarketScanner();
+    }
+
+    function playAlertSound() {
       try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.15);
+      } catch (e) {}
+    }
+
+    function calculateSMA(arr) {
+      if (!arr || arr.length === 0) return 0;
+      return arr.reduce((a, b) => a + b, 0) / arr.length;
+    }
+
+    // 計算 K 線數據：包含 MA20、斜率 (Slope)、成交量 (Volume) 與乖離率 (Bias)
+    async function fetchKlinesData(symbol, currentPrice, interval) {
+      try {
+        let candles = [];
         if (interval === '2m') {
-          return await fetchCustomIntervalData(symbol, currentPrice, 2, 20);
+          const res = await fetch(`${BINANCE_KLINES_URL}?symbol=${symbol}&interval=1m&limit=50`);
+          const data = await res.json();
+          const aggregated = [];
+          for (let i = 0; i <= data.length - 2; i += 2) {
+            aggregated.push({
+              close: parseFloat(data[i+1][4]),
+              volume: parseFloat(data[i][5]) + parseFloat(data[i+1][5])
+            });
+          }
+          candles = aggregated;
         } else {
           const res = await fetch(`${BINANCE_KLINES_URL}?symbol=${symbol}&interval=${interval}&limit=25`);
           const data = await res.json();
-          const closePrices = data.map(item => parseFloat(item[4]));
-          const ma20 = calculateSMA(closePrices, 20);
-          
-          if (!ma20) return { valid: false, ma20Diff: 0 };
-          
-          const ma20Diff = ((currentPrice - ma20) / ma20) * 100;
-          const valid = currentPrice > ma20;
-          
-          return { valid, ma20Diff };
+          candles = data.map(d => ({ close: parseFloat(d[4]), volume: parseFloat(d[5]) }));
         }
+
+        if (candles.length < 21) return { valid: false, diff: 0, highVol: false, overbought: false };
+
+        const closes = candles.map(c => c.close);
+        const volumes = candles.map(c => c.volume);
+
+        const currCloses = closes.slice(-20);
+        const prevCloses = closes.slice(-21, -1);
+        
+        const ma20Curr = calculateSMA(currCloses);
+        const ma20Prev = calculateSMA(prevCloses);
+
+        const currVol = volumes[volumes.length - 1];
+        const volMA20 = calculateSMA(volumes.slice(-20));
+
+        const isHighVol = currVol > (volMA20 * 1.2);
+        const ma20Diff = ((currentPrice - ma20Curr) / ma20Curr) * 100;
+        const isOverbought = Math.abs(ma20Diff) > 3.0;
+
+        let valid = false;
+        if (isLongMode) {
+          // 多頭：價格高於 MA20 且 MA20 斜率向上
+          valid = (currentPrice > ma20Curr) && (ma20Curr >= ma20Prev);
+        } else {
+          // 空頭：價格低於 MA20 且 MA20 斜率向下
+          valid = (currentPrice < ma20Curr) && (ma20Curr <= ma20Prev);
+        }
+
+        return { valid, diff: ma20Diff, highVol: isHighVol, overbought: isOverbought };
+
       } catch (err) {
-        return { valid: false, ma20Diff: 0 };
+        return { valid: false, diff: 0, highVol: false, overbought: false };
       }
     }
 
@@ -252,119 +262,148 @@
         const res = await fetch(BINANCE_TICKER_URL);
         const tickers = await res.json();
 
-        const usdtPairs = tickers
+        // 取得 Top 25 交易量標的 + 自訂觀察清單
+        let topPairs = tickers
           .filter(t => t.symbol.endsWith('USDT') && !t.symbol.startsWith('USDC'))
           .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
-          .slice(0, 30);
+          .slice(0, 25);
 
-        const marketData = await Promise.all(
-          usdtPairs.map(async (item) => {
-            const symbol = item.symbol.replace('USDT', '');
-            const price = parseFloat(item.lastPrice);
-            
-            const [res1m, res2m, res3m, res5m, res15m, res30m, res1h, res4h, res8h] = await Promise.all([
-              fetchIntervalMA(item.symbol, price, '1m'),
-              fetchIntervalMA(item.symbol, price, '2m'),
-              fetchIntervalMA(item.symbol, price, '3m'),
-              fetchIntervalMA(item.symbol, price, '5m'),
-              fetchIntervalMA(item.symbol, price, '15m'),
-              fetchIntervalMA(item.symbol, price, '30m'),
-              fetchIntervalMA(item.symbol, price, '1h'),
-              fetchIntervalMA(item.symbol, price, '4h'),
-              fetchIntervalMA(item.symbol, price, '8h')
-            ]);
-            
+        if (customWatchlist.length > 0) {
+          const customTickers = tickers.filter(t => customWatchlist.includes(t.symbol));
+          topPairs = [...customTickers, ...topPairs.filter(t => !customWatchlist.includes(t.symbol))];
+        }
+
+        // --------------------------------------------------------------------
+        // 第一階段（階層式過濾）：優先獲取 15M 與 1H
+        // --------------------------------------------------------------------
+        const stage1Data = await Promise.all(topPairs.map(async (item) => {
+          const symbol = item.symbol.replace('USDT', '');
+          const price = parseFloat(item.lastPrice);
+          const priceChange = parseFloat(item.priceChangePercent);
+
+          const [res15m, res1h] = await Promise.all([
+            fetchKlinesData(item.symbol, price, '15m'),
+            fetchKlinesData(item.symbol, price, '1h')
+          ]);
+
+          const basePassed = res15m.valid && res1h.valid;
+          return { symbol, fullSymbol: item.symbol, price, priceChange, res15m, res1h, basePassed };
+        }));
+
+        // --------------------------------------------------------------------
+        // 第二階段：只有通過 15M+1H 基礎過濾的標的，才請求短線 K 線 API
+        // --------------------------------------------------------------------
+        const fullMarketData = await Promise.all(stage1Data.map(async (item) => {
+          // 抓取長線 4H / 8H
+          const [res4h, res8h] = await Promise.all([
+            fetchKlinesData(item.fullSymbol, item.price, '4h'),
+            fetchKlinesData(item.fullSymbol, item.price, '8h')
+          ]);
+
+          // 若沒通過當沖基礎條件，跳過 1M, 2M, 3M, 5M, 30M 請求
+          if (!item.basePassed) {
             return {
-              symbol,
-              fullSymbol: item.symbol,
-              price,
-              res1m, res2m, res3m, res5m, res15m, res30m, res1h, res4h, res8h
+              ...item, res4h, res8h,
+              res1m: { valid: false, diff: 0 },
+              res2m: { valid: false, diff: 0 },
+              res3m: { valid: false, diff: 0 },
+              res5m: { valid: false, diff: 0 },
+              res30m: { valid: false, diff: 0 }
             };
-          })
-        );
+          }
 
-        // 第四種條件（基礎）：15M + 1H 皆高於 MA20
-        const isBaseConditionMet = (d) => d.res15m.valid && d.res1h.valid;
+          const [res1m, res2m, res3m, res5m, res30m] = await Promise.all([
+            fetchKlinesData(item.fullSymbol, item.price, '1m'),
+            fetchKlinesData(item.fullSymbol, item.price, '2m'),
+            fetchKlinesData(item.fullSymbol, item.price, '3m'),
+            fetchKlinesData(item.fullSymbol, item.price, '5m'),
+            fetchKlinesData(item.fullSymbol, item.price, '30m')
+          ]);
 
-        // 1. 1M + 2M + 15M（須包含 15M + 1H 基礎條件）
-        const list1m2m15m = marketData
-          .filter(d => isBaseConditionMet(d) && d.res1m.valid && d.res2m.valid)
-          .sort((a, b) => (b.res1m.ma20Diff + b.res2m.ma20Diff + b.res15m.ma20Diff) - (a.res1m.ma20Diff + a.res2m.ma20Diff + a.res15m.ma20Diff))
-          .slice(0, 5);
+          return { ...item, res1m, res2m, res3m, res5m, res30m, res4h, res8h };
+        }));
 
-        // 2. 3M + 5M + 15M（須包含 15M + 1H 基礎條件）
-        const list3m5m15m = marketData
-          .filter(d => isBaseConditionMet(d) && d.res3m.valid && d.res5m.valid)
-          .sort((a, b) => (b.res3m.ma20Diff + b.res5m.ma20Diff + b.res15m.ma20Diff) - (a.res3m.ma20Diff + a.res5m.ma20Diff + a.res15m.ma20Diff))
-          .slice(0, 5);
+        // 過濾列表
+        const list1m2m15m = fullMarketData.filter(d => d.basePassed && d.res1m.valid && d.res2m.valid).slice(0, 5);
+        const list3m5m15m = fullMarketData.filter(d => d.basePassed && d.res3m.valid && d.res5m.valid).slice(0, 5);
+        const list5m15m30m = fullMarketData.filter(d => d.basePassed && d.res5m.valid && d.res30m.valid).slice(0, 5);
+        const list15m1h = fullMarketData.filter(d => d.basePassed).slice(0, 5);
+        const list1h4h = fullMarketData.filter(d => d.res1h.valid && d.res4h.valid).slice(0, 5);
+        const list1h4h8h = fullMarketData.filter(d => d.res1h.valid && d.res4h.valid && d.res8h.valid).slice(0, 5);
 
-        // 3. 5M + 15M + 30M（須包含 15M + 1H 基礎條件）
-        const list5m15m30m = marketData
-          .filter(d => isBaseConditionMet(d) && d.res5m.valid && d.res30m.valid)
-          .sort((a, b) => (b.res5m.ma20Diff + b.res15m.ma20Diff + b.res30m.ma20Diff) - (a.res5m.ma20Diff + a.res15m.ma20Diff + a.res30m.ma20Diff))
-          .slice(0, 5);
+        // 新訊號偵測與聲音提醒
+        const currentMatched = new Set([
+          ...list1m2m15m.map(i => i.symbol),
+          ...list3m5m15m.map(i => i.symbol),
+          ...list5m15m30m.map(i => i.symbol)
+        ]);
 
-        // 4. 15M + 1H
-        const list15m1h = marketData
-          .filter(d => isBaseConditionMet(d))
-          .sort((a, b) => (b.res15m.ma20Diff + b.res1h.ma20Diff) - (a.res15m.ma20Diff + a.res1h.ma20Diff))
-          .slice(0, 5);
+        if (!isFirstLoad) {
+          for (let sym of currentMatched) {
+            if (!previousMatchedSymbols.has(sym)) {
+              playAlertSound();
+              break;
+            }
+          }
+        }
+        previousMatchedSymbols = currentMatched;
+        isFirstLoad = false;
 
-        // 5. 1H + 4H
-        const list1h4h = marketData
-          .filter(d => d.res1h.valid && d.res4h.valid)
-          .sort((a, b) => (b.res1h.ma20Diff + b.res4h.ma20Diff) - (a.res1h.ma20Diff + a.res4h.ma20Diff))
-          .slice(0, 5);
+        // 渲染 UI 表格
+        renderTable('tb-1m2m15m', list1m2m15m, ['res1m', 'res2m', 'res15m']);
+        renderTable('tb-3m5m15m', list3m5m15m, ['res3m', 'res5m', 'res15m']);
+        renderTable('tb-5m15m30m', list5m15m30m, ['res5m', 'res15m', 'res30m']);
+        renderTable('tb-15m1h', list15m1h, ['res15m', 'res1h']);
+        renderTable('tb-1h4h', list1h4h, ['res1h', 'res4h']);
+        renderTable('tb-1h4h8h', list1h4h8h, ['res1h', 'res4h', 'res8h']);
 
-        // 6. 1H + 4H + 8H
-        const list1h4h8h = marketData
-          .filter(d => d.res1h.valid && d.res4h.valid && d.res8h.valid)
-          .sort((a, b) => (b.res1h.ma20Diff + b.res4h.ma20Diff + b.res8h.ma20Diff) - (a.res1h.ma20Diff + a.res4h.ma20Diff + a.res8h.ma20Diff))
-          .slice(0, 5);
-
-        // 渲染表格
-        renderTable('bull-1m2m15m-tbody', list1m2m15m, ['res1m', 'res2m', 'res15m'], 'bg-cyan-400');
-        renderTable('bull-3m5m15m-tbody', list3m5m15m, ['res3m', 'res5m', 'res15m'], 'bg-amber-400');
-        renderTable('bull-5m15m30m-tbody', list5m15m30m, ['res5m', 'res15m', 'res30m'], 'bg-rose-500');
-        renderTable('bull-15m1h-tbody', list15m1h, ['res15m', 'res1h'], 'bg-emerald-400');
-        renderTable('bull-1h4h-tbody', list1h4h, ['res1h', 'res4h'], 'bg-indigo-400');
-        renderTable('bull-1h4h8h-tbody', list1h4h8h, ['res1h', 'res4h', 'res8h'], 'bg-purple-400');
-        
         document.getElementById('update-time').innerText = new Date().toLocaleTimeString('zh-TW', { hour12: false });
 
-      } catch (error) {
-        console.error('更新資料失敗:', error);
+      } catch (err) {
+        console.error('掃描器更新異常:', err);
       }
     }
 
-    function renderTable(elementId, dataList, keys, barColorClass) {
+    function renderTable(elementId, dataList, keys) {
       const tbody = document.getElementById(elementId);
       const colSpan = keys.length + 3;
+
       if (dataList.length === 0) {
         tbody.innerHTML = `<tr><td colspan="${colSpan}" class="text-center py-2.5 text-gray-500">無符合標的</td></tr>`;
         return;
       }
 
       tbody.innerHTML = dataList.map(item => {
-        const values = keys.map(k => item[k].ma20Diff);
-        const avgScore = values.reduce((a, b) => a + b, 0) / values.length;
-        const barWidth = Math.min(avgScore * 3, 16);
         const binanceUrl = `https://www.binance.com/zh-TC/futures/${item.fullSymbol}`;
+        const changeColor = item.priceChange >= 0 ? 'text-emerald-400' : 'text-rose-400';
+        const changeSign = item.priceChange >= 0 ? '+' : '';
 
-        const diffTds = values.map(val => `<td class="text-right text-rose-500">+${val.toFixed(2)}%</td>`).join('');
+        // 檢查是否有爆量或超買/超賣警示
+        const hasHighVol = keys.some(k => item[k].highVol);
+        const hasOverbought = keys.some(k => item[k].overbought);
+
+        let statusBadges = '';
+        if (hasHighVol) statusBadges += '<span title="當前週期爆量突破">💥</span>';
+        if (hasOverbought) statusBadges += '<span title="價格距離MA20過遠，謹防追高">⚠️</span>';
+
+        const diffTds = keys.map(k => {
+          const val = item[k].diff;
+          const valColor = val >= 0 ? 'text-emerald-400' : 'text-rose-400';
+          const valSign = val >= 0 ? '+' : '';
+          return `<td class="text-right ${valColor}">${valSign}${val.toFixed(2)}%</td>`;
+        }).join('');
 
         return `
-          <tr class="hover:bg-gray-800/20 transition-colors">
+          <tr class="hover:bg-gray-800/30 transition-colors">
             <td class="py-1.5 font-medium">
-              <a href="${binanceUrl}" target="_blank" rel="noopener noreferrer" class="text-gray-200 hover:text-amber-400 underline underline-offset-2 decoration-gray-600 hover:decoration-amber-400 transition-colors">
+              <a href="${binanceUrl}" target="_blank" rel="noopener noreferrer" class="text-gray-200 hover:text-amber-400 underline underline-offset-2 decoration-gray-600">
                 ${item.symbol}
               </a>
+              <span class="text-[10px] ml-1 ${changeColor}">${changeSign}${item.priceChange.toFixed(1)}%</span>
             </td>
-            <td class="text-right">${item.price < 1 ? item.price.toFixed(4) : item.price.toFixed(2)}</td>
+            <td class="text-right font-mono">${item.price < 1 ? item.price.toFixed(4) : item.price.toFixed(2)}</td>
             ${diffTds}
-            <td class="text-right pl-2">
-              <span class="inline-block h-1.5 ${barColorClass} rounded-full" style="width: ${Math.max(barWidth, 6)}px"></span>
-            </td>
+            <td class="text-center pl-1">${statusBadges || '<span class="text-gray-600">-</span>'}</td>
           </tr>
         `;
       }).join('');
