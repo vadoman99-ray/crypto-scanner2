@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>加密貨幣全週期雙MA共振掃描器</title>
+  <title>加密貨幣全週期 MA20 多頭共振掃描器</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-[#0f121d] text-gray-200 min-h-screen p-4 flex justify-center items-center font-sans">
@@ -15,7 +15,7 @@
     <div class="border-b border-gray-800 pb-3">
       <div class="flex items-center gap-2 text-xl font-bold text-white">
         <span class="text-amber-400">⚡</span>
-        <span>加密貨幣 6 週期共振掃描</span>
+        <span>加密貨幣 6 週期 MA20 共振掃描</span>
       </div>
       <div class="flex justify-between items-center text-xs text-gray-400 mt-1">
         <span>掃描更新：<span id="update-time">載入中...</span></span>
@@ -28,7 +28,7 @@
       <div class="flex items-center justify-between mb-2">
         <div class="flex items-center gap-2 text-cyan-400 font-bold text-xs">
           <span>⚡</span>
-          <span>1M + 2M + 15M 雙MA突破</span>
+          <span>1M + 2M + 15M 站上 MA20</span>
         </div>
         <span class="text-[10px] bg-cyan-500/10 text-cyan-400 px-1.5 py-0.5 rounded border border-cyan-500/20">極短線極速</span>
       </div>
@@ -54,7 +54,7 @@
       <div class="flex items-center justify-between mb-2">
         <div class="flex items-center gap-2 text-amber-400 font-bold text-xs">
           <span>🚀</span>
-          <span>3M + 5M + 15M 雙MA突破</span>
+          <span>3M + 5M + 15M 站上 MA20</span>
         </div>
         <span class="text-[10px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded border border-amber-500/20">極短線進階</span>
       </div>
@@ -80,7 +80,7 @@
       <div class="flex items-center justify-between mb-2">
         <div class="flex items-center gap-2 text-rose-400 font-bold text-xs">
           <span>🔥</span>
-          <span>5M + 15M + 30M 雙MA突破</span>
+          <span>5M + 15M + 30M 站上 MA20</span>
         </div>
         <span class="text-[10px] bg-rose-500/10 text-rose-400 px-1.5 py-0.5 rounded border border-rose-500/20">當沖強共振</span>
       </div>
@@ -106,7 +106,7 @@
       <div class="flex items-center justify-between mb-2">
         <div class="flex items-center gap-2 text-emerald-400 font-bold text-xs">
           <span>📈</span>
-          <span>15M + 1H 雙MA突破</span>
+          <span>15M + 1H 站上 MA20</span>
         </div>
         <span class="text-[10px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20">短線趨勢</span>
       </div>
@@ -131,7 +131,7 @@
       <div class="flex items-center justify-between mb-2">
         <div class="flex items-center gap-2 text-indigo-400 font-bold text-xs">
           <span>🌟</span>
-          <span>1H + 4H 雙MA突破</span>
+          <span>1H + 4H 站上 MA20</span>
         </div>
         <span class="text-[10px] bg-indigo-500/10 text-indigo-400 px-1.5 py-0.5 rounded border border-indigo-500/20">中線波段</span>
       </div>
@@ -156,7 +156,7 @@
       <div class="flex items-center justify-between mb-2">
         <div class="flex items-center gap-2 text-purple-400 font-bold text-xs">
           <span>👑</span>
-          <span>1H + 4H + 8H 雙MA突破</span>
+          <span>1H + 4H + 8H 站上 MA20</span>
         </div>
         <span class="text-[10px] bg-purple-500/10 text-purple-400 px-1.5 py-0.5 rounded border border-purple-500/20">長線大趨勢</span>
       </div>
@@ -179,7 +179,7 @@
 
     <!-- 頁尾免責聲明 -->
     <div class="text-center text-[10px] text-gray-500 pt-2">
-      資料來源：幣安公開 API。須同時突破 5MA 與 20MA 方可入選。
+      資料來源：幣安公開 API。須所有指定週期收盤價高於 MA20 方可入選。
     </div>
 
   </div>
@@ -213,12 +213,12 @@
         
         if (aggregatedCloses.length < period) return { valid: false, ma20Diff: 0 };
         
-        const ma5 = calculateSMA(aggregatedCloses, 5);
         const ma20 = calculateSMA(aggregatedCloses, 20);
+        if (!ma20) return { valid: false, ma20Diff: 0 };
         
-        if (!ma5 || !ma20) return { valid: false, ma20Diff: 0 };
         const ma20Diff = ((currentPrice - ma20) / ma20) * 100;
-        const valid = currentPrice > ma5 && currentPrice > ma20;
+        // 判斷條件：現價高於 MA20
+        const valid = currentPrice > ma20;
         
         return { valid, ma20Diff };
       } catch (err) {
@@ -234,12 +234,13 @@
           const res = await fetch(`${BINANCE_KLINES_URL}?symbol=${symbol}&interval=${interval}&limit=25`);
           const data = await res.json();
           const closePrices = data.map(item => parseFloat(item[4]));
-          const ma5 = calculateSMA(closePrices, 5);
           const ma20 = calculateSMA(closePrices, 20);
           
-          if (!ma5 || !ma20) return { valid: false, ma20Diff: 0 };
+          if (!ma20) return { valid: false, ma20Diff: 0 };
+          
           const ma20Diff = ((currentPrice - ma20) / ma20) * 100;
-          const valid = currentPrice > ma5 && currentPrice > ma20;
+          // 判斷條件：現價高於 MA20
+          const valid = currentPrice > ma20;
           
           return { valid, ma20Diff };
         }
@@ -284,37 +285,37 @@
           })
         );
 
-        // 1. 1M + 2M + 15M
+        // 1. 1M + 2M + 15M 皆高於 MA20
         const list1m2m15m = marketData
           .filter(d => d.res1m.valid && d.res2m.valid && d.res15m.valid)
           .sort((a, b) => (b.res1m.ma20Diff + b.res2m.ma20Diff + b.res15m.ma20Diff) - (a.res1m.ma20Diff + a.res2m.ma20Diff + a.res15m.ma20Diff))
           .slice(0, 5);
 
-        // 2. 3M + 5M + 15M
+        // 2. 3M + 5M + 15M 皆高於 MA20
         const list3m5m15m = marketData
           .filter(d => d.res3m.valid && d.res5m.valid && d.res15m.valid)
           .sort((a, b) => (b.res3m.ma20Diff + b.res5m.ma20Diff + b.res15m.ma20Diff) - (a.res3m.ma20Diff + a.res5m.ma20Diff + a.res15m.ma20Diff))
           .slice(0, 5);
 
-        // 3. 5M + 15M + 30M
+        // 3. 5M + 15M + 30M 皆高於 MA20
         const list5m15m30m = marketData
           .filter(d => d.res5m.valid && d.res15m.valid && d.res30m.valid)
           .sort((a, b) => (b.res5m.ma20Diff + b.res15m.ma20Diff + b.res30m.ma20Diff) - (a.res5m.ma20Diff + a.res15m.ma20Diff + a.res30m.ma20Diff))
           .slice(0, 5);
 
-        // 4. 15M + 1H
+        // 4. 15M + 1H 皆高於 MA20
         const list15m1h = marketData
           .filter(d => d.res15m.valid && d.res1h.valid)
           .sort((a, b) => (b.res15m.ma20Diff + b.res1h.ma20Diff) - (a.res15m.ma20Diff + a.res1h.ma20Diff))
           .slice(0, 5);
 
-        // 5. 1H + 4H
+        // 5. 1H + 4H 皆高於 MA20
         const list1h4h = marketData
           .filter(d => d.res1h.valid && d.res4h.valid)
           .sort((a, b) => (b.res1h.ma20Diff + b.res4h.ma20Diff) - (a.res1h.ma20Diff + a.res4h.ma20Diff))
           .slice(0, 5);
 
-        // 6. 1H + 4H + 8H
+        // 6. 1H + 4H + 8H 皆高於 MA20
         const list1h4h8h = marketData
           .filter(d => d.res1h.valid && d.res4h.valid && d.res8h.valid)
           .sort((a, b) => (b.res1h.ma20Diff + b.res4h.ma20Diff + b.res8h.ma20Diff) - (a.res1h.ma20Diff + a.res4h.ma20Diff + a.res8h.ma20Diff))
