@@ -1,271 +1,327 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>加密貨幣多週期 DIF 共振掃描器</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>幣安 USDT 永續合約掃描器 (1H 20MA+)</title>
+    <style>
+        :root {
+            --bg-color: #12161c;
+            --card-bg: #1e2329;
+            --text-main: #eaecef;
+            --text-sub: #848e9c;
+            --green: #0ecb81;
+            --yellow: #f0b90b;
+            --border: #2b313a;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            background: var(--card-bg);
+            padding: 15px 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        h1 {
+            font-size: 1.2rem;
+            margin: 0;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        button {
+            background-color: var(--yellow);
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .filter-btn {
+            background: var(--card-bg);
+            color: var(--text-sub);
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .filter-btn.active {
+            color: var(--text-main);
+            border-color: var(--yellow);
+            background: #2b313a;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--border);
+            margin-bottom: 20px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--yellow);
+            transition: width 0.1s;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card-bg);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background-color: #181a20;
+            color: var(--text-sub);
+            font-size: 0.85rem;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .badge-above {
+            background-color: rgba(14, 203, 129, 0.15);
+            color: var(--green);
+            border: 1px solid var(--green);
+        }
+
+        .badge-below {
+            background-color: rgba(240, 185, 11, 0.15);
+            color: var(--yellow);
+            border: 1px solid var(--yellow);
+        }
+
+        .symbol-link {
+            color: var(--text-main);
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .symbol-link:hover {
+            color: var(--yellow);
+        }
+
+        .stat {
+            font-size: 0.9rem;
+            color: var(--text-sub);
+        }
+    </style>
 </head>
-<body class="bg-[#0f121d] text-gray-200 min-h-screen p-4 flex justify-center items-center font-sans">
+<body>
 
-  <!-- 主容器 -->
-  <div class="w-full max-w-md bg-[#131722] rounded-xl p-4 shadow-2xl border border-gray-800 space-y-4">
-    
-    <!-- 頂部標題區 -->
-    <div class="border-b border-gray-800 pb-3">
-      <div class="flex items-center gap-2 text-xl font-bold text-white">
-        <span class="text-amber-400">⚡</span>
-        <span>加密貨幣共振掃描 (DIF > 0)</span>
-      </div>
-      <div class="flex justify-between items-center text-xs text-gray-400 mt-1">
-        <span>掃描更新：<span id="update-time">載入中...</span></span>
-        <span>自動更新：每 60 秒</span>
-      </div>
-    </div>
-
-    <!-- 1H + 4H 共振多頭區塊 -->
-    <div class="bg-[#181c28] rounded-lg p-3 border border-gray-800/60">
-      <div class="flex items-center justify-between mb-3">
-        <div class="flex items-center gap-2 text-amber-400 font-bold">
-          <span>🚀</span>
-          <span>1H + 4H DIF 多頭共振</span>
+<div class="container">
+    <div class="header">
+        <h1>幣安 USDT 永續合約 (1H MA20 條件篩選)</h1>
+        <div class="controls">
+            <span id="status" class="stat">準備就緒</span>
+            <button id="scanBtn" onclick="startScan()">開始掃描</button>
         </div>
-        <span class="text-[10px] bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20">雙週期共振</span>
-      </div>
-      
-      <div class="overflow-x-auto">
-        <table class="w-full text-xs text-left border-collapse">
-          <thead>
-            <tr class="text-gray-400 border-b border-gray-800 pb-1">
-              <th class="py-1">標的</th>
-              <th class="text-right">價格</th>
-              <th class="text-right">1H DIF</th>
-              <th class="text-right">4H DIF</th>
-              <th class="text-right">24H漲跌</th>
-              <th class="text-center">狀態</th>
-            </tr>
-          </thead>
-          <tbody id="bull-1h4h-tbody" class="divide-y divide-gray-800/40">
+    </div>
+
+    <div class="filter-group">
+        <button class="filter-btn active" onclick="setFilter('ALL')">全部 (大於 20MA)</button>
+        <button class="filter-btn" onclick="setFilter('ABOVE_5MA')">🟢 在 5MA 上方</button>
+        <button class="filter-btn" onclick="setFilter('BELOW_5MA')">🟡 在 5MA 下方 (回踩)</button>
+    </div>
+
+    <div class="progress-bar"><div id="progress" class="progress-fill"></div></div>
+
+    <table>
+        <thead>
             <tr>
-              <td colspan="6" class="text-center py-4 text-gray-500">行情資料載入中...</td>
+                <th>幣種名稱</th>
+                <th>最新價格</th>
+                <th>1H 20MA</th>
+                <th>1H 5MA</th>
+                <th>5MA 狀態濾網</th>
+                <th>操作</th>
             </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- 1H + 4H + 8H 共振多頭區塊 -->
-    <div class="bg-[#181c28] rounded-lg p-3 border border-amber-500/30">
-      <div class="flex items-center justify-between mb-3">
-        <div class="flex items-center gap-2 text-rose-400 font-bold">
-          <span>🔥</span>
-          <span>1H + 4H + 8H DIF 多頭共振</span>
-        </div>
-        <span class="text-[10px] bg-rose-500/10 text-rose-400 px-2 py-0.5 rounded border border-rose-500/20">三週期強共振</span>
-      </div>
-      
-      <div class="overflow-x-auto">
-        <table class="w-full text-xs text-left border-collapse">
-          <thead>
-            <tr class="text-gray-400 border-b border-gray-800 pb-1">
-              <th class="py-1">標的</th>
-              <th class="text-right">價格</th>
-              <th class="text-right">1H DIF</th>
-              <th class="text-right">4H DIF</th>
-              <th class="text-right">8H DIF</th>
-              <th class="text-center">狀態</th>
-            </tr>
-          </thead>
-          <tbody id="bull-1h4h8h-tbody" class="divide-y divide-gray-800/40">
+        </thead>
+        <tbody id="resultTable">
             <tr>
-              <td colspan="6" class="text-center py-4 text-gray-500">行情資料載入中...</td>
+                <td colspan="6" style="text-align: center; color: var(--text-sub);">點擊「開始掃描」以獲取資料...</td>
             </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+        </tbody>
+    </table>
+</div>
 
-    <!-- 頁尾免責聲明 -->
-    <div class="text-center text-[10px] text-gray-500 pt-2 space-y-0.5">
-      <div>💡 <b>篩選條件：</b> 各週期 DIF (EMA12 - EMA26) 皆大於 0；<span class="text-amber-400">💥 爆量</span> (當前成交量 > 前一根 1.5 倍)</div>
-      <div>資料來源：幣安 USDT 永續合約 API。</div>
-    </div>
+<script>
+    let rawResults = [];
+    let currentFilter = 'ALL';
 
-  </div>
-
-  <!-- 幣安 API 多週期 DIF 計算與串接腳本 -->
-  <script>
-    const BINANCE_TICKER_URL = 'https://fapi.binance.com/fapi/v1/ticker/24hr';
-    const BINANCE_KLINES_URL = 'https://fapi.binance.com/fapi/v1/klines';
-
-    // 計算指數移動平均線 (EMA)
-    function calculateEMA(data, period) {
-      if (data.length < period) return [];
-      const k = 2 / (period + 1);
-      let emaArray = [data[0]];
-      for (let i = 1; i < data.length; i++) {
-        emaArray.push(data[i] * k + emaArray[i - 1] * (1 - k));
-      }
-      return emaArray;
+    // 計算簡單移動平均 (SMA)
+    function calculateSMA(data, count) {
+        const avg = data.slice(-count).reduce((sum, val) => sum + val, 0) / count;
+        return avg;
     }
 
-    // 計算 MACD DIF (EMA12 - EMA26)
-    function calculateDIF(closePrices) {
-      if (closePrices.length < 26) return 0;
-      const ema12 = calculateEMA(closePrices, 12);
-      const ema26 = calculateEMA(closePrices, 26);
-      const latestEMA12 = ema12[ema12.length - 1];
-      const latestEMA26 = ema26[ema26.length - 1];
-      return latestEMA12 - latestEMA26;
-    }
-
-    // 取得指定時間週期的 DIF 與爆量狀態
-    async function fetchTimeframeData(symbol, interval, limit = 35) {
-      try {
-        const res = await fetch(`${BINANCE_KLINES_URL}?symbol=${symbol}&interval=${interval}&limit=${limit}`);
+    // 取得所有 USDT 永續合約幣種
+    async function getUSDTFuturesSymbols() {
+        const res = await fetch('https://fapi.binance.com/fapi/v1/exchangeInfo');
         const data = await res.json();
-        
-        const closePrices = data.map(item => parseFloat(item[4]));
-        const volumes = data.map(item => parseFloat(item[5]));
-        
-        const dif = calculateDIF(closePrices);
-
-        // 判斷當前 K 線是否爆量 (當前量 > 前一根 1.5 倍)
-        const currVol = volumes[volumes.length - 1];
-        const prevVol = volumes[volumes.length - 2];
-        const isHighVol = prevVol > 0 ? (currVol > prevVol * 1.5) : false;
-
-        return { dif, isHighVol };
-      } catch (err) {
-        console.error(`無法取得 ${symbol} ${interval} 資料`, err);
-        return { dif: 0, isHighVol: false };
-      }
+        return data.symbols
+            .filter(s => s.quoteAsset === 'USDT' && s.contractType === 'PERPETUAL' && s.status === 'TRADING')
+            .map(s => s.symbol);
     }
 
-    // 核心數據分析與篩選
-    async function updateMarketScanner() {
-      try {
-        const res = await fetch(BINANCE_TICKER_URL);
-        const tickers = await res.json();
-
-        // 僅保留幣安 U 本位永續合約 (排除 USDC、交割合約及槓桿代幣)
-        const usdtPairs = tickers
-          .filter(t => t.symbol.endsWith('USDT') && !t.symbol.includes('_'))
-          .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
-          .slice(0, 30);
-
-        // 同步並行查詢各週期 K 線
-        const marketData = await Promise.all(
-          usdtPairs.map(async (item) => {
-            const symbol = item.symbol.replace('USDT', '');
-            const fullSymbol = item.symbol;
-            const price = parseFloat(item.lastPrice);
-            const change24h = parseFloat(item.priceChangePercent);
+    // 獲取單一幣種 K 線並計算 MA
+    async function fetchKlineData(symbol) {
+        try {
+            const res = await fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=30`);
+            const data = await res.json();
             
-            // 多週期平行請求：1h, 4h, 8h (取得 DIF 值)
-            const [tf1h, tf4h, tf8h] = await Promise.all([
-              fetchTimeframeData(item.symbol, '1h'),
-              fetchTimeframeData(item.symbol, '4h'),
-              fetchTimeframeData(item.symbol, '8h')
-            ]);
+            // 取得收盤價陣列
+            const closes = data.map(k => parseFloat(k[4]));
+            const currentClose = closes[closes.length - 1];
             
-            return {
-              symbol,
-              fullSymbol,
-              price,
-              change24h,
-              dif1h: tf1h.dif,
-              dif4h: tf4h.dif,
-              dif8h: tf8h.dif,
-              isHighVol: tf1h.isHighVol || tf4h.isHighVol || tf8h.isHighVol
-            };
-          })
-        );
+            const ma20 = calculateSMA(closes, 20);
+            const ma5 = calculateSMA(closes, 5);
 
-        // 條件 1：1H 與 4H 的 DIF 皆 > 0
-        const list1h4h = marketData
-          .filter(d => d.dif1h > 0 && d.dif4h > 0)
-          .sort((a, b) => (b.dif1h + b.dif4h) - (a.dif1h + a.dif4h))
-          .slice(0, 8);
+            // 核心篩選條件：1H 收盤價必須在 20MA 上方
+            if (currentClose > ma20) {
+                return {
+                    symbol: symbol,
+                    price: currentClose,
+                    ma20: ma20,
+                    ma5: ma5,
+                    isAboveMa5: currentClose >= ma5
+                };
+            }
+            return null;
+        } catch (e) {
+            return null;
+        }
+    }
 
-        // 條件 2：1H、4H 與 8H 的 DIF 皆 > 0
-        const list1h4h8h = marketData
-          .filter(d => d.dif1h > 0 && d.dif4h > 0 && d.dif8h > 0)
-          .sort((a, b) => (b.dif1h + b.dif4h + b.dif8h) - (a.dif1h + a.dif4h + a.dif8h))
-          .slice(0, 8);
-
-        // 渲染畫面
-        render1h4hTable(list1h4h);
-        render1h4h8hTable(list1h4h8h);
+    // 開始掃描任務
+    async function startScan() {
+        const scanBtn = document.getElementById('scanBtn');
+        const statusEl = document.getElementById('status');
+        const progressEl = document.getElementById('progress');
         
-        // 更新時間
-        document.getElementById('update-time').innerText = new Date().toLocaleTimeString('zh-TW', { hour12: false });
+        scanBtn.disabled = true;
+        rawResults = [];
+        renderTable();
 
-      } catch (error) {
-        console.error('更新多週期資料失敗:', error);
-      }
+        statusEl.innerText = "獲取合約清單...";
+        const symbols = await getUSDTFuturesSymbols();
+        
+        const batchSize = 10; // 控制併發請求量，防止 Binance API 限流
+        let processed = 0;
+
+        for (let i = 0; i < symbols.length; i += batchSize) {
+            const batch = symbols.slice(i, i + batchSize);
+            const promises = batch.map(sym => fetchKlineData(sym));
+            const results = await Promise.all(promises);
+
+            results.forEach(res => {
+                if (res) rawResults.push(res);
+            });
+
+            processed += batch.length;
+            const pct = Math.floor((processed / symbols.length) * 100);
+            progressEl.style.width = `${pct}%`;
+            statusEl.innerText = `掃描中: ${processed} / ${symbols.length}`;
+        }
+
+        statusEl.innerText = `掃描完成！符合條件: ${rawResults.length} 個`;
+        scanBtn.disabled = false;
+        renderTable();
     }
 
-    // 渲染 1H + 4H 表格
-    function render1h4hTable(dataList) {
-      const tbody = document.getElementById('bull-1h4h-tbody');
-      if (dataList.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-gray-500">無雙週期 DIF 共振標的</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = dataList.map(item => {
-        const binanceUrl = `https://www.binance.com/zh-TC/futures/${item.fullSymbol}`;
-        const c24Class = item.change24h >= 0 ? 'text-rose-500' : 'text-emerald-400';
-
-        return `
-          <tr class="hover:bg-gray-800/20 transition-colors">
-            <td class="py-2 font-medium">
-              <a href="${binanceUrl}" target="_blank" rel="noopener noreferrer" class="text-gray-200 hover:text-amber-400 underline underline-offset-2 decoration-gray-600">
-                ${item.symbol}
-              </a>
-            </td>
-            <td class="text-right font-mono">${item.price < 1 ? item.price.toFixed(4) : item.price.toFixed(2)}</td>
-            <td class="text-right text-rose-500 font-mono">+${item.dif1h.toFixed(3)}</td>
-            <td class="text-right text-rose-500 font-mono">+${item.dif4h.toFixed(3)}</td>
-            <td class="text-right ${c24Class}">${item.change24h > 0 ? '+' : ''}${item.change24h.toFixed(2)}%</td>
-            <td class="text-center">${item.isHighVol ? '💥' : '-'}</td>
-          </tr>
-        `;
-      }).join('');
+    // 切換濾網頁籤
+    function setFilter(filter) {
+        currentFilter = filter;
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        renderTable();
     }
 
-    // 渲染 1H + 4H + 8H 表格
-    function render1h4h8hTable(dataList) {
-      const tbody = document.getElementById('bull-1h4h8h-tbody');
-      if (dataList.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-gray-500">無三週期 DIF 強共振標的</td></tr>`;
-        return;
-      }
+    // 渲染表格內容
+    function renderTable() {
+        const tbody = document.getElementById('resultTable');
+        
+        let filtered = rawResults.filter(item => {
+            if (currentFilter === 'ABOVE_5MA') return item.isAboveMa5;
+            if (currentFilter === 'BELOW_5MA') return !item.isAboveMa5;
+            return true;
+        });
 
-      tbody.innerHTML = dataList.map(item => {
-        const binanceUrl = `https://www.binance.com/zh-TC/futures/${item.fullSymbol}`;
+        // 優先依據距離 20MA 比例或 5MA 狀態排序
+        filtered.sort((a, b) => (b.price / b.ma20) - (a.price / a.ma20));
 
-        return `
-          <tr class="hover:bg-gray-800/20 transition-colors">
-            <td class="py-2 font-medium">
-              <a href="${binanceUrl}" target="_blank" rel="noopener noreferrer" class="text-gray-200 hover:text-amber-400 underline underline-offset-2 decoration-gray-600">
-                ${item.symbol}
-              </a>
-            </td>
-            <td class="text-right font-mono">${item.price < 1 ? item.price.toFixed(4) : item.price.toFixed(2)}</td>
-            <td class="text-right text-rose-500 font-mono">+${item.dif1h.toFixed(3)}</td>
-            <td class="text-right text-rose-500 font-mono">+${item.dif4h.toFixed(3)}</td>
-            <td class="text-right text-rose-500 font-mono">+${item.dif8h.toFixed(3)}</td>
-            <td class="text-center">${item.isHighVol ? '💥' : '-'}</td>
-          </tr>
-        `;
-      }).join('');
+        if (filtered.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-sub);">無符合條件的數據</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = filtered.map(item => `
+            <tr>
+                <td><a class="symbol-link" href="https://www.binance.com/zh-TC/futures/${item.symbol}" target="_blank">${item.symbol}</a></td>
+                <td>${item.price}</td>
+                <td>${item.ma20.toFixed(4)}</td>
+                <td>${item.ma5.toFixed(4)}</td>
+                <td>
+                    ${item.isAboveMa5 
+                        ? `<span class="badge badge-above">在 5MA 上方 (強勢)</span>` 
+                        : `<span class="badge badge-below">在 5MA 下方 (回踩)</span>`}
+                </td>
+                <td><a href="https://www.binance.com/zh-TC/futures/${item.symbol}" target="_blank" style="color: var(--yellow);">開啟 K 線</a></td>
+            </tr>
+        `).map(row => row).join('');
     }
+</script>
 
-    // 啟動分析程序 (每 60 秒刷新一次)
-    updateMarketScanner();
-    setInterval(updateMarketScanner, 60000);
-  </script>
 </body>
 </html>
