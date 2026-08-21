@@ -18,42 +18,48 @@
             --green-bg: rgba(14, 203, 129, 0.15);
             --red: #f6465d;
             --red-bg: rgba(246, 70, 93, 0.15);
-            --fire: #ff6d00;
-            --fire-bg: rgba(255, 109, 0, 0.15);
-            --breakout: #e040fb;
-            --breakout-bg: rgba(224, 64, 251, 0.18);
+            --blue: #1877f2;
+            --blue-bg: rgba(24, 119, 242, 0.15);
+            --purple: #9c27b0;
+            --purple-bg: rgba(156, 39, 176, 0.15);
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding-bottom: 80px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding-bottom: 75px; }
         
-        .app-header { position: sticky; top: 0; z-index: 100; background-color: rgba(30, 35, 41, 0.95); backdrop-filter: blur(8px); padding: 12px 16px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; }
-        .header-title { font-weight: 800; font-size: 1rem; }
-        .scan-btn { background-color: var(--yellow); color: #000; border: none; padding: 6px 16px; border-radius: 20px; font-weight: 700; font-size: 0.8rem; cursor: pointer; }
-        
+        .app-header { position: sticky; top: 0; z-index: 100; background-color: rgba(30, 35, 41, 0.95); backdrop-filter: blur(8px); padding: 12px 16px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+        .header-title { font-weight: 800; font-size: 1.05rem; display: flex; align-items: center; gap: 6px; }
+        .scan-btn { background-color: var(--yellow); color: #000; border: none; padding: 8px 18px; border-radius: 20px; font-weight: 700; font-size: 0.85rem; cursor: pointer; }
         .progress-bar { height: 3px; background: var(--card-border); width: 100%; }
-        .progress-fill { height: 100%; width: 0%; background: var(--yellow); transition: width 0.1s; }
-        
-        .toolbar { padding: 10px 16px; display: flex; gap: 8px; border-bottom: 1px solid var(--card-border); }
-        .search-input { flex: 1; background: var(--bg-color); border: 1px solid var(--card-border); color: var(--text-main); padding: 7px 12px; border-radius: 8px; font-size: 0.85rem; outline: none; }
-        .tool-btn { background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-sub); padding: 7px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; }
-
-        .status-bar { padding: 5px 16px; font-size: 0.7rem; color: var(--text-sub); display: flex; justify-content: space-between; }
+        .progress-fill { height: 100%; width: 0%; background: var(--yellow); transition: width 0.15s ease-out; }
+        .toolbar { padding: 10px 16px; background: rgba(30, 35, 41, 0.6); display: flex; gap: 8px; align-items: center; border-bottom: 1px solid var(--card-border); }
+        .search-input { flex: 1; background: var(--bg-color); border: 1px solid var(--card-border); color: var(--text-main); padding: 7px 12px; border-radius: 8px; font-size: 0.85rem; }
+        .tool-btn { background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-sub); padding: 7px 12px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; font-weight: 600; }
+        .status-bar { padding: 8px 16px; font-size: 0.75rem; color: var(--text-sub); display: flex; justify-content: space-between; align-items: center; }
         .container { padding: 10px 16px; }
         
-        .symbol-card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; text-decoration: none; color: inherit; }
-        .symbol-info .name { font-size: 1rem; font-weight: 700; }
-        .badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; margin-right: 3px; font-weight: bold; }
-        .badge-15m { background: rgba(224, 64, 251, 0.15); color: #e040fb; border: 1px solid #e040fb; }
+        .symbol-card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; text-decoration: none; color: inherit; }
+        .symbol-info .name { font-size: 1.05rem; font-weight: 700; margin-bottom: 4px; }
+        .symbol-metrics { text-align: right; }
+        .symbol-metrics .price { font-size: 1rem; font-weight: 700; margin-bottom: 4px; font-family: monospace; }
         
-        /* 底部導覽列滾動優化 */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 65px; background-color: var(--card-bg); border-top: 1px solid var(--card-border); display: flex; overflow-x: auto; white-space: nowrap; z-index: 100; padding: 0 5px; }
-        .bottom-nav::-webkit-scrollbar { display: none; }
-        .nav-item { min-width: 75px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-sub); font-size: 0.7rem; cursor: pointer; border: none; background: none; }
+        .badge { font-size: 0.65rem; padding: 3px 6px; border-radius: 4px; font-weight: 600; margin-right: 4px; }
+        .badge-above { background-color: var(--green-bg); color: var(--green); border: 1px solid var(--green); }
+        .badge-below { background-color: rgba(240, 185, 11, 0.15); color: var(--yellow); border: 1px solid var(--yellow); }
+        .badge-cross-5ma { background-color: var(--purple-bg); color: #ce93d8; border: 1px solid #ce93d8; }
+        .badge-above-5ma { background-color: var(--blue-bg); color: #90caf9; border: 1px solid #90caf9; }
+        
+        .change-badge { font-size: 0.8rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+        .change-up { color: var(--green); background-color: var(--green-bg); }
+        .change-down { color: var(--red); background-color: var(--red-bg); }
+        
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background-color: var(--card-bg); border-top: 1px solid var(--card-border); display: flex; z-index: 100; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-sub); font-size: 0.65rem; cursor: pointer; border: none; background: none; }
         .nav-item.active { color: var(--yellow); font-weight: bold; }
         
         .about-card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-left: 4px solid var(--yellow); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
-        .about-title { font-size: 0.9rem; color: var(--yellow); margin-bottom: 8px; font-weight: bold; }
-        .about-content { font-size: 0.85rem; line-height: 1.5; color: #d1d5db; }
+        .about-title { font-size: 0.95rem; font-weight: 700; color: var(--yellow); margin-bottom: 10px; }
+        .about-content { font-size: 0.85rem; color: #d1d5db; line-height: 1.6; }
+        .highlight { color: #fcd535; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -62,22 +68,27 @@
         <div class="header-title">⚡ 1H 20MA 掃描器</div>
         <button id="scanBtn" class="scan-btn" onclick="startScan()">重新掃描</button>
     </div>
+
     <div class="progress-bar"><div id="progress" class="progress-fill"></div></div>
 
-    <div class="toolbar">
-        <input type="text" id="searchInput" class="search-input" placeholder="搜尋幣種..." oninput="renderList()">
-        <button class="tool-btn" onclick="toggleSort()">漲幅切換</button>
+    <div class="toolbar" id="toolbar">
+        <input type="text" id="searchInput" class="search-input" placeholder="搜尋..." oninput="renderList()">
+        <button class="tool-btn" id="sortBtn" onclick="toggleSort()">漲幅 ⬇</button>
     </div>
-    <div class="status-bar"><span id="statusText">請開始掃描</span><span id="countText">共 0 筆</span></div>
+
+    <div class="status-bar" id="statusBar">
+        <span id="statusText">請點擊掃描</span>
+        <span id="countText">共 0 筆</span>
+    </div>
 
     <div class="container" id="symbolList"></div>
 
     <div class="bottom-nav">
         <button class="nav-item active" onclick="setFilter('ALL', this)"><div>🌐</div><div>全部</div></button>
         <button class="nav-item" onclick="setFilter('ABOVE_5MA', this)"><div>🟢</div><div>5MA 上</div></button>
-        <button class="nav-item" onclick="setFilter('15M_ABOVE_5MA', this)"><div>🍏</div><div>15m 5MA上</div></button>
-        <button class="nav-item" onclick="setFilter('15M_BREAKOUT_5MA', this)"><div>⚡</div><div>15m 突破5MA</div></button>
-        <button class="nav-item" onclick="setFilter('BREAKOUT', this)"><div>🚀</div><div>剛突破</div></button>
+        <button class="nav-item" onclick="setFilter('BELOW_5MA', this)"><div>🟡</div><div>5MA 下</div></button>
+        <button class="nav-item" onclick="setFilter('CROSS_5MA', this)"><div>⚡</div><div>突破 5MA</div></button>
+        <button class="nav-item" onclick="setFilter('ABOVE_5MA_15M', this)"><div>🔥</div><div>在 5MA 上</div></button>
         <button class="nav-item" onclick="setFilter('INFO', this)"><div>ℹ️</div><div>說明</div></button>
     </div>
 
@@ -87,34 +98,37 @@
     let ticker24hMap = {};
     let sortDesc = true;
 
-    function calculateSMA(data, count) { if (data.length < count) return 0; return data.slice(-count).reduce((sum, val) => sum + val, 0) / count; }
-    function calculateBBAt(prices, index, period = 20) { if (index < period - 1) return Infinity; const slice = prices.slice(index - period + 1, index + 1); const sma = slice.reduce((a, b) => a + b, 0) / period; const variance = slice.reduce((a, b) => a + Math.pow(b - sma, 2), 0) / period; return sma + (2 * Math.sqrt(variance)); }
+    function getSMA(data, period) { if (data.length < period) return 0; return data.slice(-period).reduce((a, b) => a + b, 0) / period; }
+    
+    async function fetch24hTickers() { try { const res = await fetch('https://fapi.binance.com/fapi/v1/ticker/24hr'); const data = await res.json(); const map = {}; data.forEach(item => { map[item.symbol] = parseFloat(item.priceChangePercent); }); return map; } catch(e) { return {}; } }
+    async function getUSDTFuturesSymbols() { const res = await fetch('https://fapi.binance.com/fapi/v1/exchangeInfo'); const data = await res.json(); return data.symbols.filter(s => s.quoteAsset === 'USDT' && s.contractType === 'PERPETUAL' && s.status === 'TRADING').map(s => s.symbol); }
 
     async function processSymbol(symbol) {
         try {
             const [res1h, res15m] = await Promise.all([
                 fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=30`).then(r => r.json()),
-                fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=15m&limit=35`).then(r => r.json())
+                fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=15m&limit=30`).then(r => r.json())
             ]);
             const closes1h = res1h.map(k => parseFloat(k[4]));
-            const currentClose1h = closes1h[closes1h.length - 1];
-            const ma20 = calculateSMA(closes1h, 20);
-            const ma5 = calculateSMA(closes1h, 5);
+            const closes15m = res15m.map(k => parseFloat(k[4]));
+            
+            // 1H 邏輯
+            const ma20 = getSMA(closes1h, 20);
+            const ma5 = getSMA(closes1h, 5);
+            
+            // 15m 邏輯
+            const curr15Idx = closes15m.length - 1;
+            const prev15Idx = closes15m.length - 2;
+            const ma5_15m = getSMA(closes15m, 5);
+            const ma5_prev_15m = getSMA(closes15m.slice(0, -1), 5);
 
-            if (currentClose1h > ma20) {
-                const closes15m = res15m.map(k => parseFloat(k[4]));
-                const ma5_15m = calculateSMA(closes15m, 5);
-                const prev_ma5_15m = calculateSMA(closes15m.slice(0, -1), 5);
-                
-                const currClose15m = closes15m[closes15m.length - 1];
-                const prevClose15m = closes15m[closes15m.length - 2];
-
+            if (closes1h[closes1h.length - 1] > ma20) {
                 return { 
-                    symbol, price: currentClose1h, 
-                    isAboveMa5: currentClose1h >= ma5,
-                    is15mAbove5MA: currClose15m >= ma5_15m,
-                    is15mJustBreakout5MA: (prevClose15m < prev_ma5_15m) && (currClose15m >= ma5_15m),
-                    isJustBreakout15mBB: (closes15m[closes15m.length-2] < calculateBBAt(closes15m, closes15m.length-2)) && (currClose15m >= calculateBBAt(closes15m, closes15m.length-1)),
+                    symbol: symbol, 
+                    price: closes1h[closes1h.length - 1], 
+                    isAboveMa5: closes1h[closes1h.length - 1] >= ma5,
+                    isAbove5ma15m: closes15m[curr15Idx] > ma5_15m,
+                    isCrossed5ma15m: (closes15m[prev15Idx] <= ma5_prev_15m && closes15m[curr15Idx] > ma5_15m),
                     priceChange24h: ticker24hMap[symbol] || 0 
                 };
             }
@@ -123,57 +137,87 @@
     }
 
     async function startScan() {
-        const scanBtn = document.getElementById('scanBtn');
-        scanBtn.disabled = true; rawResults = [];
-        ticker24hMap = await fetch('https://fapi.binance.com/fapi/v1/ticker/24hr').then(r=>r.json()).then(d=>{const m={}; d.forEach(i=>m[i.symbol]=parseFloat(i.priceChangePercent)); return m;});
-        const symbols = await fetch('https://fapi.binance.com/fapi/v1/exchangeInfo').then(r=>r.json()).then(d=>d.symbols.filter(s=>s.quoteAsset==='USDT'&&s.contractType==='PERPETUAL').map(s=>s.symbol));
-        
+        const btn = document.getElementById('scanBtn');
+        btn.disabled = true; btn.innerText = "掃描中..."; rawResults = [];
+        ticker24hMap = await fetch24hTickers();
+        const symbols = await getUSDTFuturesSymbols();
+        let processed = 0;
         for (let i = 0; i < symbols.length; i += 15) {
-            const batch = await Promise.all(symbols.slice(i, i + 15).map(processSymbol));
-            batch.forEach(res => { if (res) rawResults.push(res); });
-            document.getElementById('progress').style.width = `${Math.floor((i / symbols.length) * 100)}%`;
+            const batch = symbols.slice(i, i + 15);
+            const results = await Promise.all(batch.map(sym => processSymbol(sym)));
+            results.forEach(res => { if (res) rawResults.push(res); });
+            processed += batch.length;
+            document.getElementById('progress').style.width = `${Math.floor((processed / symbols.length) * 100)}%`;
             if (currentFilter !== 'INFO') renderList();
         }
-        scanBtn.disabled = false;
+        btn.disabled = false; btn.innerText = "重新掃描";
     }
 
+    function toggleSort() { sortDesc = !sortDesc; renderList(); }
     function setFilter(filter, el) { 
         currentFilter = filter; 
-        document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active')); 
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); 
         el.classList.add('active'); 
-        renderList(); 
+        if (filter === 'INFO') { document.getElementById('toolbar').style.display = 'none'; document.getElementById('statusBar').style.display = 'none'; renderInfoPage(); } 
+        else { document.getElementById('toolbar').style.display = 'flex'; document.getElementById('statusBar').style.display = 'flex'; renderList(); } 
     }
 
     function getFilteredData() {
         const query = document.getElementById('searchInput').value.toUpperCase();
         return rawResults.filter(item => item.symbol.includes(query)).filter(item => {
             if (currentFilter === 'ABOVE_5MA') return item.isAboveMa5;
-            if (currentFilter === '15M_ABOVE_5MA') return item.is15mAbove5MA;
-            if (currentFilter === '15M_BREAKOUT_5MA') return item.is15mJustBreakout5MA;
-            if (currentFilter === 'BREAKOUT') return item.isJustBreakout15mBB;
+            if (currentFilter === 'BELOW_5MA') return !item.isAboveMa5;
+            if (currentFilter === 'CROSS_5MA') return item.isCrossed5ma15m;
+            if (currentFilter === 'ABOVE_5MA_15M') return item.isAbove5ma15m;
             return true;
         });
     }
 
+    function renderInfoPage() {
+        document.getElementById('symbolList').innerHTML = `
+            <div class="about-card">
+                <div class="about-title">🏷️ 分頁標籤說明</div>
+                <div class="about-content">
+                    <ul>
+                        <li><b>🌐 全部：</b>符合 1H 20MA 多頭趨勢的標的。</li>
+                        <li><b>🟢 5MA 上：</b>1H 價格站上 5MA。</li>
+                        <li><b>🟡 5MA 下：</b>1H 價格回踩至 5MA 以下但仍在 20MA 上。</li>
+                        <li><b>⚡ 突破 5MA：</b>15m K 線剛穿越 5MA 的動能瞬間。</li>
+                        <li><b>🔥 在 5MA 上：</b>15m K 線穩定處於 5MA 之上。</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="about-card">
+                <div class="about-title">💡 操作建議</div>
+                <div class="about-content">
+                    使用 <span class="highlight">⚡ 突破 5MA</span> 尋找爆發機會，並參考 <span class="highlight">🔥 在 5MA 上</span> 進行趨勢跟進。
+                </div>
+            </div>
+        `;
+    }
+
     function renderList() {
-        if (currentFilter === 'INFO') {
-            document.getElementById('symbolList').innerHTML = `<div class="about-card"><div class="about-title">使用說明</div><div class="about-content">切換下方分頁即可快速篩選 15 分鐘線的動能標的，方便捕捉更短期的進場點。</div></div>`;
-            return;
-        }
-        let filtered = getFilteredData().sort((a,b) => sortDesc ? b.priceChange24h - a.priceChange24h : a.priceChange24h - b.priceChange24h);
-        document.getElementById('countText').innerText = `共 ${filtered.length} 筆`;
-        document.getElementById('symbolList').innerHTML = filtered.map(item => `
+        const container = document.getElementById('symbolList');
+        let data = getFilteredData();
+        data.sort((a, b) => sortDesc ? b.priceChange24h - a.priceChange24h : a.priceChange24h - b.priceChange24h);
+        document.getElementById('countText').innerText = `共 ${data.length} 筆`;
+        container.innerHTML = data.map(item => `
             <a class="symbol-card" href="https://www.binance.com/zh-TC/futures/${item.symbol}" target="_blank">
-                <div class="symbol-info"><div class="name">${item.symbol.replace('USDT', '')}</div></div>
-                <div>
-                    ${item.is15mAbove5MA ? '<span class="badge badge-15m">15m 5MA↑</span>' : ''}
-                    <span style="font-weight:bold">${item.priceChange24h.toFixed(2)}%</span>
+                <div class="symbol-info">
+                    <div class="name">${item.symbol.replace('USDT', '')}</div>
+                    <div>
+                        ${item.isAboveMa5 ? '<span class="badge badge-above">1H 5MA上</span>' : '<span class="badge badge-below">1H 5MA下</span>'}
+                        ${item.isCrossed5ma15m ? '<span class="badge badge-cross-5ma">⚡ 剛突破5MA</span>' : ''}
+                        ${item.isAbove5ma15m ? '<span class="badge badge-above-5ma">🔥 15m 5MA上</span>' : ''}
+                    </div>
+                </div>
+                <div class="symbol-metrics">
+                    <div class="price">${item.price}</div>
+                    <span class="change-badge ${item.priceChange24h>=0?'change-up':'change-down'}">${item.priceChange24h.toFixed(2)}%</span>
                 </div>
             </a>
         `).join('');
     }
-    
-    function toggleSort() { sortDesc = !sortDesc; renderList(); }
 </script>
 </body>
 </html>
