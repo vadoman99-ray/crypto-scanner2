@@ -32,16 +32,27 @@
         
         .app-header { position: sticky; top: 0; z-index: 100; background-color: rgba(30, 35, 41, 0.95); backdrop-filter: blur(8px); padding: 12px 16px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
         .header-title { font-weight: 800; font-size: 1.05rem; display: flex; align-items: center; gap: 6px; }
-        .scan-btn { background-color: var(--yellow); color: #000; border: none; padding: 8px 18px; border-radius: 20px; font-weight: 700; font-size: 0.85rem; cursor: pointer; }
-        .progress-bar { height: 3px; background: var(--card-border); width: 100%; }
-        .progress-fill { height: 100%; width: 0%; background: var(--yellow); transition: width 0.15s ease-out; }
+        .scan-btn { background-color: var(--yellow); color: #000; border: none; padding: 8px 18px; border-radius: 20px; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: background 0.2s; }
+        .scan-btn:hover { background-color: var(--yellow-hover); }
+        .scan-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .progress-bar { height: 3px; background: var(--card-border); width: 100%; overflow: hidden; }
+        .progress-fill { height: 100%; width: 0%; background: var(--yellow); transition: width 0.2s ease-out; }
+        
         .toolbar { padding: 10px 16px; background: rgba(30, 35, 41, 0.6); display: flex; gap: 8px; align-items: center; border-bottom: 1px solid var(--card-border); }
-        .search-input { flex: 1; background: var(--bg-color); border: 1px solid var(--card-border); color: var(--text-main); padding: 7px 12px; border-radius: 8px; font-size: 0.85rem; }
-        .tool-btn { background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-sub); padding: 7px 12px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; font-weight: 600; }
+        .search-wrapper { position: relative; flex: 1; display: flex; align-items: center; }
+        .search-input { width: 100%; background: var(--bg-color); border: 1px solid var(--card-border); color: var(--text-main); padding: 7px 30px 7px 12px; border-radius: 8px; font-size: 0.85rem; outline: none; }
+        .search-input:focus { border-color: var(--yellow); }
+        .clear-btn { position: absolute; right: 8px; background: none; border: none; color: var(--text-sub); cursor: pointer; font-size: 0.9rem; display: none; }
+        
+        .tool-btn { background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-sub); padding: 7px 12px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; font-weight: 600; white-space: nowrap; }
+        .tool-btn:hover { color: var(--text-main); border-color: var(--text-sub); }
+
         .status-bar { padding: 8px 16px; font-size: 0.75rem; color: var(--text-sub); display: flex; justify-content: space-between; align-items: center; }
         .container { padding: 10px 16px; }
         
-        .symbol-card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; text-decoration: none; color: inherit; }
+        .symbol-card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; text-decoration: none; color: inherit; transition: transform 0.15s, border-color 0.15s; }
+        .symbol-card:hover { transform: translateY(-2px); border-color: var(--yellow); }
         .symbol-info .name { font-size: 1.05rem; font-weight: 700; margin-bottom: 4px; }
         .symbol-metrics { text-align: right; }
         .symbol-metrics .price { font-size: 1rem; font-weight: 700; margin-bottom: 4px; font-family: monospace; }
@@ -54,7 +65,7 @@
         .badge-vcp { background-color: var(--orange-bg); color: #ffb74d; border: 1px solid #ffb74d; }
         .badge-bb-slope { background-color: var(--pink-bg); color: #f48fb1; border: 1px solid #f48fb1; }
         
-        .change-badge { font-size: 0.8rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+        .change-badge { font-size: 0.8rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; display: inline-block; }
         .change-up { color: var(--green); background-color: var(--green-bg); }
         .change-down { color: var(--red); background-color: var(--red-bg); }
         
@@ -68,6 +79,7 @@
         .about-content ul { padding-left: 18px; margin: 0; }
         .about-content li { margin-bottom: 8px; }
         .about-content li:last-child { margin-bottom: 0; }
+        .empty-tip { text-align: center; padding: 40px 0; color: var(--text-sub); font-size: 0.9rem; }
     </style>
 </head>
 <body>
@@ -80,12 +92,15 @@
     <div class="progress-bar"><div id="progress" class="progress-fill"></div></div>
 
     <div class="toolbar" id="toolbar">
-        <input type="text" id="searchInput" class="search-input" placeholder="搜尋..." oninput="renderList()">
+        <div class="search-wrapper">
+            <input type="text" id="searchInput" class="search-input" placeholder="搜尋幣種 (如: BTC)..." oninput="onSearchInput()">
+            <button id="clearBtn" class="clear-btn" onclick="clearSearch()">✕</button>
+        </div>
         <button class="tool-btn" id="sortBtn" onclick="toggleSort()">漲幅 ⬇</button>
     </div>
 
     <div class="status-bar" id="statusBar">
-        <span id="statusText">請點擊掃描</span>
+        <span id="statusText">請點擊掃描開始</span>
         <span id="countText">共 0 筆</span>
     </div>
 
@@ -108,15 +123,13 @@
     let ticker24hMap = {};
     let sortDesc = true;
 
-    // 基礎 MA 計算
     function getSMA(data, period) { 
-        if (data.length < period) return 0; 
+        if (!data || data.length < period) return 0; 
         return data.slice(-period).reduce((a, b) => a + b, 0) / period; 
     }
 
-    // 計算 20 布林通道上軌 (N=20, K=2)
     function getBollingerUpperBand(data, period = 20, multiplier = 2) {
-        if (data.length < period) return 0;
+        if (!data || data.length < period) return 0;
         const slice = data.slice(-period);
         const mean = slice.reduce((a, b) => a + b, 0) / period;
         const variance = slice.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / period;
@@ -124,41 +137,62 @@
         return mean + (multiplier * stdDev);
     }
 
-    // 檢查 5MA 斜率是否向上 (最新 5MA > 前一根 5MA)
     function is5MASlopeUp(closes) {
-        if (closes.length < 6) return false;
+        if (!closes || closes.length < 6) return false;
         const current5MA = getSMA(closes, 5);
         const prev5MA = getSMA(closes.slice(0, -1), 5);
         return current5MA > prev5MA;
     }
     
-    // 判斷單一週期：價格突破 20 布林上軌 且 5MA 斜率向上
     function checkBollingerAndSlopeUp(closes) {
-        if (closes.length < 20) return false;
+        if (!closes || closes.length < 20) return false;
         const currentPrice = closes[closes.length - 1];
         const bbUpper = getBollingerUpperBand(closes, 20, 2);
         const slopeUp = is5MASlopeUp(closes);
         return (currentPrice > bbUpper) && slopeUp;
     }
 
-    // VCP 邏輯
     function checkVCP15M(klines) {
-        if (klines.length < 24) return false;
+        if (!klines || klines.length < 24) return false;
         const recent = klines.slice(-12);
         const previous = klines.slice(-24, -12);
         
         const getRangePct = (arr) => {
             const highs = arr.map(k => parseFloat(k[2]));
             const lows = arr.map(k => parseFloat(k[3]));
-            return (Math.max(...highs) - Math.min(...lows)) / Math.min(...lows);
+            const minLow = Math.min(...lows);
+            return minLow === 0 ? 0 : (Math.max(...highs) - minLow) / minLow;
         };
         const getAvgVol = (arr) => arr.reduce((acc, k) => acc + parseFloat(k[5]), 0) / arr.length;
 
         return getRangePct(recent) < (getRangePct(previous) * 0.75) && getAvgVol(recent) < getAvgVol(previous);
     }
 
-    async function fetch24hTickers() { try { const res = await fetch('https://fapi.binance.com/fapi/v1/ticker/24hr'); const data = await res.json(); const map = {}; data.forEach(item => { map[item.symbol] = parseFloat(item.priceChangePercent); }); return map; } catch(e) { return {}; } }
-    async function getUSDTFuturesSymbols() { const res = await fetch('https://fapi.binance.com/fapi/v1/exchangeInfo'); const data = await res.json(); return data.symbols.filter(s => s.quoteAsset === 'USDT' && s.contractType === 'PERPETUAL' && s.status === 'TRADING').map(s => s.symbol); }
+    async function fetch24hTickers() { 
+        try { 
+            const res = await fetch('https://fapi.binance.com/fapi/v1/ticker/24hr'); 
+            const data = await res.json(); 
+            const map = {}; 
+            data.forEach(item => { map[item.symbol] = parseFloat(item.priceChangePercent); }); 
+            return map; 
+        } catch(e) { 
+            console.error('Fetch tickers error:', e);
+            return {}; 
+        } 
+    }
+
+    async function getUSDTFuturesSymbols() { 
+        try {
+            const res = await fetch('https://fapi.binance.com/fapi/v1/exchangeInfo'); 
+            const data = await res.json(); 
+            return data.symbols
+                .filter(s => s.quoteAsset === 'USDT' && s.contractType === 'PERPETUAL' && s.status === 'TRADING')
+                .map(s => s.symbol); 
+        } catch(e) {
+            console.error('Fetch symbols error:', e);
+            return [];
+        }
+    }
 
     async function processSymbol(symbol) {
         try {
@@ -169,23 +203,22 @@
                 fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=1m&limit=30`).then(r => r.json())
             ]);
 
+            if (!Array.isArray(res1h) || res1h.length < 20) return null;
+
             const closes1h = res1h.map(k => parseFloat(k[4]));
             const closes15m = res15m.map(k => parseFloat(k[4]));
             const closes5m = res5m.map(k => parseFloat(k[4]));
             const closes1m = res1m.map(k => parseFloat(k[4]));
             
-            // 1H 邏輯
             const ma20 = getSMA(closes1h, 20);
             const ma5 = getSMA(closes1h, 5);
             
-            // 15m 邏輯與 VCP 判斷
             const curr15Idx = closes15m.length - 1;
             const prev15Idx = closes15m.length - 2;
             const ma5_15m = getSMA(closes15m, 5);
             const ma5_prev_15m = getSMA(closes15m.slice(0, -1), 5);
             const isVcp15m = checkVCP15M(res15m);
 
-            // 1m, 5m & 15m 20布林上軌 + 5MA斜率向上 條件
             const is1mBBAndSlope = checkBollingerAndSlopeUp(closes1m);
             const is5mBBAndSlope = checkBollingerAndSlopeUp(closes5m);
             const is15mBBAndSlope = checkBollingerAndSlopeUp(closes15m);
@@ -210,32 +243,79 @@
 
     async function startScan() {
         const btn = document.getElementById('scanBtn');
-        btn.disabled = true; btn.innerText = "掃描中..."; rawResults = [];
+        const statusText = document.getElementById('statusText');
+        btn.disabled = true; 
+        btn.innerText = "掃描中..."; 
+        statusText.innerText = "正在取得市場清單...";
+        rawResults = [];
+        
         ticker24hMap = await fetch24hTickers();
         const symbols = await getUSDTFuturesSymbols();
+        
+        if (symbols.length === 0) {
+            statusText.innerText = "無法載入標的，請再試一次";
+            btn.disabled = false;
+            btn.innerText = "重新掃描";
+            return;
+        }
+
         let processed = 0;
-        for (let i = 0; i < symbols.length; i += 15) {
-            const batch = symbols.slice(i, i + 15);
+        const batchSize = 10; // 控制並行請求，避免 API 封鎖
+        
+        for (let i = 0; i < symbols.length; i += batchSize) {
+            const batch = symbols.slice(i, i + batchSize);
             const results = await Promise.all(batch.map(sym => processSymbol(sym)));
             results.forEach(res => { if (res) rawResults.push(res); });
             processed += batch.length;
-            document.getElementById('progress').style.width = `${Math.floor((processed / symbols.length) * 100)}%`;
+            
+            const pct = Math.floor((processed / symbols.length) * 100);
+            document.getElementById('progress').style.width = `${pct}%`;
+            statusText.innerText = `掃描中 (${processed}/${symbols.length})...`;
+            
             if (currentFilter !== 'INFO') renderList();
         }
-        btn.disabled = false; btn.innerText = "重新掃描";
+
+        statusText.innerText = "掃描完成";
+        btn.disabled = false; 
+        btn.innerText = "重新掃描";
     }
 
-    function toggleSort() { sortDesc = !sortDesc; renderList(); }
+    function toggleSort() { 
+        sortDesc = !sortDesc; 
+        document.getElementById('sortBtn').innerText = sortDesc ? "漲幅 ⬇" : "漲幅 ⬆";
+        renderList(); 
+    }
+
+    function onSearchInput() {
+        const input = document.getElementById('searchInput');
+        document.getElementById('clearBtn').style.display = input.value ? 'block' : 'none';
+        renderList();
+    }
+
+    function clearSearch() {
+        const input = document.getElementById('searchInput');
+        input.value = '';
+        document.getElementById('clearBtn').style.display = 'none';
+        renderList();
+    }
+
     function setFilter(filter, el) { 
         currentFilter = filter; 
         document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); 
         el.classList.add('active'); 
-        if (filter === 'INFO') { document.getElementById('toolbar').style.display = 'none'; document.getElementById('statusBar').style.display = 'none'; renderInfoPage(); } 
-        else { document.getElementById('toolbar').style.display = 'flex'; document.getElementById('statusBar').style.display = 'flex'; renderList(); } 
+        if (filter === 'INFO') { 
+            document.getElementById('toolbar').style.display = 'none'; 
+            document.getElementById('statusBar').style.display = 'none'; 
+            renderInfoPage(); 
+        } else { 
+            document.getElementById('toolbar').style.display = 'flex'; 
+            document.getElementById('statusBar').style.display = 'flex'; 
+            renderList(); 
+        } 
     }
 
     function getFilteredData() {
-        const query = document.getElementById('searchInput').value.toUpperCase();
+        const query = document.getElementById('searchInput').value.toUpperCase().trim();
         return rawResults.filter(item => item.symbol.includes(query)).filter(item => {
             if (currentFilter === 'ABOVE_5MA') return item.isAboveMa5;
             if (currentFilter === 'BELOW_5MA') return !item.isAboveMa5;
@@ -287,7 +367,14 @@
         const container = document.getElementById('symbolList');
         let data = getFilteredData();
         data.sort((a, b) => sortDesc ? b.priceChange24h - a.priceChange24h : a.priceChange24h - b.priceChange24h);
-        document.getElementById('countText').innerText = `共 ${data.length} 筆`;
+        
+        document.getElementById('countText').innerText = `符合 ${data.length} / 總計 ${rawResults.length} 筆`;
+
+        if (data.length === 0) {
+            container.innerHTML = `<div class="empty-tip">${rawResults.length === 0 ? '請點擊右上角「重新掃描」按鈕' : '沒有找到符合條件的標的'}</div>`;
+            return;
+        }
+
         container.innerHTML = data.map(item => `
             <a class="symbol-card" href="https://www.binance.com/zh-TC/futures/${item.symbol}" target="_blank">
                 <div class="symbol-info">
@@ -302,7 +389,7 @@
                 </div>
                 <div class="symbol-metrics">
                     <div class="price">${item.price}</div>
-                    <span class="change-badge ${item.priceChange24h>=0?'change-up':'change-down'}">${item.priceChange24h.toFixed(2)}%</span>
+                    <span class="change-badge ${item.priceChange24h >= 0 ? 'change-up' : 'change-down'}">${item.priceChange24h.toFixed(2)}%</span>
                 </div>
             </a>
         `).join('');
