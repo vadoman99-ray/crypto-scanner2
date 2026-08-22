@@ -18,14 +18,8 @@
             --green-bg: rgba(14, 203, 129, 0.15);
             --red: #f6465d;
             --red-bg: rgba(246, 70, 93, 0.15);
-            --blue: #1877f2;
-            --blue-bg: rgba(24, 119, 242, 0.15);
             --purple: #9c27b0;
             --purple-bg: rgba(156, 39, 176, 0.15);
-            --orange: #ff9800;
-            --orange-bg: rgba(255, 152, 0, 0.15);
-            --pink: #e91e63;
-            --pink-bg: rgba(233, 30, 99, 0.15);
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding-bottom: 75px; }
@@ -60,17 +54,14 @@
         .badge { font-size: 0.65rem; padding: 3px 6px; border-radius: 4px; font-weight: 600; margin-right: 4px; display: inline-block; margin-top: 2px; }
         .badge-above { background-color: var(--green-bg); color: var(--green); border: 1px solid var(--green); }
         .badge-below { background-color: rgba(240, 185, 11, 0.15); color: var(--yellow); border: 1px solid var(--yellow); }
-        .badge-cross-5ma { background-color: var(--purple-bg); color: #ce93d8; border: 1px solid #ce93d8; }
-        .badge-above-5ma { background-color: var(--blue-bg); color: #90caf9; border: 1px solid #90caf9; }
-        .badge-vcp { background-color: var(--orange-bg); color: #ffb74d; border: 1px solid #ffb74d; }
-        .badge-bb-slope { background-color: var(--pink-bg); color: #f48fb1; border: 1px solid #f48fb1; }
+        .badge-squeeze { background-color: var(--purple-bg); color: #ce93d8; border: 1px solid #ce93d8; }
         
         .change-badge { font-size: 0.8rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; display: inline-block; }
         .change-up { color: var(--green); background-color: var(--green-bg); }
         .change-down { color: var(--red); background-color: var(--red-bg); }
         
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background-color: var(--card-bg); border-top: 1px solid var(--card-border); display: flex; z-index: 100; overflow-x: auto; }
-        .nav-item { flex: 1; min-width: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-sub); font-size: 0.58rem; cursor: pointer; border: none; background: none; white-space: nowrap; padding: 0 2px; }
+        .nav-item { flex: 1; min-width: 65px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-sub); font-size: 0.6rem; cursor: pointer; border: none; background: none; white-space: nowrap; padding: 0 2px; }
         .nav-item.active { color: var(--yellow); font-weight: bold; }
         
         .about-card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-left: 4px solid var(--yellow); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
@@ -87,7 +78,7 @@
 <body>
 
     <div class="app-header">
-        <div class="header-title">⚡ 1H 20MA 掃描器</div>
+        <div class="header-title">⚡ 1H K棒與 5分K 5MA 掃描器</div>
         <button id="scanBtn" class="scan-btn" onclick="startScan()">重新掃描</button>
     </div>
 
@@ -110,12 +101,9 @@
 
     <div class="bottom-nav">
         <button class="nav-item active" onclick="setFilter('ALL', this)"><div>🌐</div><div>全部</div></button>
-        <button class="nav-item" onclick="setFilter('ABOVE_5MA', this)"><div>🟢</div><div>5MA 上</div></button>
-        <button class="nav-item" onclick="setFilter('BELOW_5MA', this)"><div>🟡</div><div>5MA 下</div></button>
-        <button class="nav-item" onclick="setFilter('CROSS_5MA', this)"><div>⚡</div><div>突破 5MA</div></button>
-        <button class="nav-item" onclick="setFilter('ABOVE_5MA_15M', this)"><div>🔥</div><div>在 5MA 上</div></button>
-        <button class="nav-item" onclick="setFilter('VCP_15M', this)"><div>🌀</div><div>15K VCP</div></button>
-        <button class="nav-item" onclick="setFilter('BOLLINGER_SLOPE_UP', this)"><div>🚀</div><div>15m+5m布林向上</div></button>
+        <button class="nav-item" onclick="setFilter('ABOVE_5MA', this)"><div>🟢</div><div>5分K 5MA 上</div></button>
+        <button class="nav-item" onclick="setFilter('BELOW_5MA', this)"><div>🟡</div><div>5分K 5MA 下</div></button>
+        <button class="nav-item" onclick="setFilter('1H_5MA_15M_SQUEEZE', this)"><div>🔮</div><div>1H 5MA上+15M壓縮</div></button>
         <button class="nav-item" onclick="setFilter('INFO', this)"><div>ℹ️</div><div>說明</div></button>
     </div>
 
@@ -130,44 +118,29 @@
         return data.slice(-period).reduce((a, b) => a + b, 0) / period; 
     }
 
-    function getBollingerUpperBand(data, period = 20, multiplier = 2) {
-        if (!data || data.length < period) return 0;
-        const slice = data.slice(-period);
-        const mean = slice.reduce((a, b) => a + b, 0) / period;
-        const variance = slice.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / period;
-        const stdDev = Math.sqrt(variance);
-        return mean + (multiplier * stdDev);
-    }
-
-    function is5MASlopeUp(closes) {
-        if (!closes || closes.length < 6) return false;
-        const current5MA = getSMA(closes, 5);
-        const prev5MA = getSMA(closes.slice(0, -1), 5);
-        return current5MA > prev5MA;
-    }
-    
-    function checkBollingerAndSlopeUp(closes) {
-        if (!closes || closes.length < 20) return false;
-        const currentPrice = closes[closes.length - 1];
-        const bbUpper = getBollingerUpperBand(closes, 20, 2);
-        const slopeUp = is5MASlopeUp(closes);
-        return (currentPrice > bbUpper) && slopeUp;
-    }
-
-    function checkVCP15M(klines) {
-        if (!klines || klines.length < 24) return false;
-        const recent = klines.slice(-12);
-        const previous = klines.slice(-24, -12);
+    function check15mBollingerSqueeze(klines15m) {
+        if (!klines15m || klines15m.length < 50) return false;
         
-        const getRangePct = (arr) => {
-            const highs = arr.map(k => parseFloat(k[2]));
-            const lows = arr.map(k => parseFloat(k[3]));
-            const minLow = Math.min(...lows);
-            return minLow === 0 ? 0 : (Math.max(...highs) - minLow) / minLow;
-        };
-        const getAvgVol = (arr) => arr.reduce((acc, k) => acc + parseFloat(k[5]), 0) / arr.length;
+        const closes = klines15m.map(k => parseFloat(k[4]));
+        const bandwidths = [];
 
-        return getRangePct(recent) < (getRangePct(previous) * 0.75) && getAvgVol(recent) < getAvgVol(previous);
+        for (let i = 19; i < closes.length; i++) {
+            const slice = closes.slice(i - 19, i + 1);
+            const mean = slice.reduce((a, b) => a + b, 0) / 20;
+            const variance = slice.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / 20;
+            const stdDev = Math.sqrt(variance);
+            
+            const upper = mean + (2 * stdDev);
+            const lower = mean - (2 * stdDev);
+            const bandwidth = mean === 0 ? 0 : (upper - lower) / mean;
+            bandwidths.push(bandwidth);
+        }
+
+        const recent20Bandwidths = bandwidths.slice(-20);
+        const sortedBandwidths = [...bandwidths].sort((a, b) => a - b);
+        const threshold = sortedBandwidths[Math.floor(bandwidths.length * 0.15)];
+
+        return recent20Bandwidths.some(bw => bw <= threshold);
     }
 
     async function fetch24hTickers() { 
@@ -198,45 +171,34 @@
 
     async function processSymbol(symbol) {
         try {
-            const [res1h, res15m, res5m] = await Promise.all([
-                fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=30`).then(r => r.json()),
-                fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=15m&limit=30`).then(r => r.json()),
-                fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=5m&limit=30`).then(r => r.json())
+            const [res1h, res5m, res15m] = await Promise.all([
+                fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=10`).then(r => r.json()),
+                fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=5m&limit=10`).then(r => r.json()),
+                fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=15m&limit=70`).then(r => r.json())
             ]);
 
-            if (!Array.isArray(res1h) || res1h.length < 20) return null;
+            if (!Array.isArray(res1h) || res1h.length < 5 || !Array.isArray(res5m) || res5m.length < 5) return null;
 
             const closes1h = res1h.map(k => parseFloat(k[4]));
-            const closes15m = res15m.map(k => parseFloat(k[4]));
+            const price1h = closes1h[closes1h.length - 1];
+            const ma5_1h = getSMA(closes1h, 5);
+
             const closes5m = res5m.map(k => parseFloat(k[4]));
-            
-            const ma20 = getSMA(closes1h, 20);
-            const ma5 = getSMA(closes1h, 5);
-            
-            const curr15Idx = closes15m.length - 1;
-            const prev15Idx = closes15m.length - 2;
-            const ma5_15m = getSMA(closes15m, 5);
-            const ma5_prev_15m = getSMA(closes15m.slice(0, -1), 5);
-            const isVcp15m = checkVCP15M(res15m);
+            const ma5_5m = getSMA(closes5m, 5);
 
-            const is5mBBAndSlope = checkBollingerAndSlopeUp(closes5m);
-            const is15mBBAndSlope = checkBollingerAndSlopeUp(closes15m);
+            const isAbove5mMa5 = price1h > ma5_5m;
+            const isAbove1hMa5 = price1h > ma5_1h;
+            const has15mSqueeze = check15mBollingerSqueeze(res15m);
 
-            const is5m15mBollingerAndSlopeUp = is5mBBAndSlope && is15mBBAndSlope;
-
-            if (closes1h[closes1h.length - 1] > ma20) {
-                return { 
-                    symbol: symbol, 
-                    price: closes1h[closes1h.length - 1], 
-                    isAboveMa5: closes1h[closes1h.length - 1] >= ma5,
-                    isAbove5ma15m: closes15m[curr15Idx] > ma5_15m,
-                    isCrossed5ma15m: (closes15m[prev15Idx] <= ma5_prev_15m && closes15m[curr15Idx] > ma5_15m),
-                    isVcp15m: isVcp15m,
-                    is5m15mBollingerAndSlopeUp: is5m15mBollingerAndSlopeUp,
-                    priceChange24h: ticker24hMap[symbol] || 0 
-                };
-            }
-            return null;
+            return { 
+                symbol: symbol, 
+                price: price1h, 
+                ma5_5m: ma5_5m,
+                isAboveMa5: isAbove5mMa5,
+                isAbove1hMa5: isAbove1hMa5,
+                has15mSqueeze: has15mSqueeze,
+                priceChange24h: ticker24hMap[symbol] || 0 
+            };
         } catch (e) { return null; }
     }
 
@@ -259,7 +221,7 @@
         }
 
         let processed = 0;
-        const batchSize = 10;
+        const batchSize = 15;
         
         for (let i = 0; i < symbols.length; i += batchSize) {
             const batch = symbols.slice(i, i + batchSize);
@@ -318,10 +280,7 @@
         return rawResults.filter(item => item.symbol.includes(query)).filter(item => {
             if (currentFilter === 'ABOVE_5MA') return item.isAboveMa5;
             if (currentFilter === 'BELOW_5MA') return !item.isAboveMa5;
-            if (currentFilter === 'CROSS_5MA') return item.isCrossed5ma15m;
-            if (currentFilter === 'ABOVE_5MA_15M') return item.isAbove5ma15m;
-            if (currentFilter === 'VCP_15M') return item.isVcp15m;
-            if (currentFilter === 'BOLLINGER_SLOPE_UP') return item.is5m15mBollingerAndSlopeUp;
+            if (currentFilter === '1H_5MA_15M_SQUEEZE') return item.isAbove1hMa5 && item.has15mSqueeze;
             return true;
         });
     }
@@ -329,13 +288,12 @@
     function renderInfoPage() {
         document.getElementById('symbolList').innerHTML = `
             <div class="about-card strategy">
-                <div class="about-title">🔥 實戰超級攻略 (極短線與波段操作)</div>
+                <div class="about-title">🔥 超級實戰攻略</div>
                 <div class="about-content">
                     <ul>
-                        <li><b>🚀 共振噴發狙擊（極短線首選）：</b>切換至「<b>15m+5m布林向上</b>」，挑選同時帶有 <b>1H 5MA上</b> 的幣種。這代表多個週期同時向上擴張，常是強勢主升段發動點。</li>
-                        <li><b>🌀 潛伏起漲點（低風險高盈虧比）：</b>觀察「<b>15K VCP</b>」分頁。若標的同時出現「<b>⚡ 剛突破5MA</b>」，代表波動擠壓完成並開始帶量轉強，為最佳右側試倉位置。</li>
-                        <li><b>🟡 回踩低吸法（順勢波段）：</b>點擊「<b>5MA 下</b>」分頁，尋找價格處於 1H 20MA 之上但短期回踩的熱門幣，待 15m 出現止跌訊號時順勢切入。</li>
-                        <li><b>🛡️ 風險控管心法：</b>建議進場後將防守位（止損）設於 <b>15m 5MA</b> 或前一根 15m K 線低點，若價格跌破即果斷離場。</li>
+                        <li><b>🟢 順勢做多（5分K 5MA 之上）：</b>1 小時 K 棒收盤價高於 5 分鐘 5MA，代表超短線多頭強勢推進。</li>
+                        <li><b>🟡 回踩關注（5分K 5MA 之下）：</b>1 小時 K 棒收盤價低於 5 分鐘 5MA，代表極短線拉回，可留意止跌點。</li>
+                        <li><b>🔮 蓄勢噴發狙擊（1H 5MA上 + 15M壓縮）：</b>1 小時站上 1H 5MA（中短期偏多），且過去 20 根 15 分鐘 K 棒曾出現布林極致壓縮。這通常是<b>變盤前的蓄勢狀態，極易出現帶量爆發</b>！</li>
                     </ul>
                 </div>
             </div>
@@ -343,32 +301,7 @@
             <div class="about-card">
                 <div class="about-title">🎯 工具核心設計理念</div>
                 <div class="about-content">
-                    本工具專為<b>幣安 USDT 永續合約</b>打造，旨在協助交易者迅速篩選出具備<b>多頭趨勢慣性與極致短線爆發力</b>的標的，省去逐一翻圖的時間。
-                </div>
-            </div>
-
-            <div class="about-card">
-                <div class="about-title">📊 基礎篩選條件 (主濾網)</div>
-                <div class="about-content">
-                    <ul>
-                        <li><b>1H 20MA 多頭站上：</b>當前 1 小時 K 線收盤價高於 20MA，確保標的處於中短期多頭格局。</li>
-                        <li><b>24H 漲幅排序：</b>自動由高至低排列，優先聚焦於全市場資金最關注的热門動能幣種。</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="about-card">
-                <div class="about-title">🏷️ 分頁標籤與策略說明</div>
-                <div class="about-content">
-                    <ul>
-                        <li><b>🌐 全部：</b>列出所有符合 1H 20MA 上方的合約標的。</li>
-                        <li><b>🟢 5MA 上：</b>1H 價格站上 5MA，極短期多頭強勢推進中。</li>
-                        <li><b>🟡 5MA 下：</b>1H 價格位於 5MA 下方但仍在 20MA 之上，屬多頭回踩修正。</li>
-                        <li><b>⚡ 突破 5MA：</b>15m K 線剛突破並站上 15m 5MA。</li>
-                        <li><b>🔥 在 5MA 上：</b>15m K 線穩定處於 15m 5MA 之上。</li>
-                        <li><b>🌀 15K VCP：</b>15m K 線出現「波動收緊」且「成交量縮」特徵，代表賣壓竭盡。</li>
-                        <li><b>🚀 15m+5m布林向上：</b>15m 與 5m 兩個週期<b>同時滿足</b>「突破 20 布林通道上軌」且「5MA 斜率向上」，屬強勁的共振發動訊號！</li>
-                    </ul>
+                    本工具專為<b>幣安 USDT 永續合約</b>打造，提供極簡的強弱篩選，並結合 <b>15M 布林壓縮</b> 特徵，幫助交易者迅速掌握壓縮後即將發動的多頭標的。
                 </div>
             </div>
         `;
@@ -391,11 +324,8 @@
                 <div class="symbol-info">
                     <div class="name">${item.symbol.replace('USDT', '')}</div>
                     <div>
-                        ${item.isAboveMa5 ? '<span class="badge badge-above">1H 5MA上</span>' : '<span class="badge badge-below">1H 5MA下</span>'}
-                        ${item.is5m15mBollingerAndSlopeUp ? '<span class="badge badge-bb-slope">🚀 15m+5m布林向上</span>' : ''}
-                        ${item.isVcp15m ? '<span class="badge badge-vcp">🌀 15K VCP</span>' : ''}
-                        ${item.isCrossed5ma15m ? '<span class="badge badge-cross-5ma">⚡ 剛突破5MA</span>' : ''}
-                        ${item.isAbove5ma15m ? '<span class="badge badge-above-5ma">🔥 15m 5MA上</span>' : ''}
+                        ${item.isAboveMa5 ? '<span class="badge badge-above">🟢 5分K 5MA 上</span>' : '<span class="badge badge-below">🟡 5分K 5MA 下</span>'}
+                        ${(item.isAbove1hMa5 && item.has15mSqueeze) ? '<span class="badge badge-squeeze">🔮 1H 5MA上+15M壓縮</span>' : ''}
                     </div>
                 </div>
                 <div class="symbol-metrics">
