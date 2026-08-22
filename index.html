@@ -24,6 +24,8 @@
             --purple-bg: rgba(156, 39, 176, 0.15);
             --orange: #ff9800;
             --orange-bg: rgba(255, 152, 0, 0.15);
+            --pink: #e91e63;
+            --pink-bg: rgba(233, 30, 99, 0.15);
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding-bottom: 75px; }
@@ -44,12 +46,13 @@
         .symbol-metrics { text-align: right; }
         .symbol-metrics .price { font-size: 1rem; font-weight: 700; margin-bottom: 4px; font-family: monospace; }
         
-        .badge { font-size: 0.65rem; padding: 3px 6px; border-radius: 4px; font-weight: 600; margin-right: 4px; }
+        .badge { font-size: 0.65rem; padding: 3px 6px; border-radius: 4px; font-weight: 600; margin-right: 4px; display: inline-block; margin-top: 2px; }
         .badge-above { background-color: var(--green-bg); color: var(--green); border: 1px solid var(--green); }
         .badge-below { background-color: rgba(240, 185, 11, 0.15); color: var(--yellow); border: 1px solid var(--yellow); }
         .badge-cross-5ma { background-color: var(--purple-bg); color: #ce93d8; border: 1px solid #ce93d8; }
         .badge-above-5ma { background-color: var(--blue-bg); color: #90caf9; border: 1px solid #90caf9; }
         .badge-vcp { background-color: var(--orange-bg); color: #ffb74d; border: 1px solid #ffb74d; }
+        .badge-1m5m { background-color: var(--pink-bg); color: #f48fb1; border: 1px solid #f48fb1; }
         
         .change-badge { font-size: 0.8rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
         .change-up { color: var(--green); background-color: var(--green-bg); }
@@ -107,39 +110,19 @@
 
     function getSMA(data, period) { if (data.length < period) return 0; return data.slice(-period).reduce((a, b) => a + b, 0) / period; }
     
-    // 檢查 1H 是否符合 VCP (價格波動收縮 + 成交量縮)
     function checkVCP1H(klines) {
         if (klines.length < 24) return false;
-        
-        // 取最近 12 根 K 線 (近段) 與 前 12 根 K 線 (前段)
         const recent = klines.slice(-12);
         const previous = klines.slice(-24, -12);
         
-        // 計算近段與前段的高低振幅幅度 %
         const getRangePct = (arr) => {
             const highs = arr.map(k => parseFloat(k[2]));
             const lows = arr.map(k => parseFloat(k[3]));
-            const maxHigh = Math.max(...highs);
-            const minLow = Math.min(...lows);
-            return (maxHigh - minLow) / minLow;
+            return (Math.max(...highs) - Math.min(...lows)) / Math.min(...lows);
         };
+        const getAvgVol = (arr) => arr.reduce((acc, k) => acc + parseFloat(k[5]), 0) / arr.length;
 
-        // 計算平均成交量
-        const getAvgVol = (arr) => {
-            return arr.reduce((acc, k) => acc + parseFloat(k[5]), 0) / arr.length;
-        };
-
-        const recentRange = getRangePct(recent);
-        const previousRange = getRangePct(previous);
-        
-        const recentVol = getAvgVol(recent);
-        const previousVol = getAvgVol(previous);
-
-        // VCP條件：1. 近期波幅縮小至先前波幅的 75% 以下 2. 近期均量小於先前均量 (成交量乾涸)
-        const isContraction = recentRange < (previousRange * 0.75);
-        const isVolumeDryUp = recentVol < previousVol;
-
-        return isContraction && isVolumeDryUp;
+        return getRangePct(recent) < (getRangePct(previous) * 0.75) && getAvgVol(recent) < getAvgVol(previous);
     }
 
     async function fetch24hTickers() { try { const res = await fetch('https://fapi.binance.com/fapi/v1/ticker/24hr'); const data = await res.json(); const map = {}; data.forEach(item => { map[item.symbol] = parseFloat(item.priceChangePercent); }); return map; } catch(e) { return {}; } }
@@ -147,12 +130,17 @@
 
     async function processSymbol(symbol) {
         try {
-            const [res1h, res15m] = await Promise.all([
+            const [res1h, res15m, res5m, res1m] = await Promise.all([
                 fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=30`).then(r => r.json()),
-                fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=15m&limit=30`).then(r => r.json())
+                fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=15m&limit=30`).then(r => r.json()),
+                fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=5m&limit=10`).then(r => r.json()),
+                fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=1m&limit=10`).then(r => r.json())
             ]);
+
             const closes1h = res1h.map(k => parseFloat(k[4]));
             const closes15m = res15m.map(k => parseFloat(k[4]));
+            const closes5m = res5m.map(k => parseFloat(k[4]));
+            const closes1m = res1m.map(k => parseFloat(k[4]));
             
             // 1H 邏輯
             const ma20 = getSMA(closes1h, 20);
@@ -165,6 +153,11 @@
             const ma5_15m = getSMA(closes15m, 5);
             const ma5_prev_15m = getSMA(closes15m.slice(0, -1), 5);
 
+            // 1m & 5m 邏輯
+            const ma5_5m = getSMA(closes5m, 5);
+            const ma5_1m = getSMA(closes1m, 5);
+            const is1mAnd5mAbove5ma = (closes1m[closes1m.length - 1] > ma5_1m) && (closes5m[closes5m.length - 1] > ma5_5m);
+
             if (closes1h[closes1h.length - 1] > ma20) {
                 return { 
                     symbol: symbol, 
@@ -173,6 +166,7 @@
                     isAbove5ma15m: closes15m[curr15Idx] > ma5_15m,
                     isCrossed5ma15m: (closes15m[prev15Idx] <= ma5_prev_15m && closes15m[curr15Idx] > ma5_15m),
                     isVcp1h: isVcp1h,
+                    is1mAnd5mAbove5ma: is1mAnd5mAbove5ma,
                     priceChange24h: ticker24hMap[symbol] || 0 
                 };
             }
@@ -247,6 +241,7 @@
                         <li><b>⚡ 突破 5MA：</b>15m K 線剛突破並站上 15m 5MA，代表短線發動攻擊的瞬間。</li>
                         <li><b>🔥 在 5MA 上：</b>15m K 線穩定處於 15m 5MA 之上，屬持續推升的強勢行情。</li>
                         <li><b>🌀 1H VCP：</b>1H K 線出現「波動幅度由寬變窄」且「成交量顯著乾涸」特徵，代表賣壓竭盡、即將爆發突破。</li>
+                        <li><b>🎊 1m+5m 5MA上：</b>1分K與5分K價格皆站在各自的5MA之上，代表超短線多頭極強且高度同步。</li>
                     </ul>
                 </div>
             </div>
@@ -293,6 +288,7 @@
                         ${item.isVcp1h ? '<span class="badge badge-vcp">🌀 VCP收縮</span>' : ''}
                         ${item.isCrossed5ma15m ? '<span class="badge badge-cross-5ma">⚡ 剛突破5MA</span>' : ''}
                         ${item.isAbove5ma15m ? '<span class="badge badge-above-5ma">🔥 15m 5MA上</span>' : ''}
+                        ${item.is1mAnd5mAbove5ma ? '<span class="badge badge-1m5m">🎊 1m+5m 5MA上</span>' : ''}
                     </div>
                 </div>
                 <div class="symbol-metrics">
