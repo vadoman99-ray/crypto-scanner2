@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>幣安合約動能掃描器 Pro</title>
+    <title>幣安合約動態掃描器 Pro</title>
     <style>
         :root {
             --bg-color: #0b0e11;
@@ -74,7 +74,9 @@
         .nav-item.active { color: var(--yellow); font-weight: bold; }
         
         .about-card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-left: 4px solid var(--yellow); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+        .about-card.strategy { border-left-color: #0ecb81; }
         .about-title { font-size: 0.95rem; font-weight: 700; color: var(--yellow); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+        .about-card.strategy .about-title { color: #0ecb81; }
         .about-content { font-size: 0.85rem; color: #d1d5db; line-height: 1.6; }
         .about-content ul { padding-left: 18px; margin: 0; }
         .about-content li { margin-bottom: 8px; }
@@ -113,7 +115,7 @@
         <button class="nav-item" onclick="setFilter('CROSS_5MA', this)"><div>⚡</div><div>突破 5MA</div></button>
         <button class="nav-item" onclick="setFilter('ABOVE_5MA_15M', this)"><div>🔥</div><div>在 5MA 上</div></button>
         <button class="nav-item" onclick="setFilter('VCP_15M', this)"><div>🌀</div><div>15K VCP</div></button>
-        <button class="nav-item" onclick="setFilter('BOLLINGER_SLOPE_UP', this)"><div>🚀</div><div>布林+5MA向上</div></button>
+        <button class="nav-item" onclick="setFilter('BOLLINGER_SLOPE_UP', this)"><div>🚀</div><div>15m+5m布林向上</div></button>
         <button class="nav-item" onclick="setFilter('INFO', this)"><div>ℹ️</div><div>說明</div></button>
     </div>
 
@@ -196,11 +198,10 @@
 
     async function processSymbol(symbol) {
         try {
-            const [res1h, res15m, res5m, res1m] = await Promise.all([
+            const [res1h, res15m, res5m] = await Promise.all([
                 fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=30`).then(r => r.json()),
                 fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=15m&limit=30`).then(r => r.json()),
-                fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=5m&limit=30`).then(r => r.json()),
-                fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=1m&limit=30`).then(r => r.json())
+                fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=5m&limit=30`).then(r => r.json())
             ]);
 
             if (!Array.isArray(res1h) || res1h.length < 20) return null;
@@ -208,7 +209,6 @@
             const closes1h = res1h.map(k => parseFloat(k[4]));
             const closes15m = res15m.map(k => parseFloat(k[4]));
             const closes5m = res5m.map(k => parseFloat(k[4]));
-            const closes1m = res1m.map(k => parseFloat(k[4]));
             
             const ma20 = getSMA(closes1h, 20);
             const ma5 = getSMA(closes1h, 5);
@@ -219,11 +219,10 @@
             const ma5_prev_15m = getSMA(closes15m.slice(0, -1), 5);
             const isVcp15m = checkVCP15M(res15m);
 
-            const is1mBBAndSlope = checkBollingerAndSlopeUp(closes1m);
             const is5mBBAndSlope = checkBollingerAndSlopeUp(closes5m);
             const is15mBBAndSlope = checkBollingerAndSlopeUp(closes15m);
 
-            const is1m5m15mBollingerAndSlopeUp = is1mBBAndSlope && is5mBBAndSlope && is15mBBAndSlope;
+            const is5m15mBollingerAndSlopeUp = is5mBBAndSlope && is15mBBAndSlope;
 
             if (closes1h[closes1h.length - 1] > ma20) {
                 return { 
@@ -233,7 +232,7 @@
                     isAbove5ma15m: closes15m[curr15Idx] > ma5_15m,
                     isCrossed5ma15m: (closes15m[prev15Idx] <= ma5_prev_15m && closes15m[curr15Idx] > ma5_15m),
                     isVcp15m: isVcp15m,
-                    is1m5m15mBollingerAndSlopeUp: is1m5m15mBollingerAndSlopeUp,
+                    is5m15mBollingerAndSlopeUp: is5m15mBollingerAndSlopeUp,
                     priceChange24h: ticker24hMap[symbol] || 0 
                 };
             }
@@ -260,7 +259,7 @@
         }
 
         let processed = 0;
-        const batchSize = 10; // 控制並行請求，避免 API 封鎖
+        const batchSize = 10;
         
         for (let i = 0; i < symbols.length; i += batchSize) {
             const batch = symbols.slice(i, i + batchSize);
@@ -322,13 +321,25 @@
             if (currentFilter === 'CROSS_5MA') return item.isCrossed5ma15m;
             if (currentFilter === 'ABOVE_5MA_15M') return item.isAbove5ma15m;
             if (currentFilter === 'VCP_15M') return item.isVcp15m;
-            if (currentFilter === 'BOLLINGER_SLOPE_UP') return item.is1m5m15mBollingerAndSlopeUp;
+            if (currentFilter === 'BOLLINGER_SLOPE_UP') return item.is5m15mBollingerAndSlopeUp;
             return true;
         });
     }
 
     function renderInfoPage() {
         document.getElementById('symbolList').innerHTML = `
+            <div class="about-card strategy">
+                <div class="about-title">🔥 實戰超級攻略 (極短線與波段操作)</div>
+                <div class="about-content">
+                    <ul>
+                        <li><b>🚀 共振噴發狙擊（極短線首選）：</b>切換至「<b>15m+5m布林向上</b>」，挑選同時帶有 <b>1H 5MA上</b> 的幣種。這代表多個週期同時向上擴張，常是強勢主升段發動點。</li>
+                        <li><b>🌀 潛伏起漲點（低風險高盈虧比）：</b>觀察「<b>15K VCP</b>」分頁。若標的同時出現「<b>⚡ 剛突破5MA</b>」，代表波動擠壓完成並開始帶量轉強，為最佳右側試倉位置。</li>
+                        <li><b>🟡 回踩低吸法（順勢波段）：</b>點擊「<b>5MA 下</b>」分頁，尋找價格處於 1H 20MA 之上但短期回踩的熱門幣，待 15m 出現止跌訊號時順勢切入。</li>
+                        <li><b>🛡️ 風險控管心法：</b>建議進場後將防守位（止損）設於 <b>15m 5MA</b> 或前一根 15m K 線低點，若價格跌破即果斷離場。</li>
+                    </ul>
+                </div>
+            </div>
+
             <div class="about-card">
                 <div class="about-title">🎯 工具核心設計理念</div>
                 <div class="about-content">
@@ -356,7 +367,7 @@
                         <li><b>⚡ 突破 5MA：</b>15m K 線剛突破並站上 15m 5MA。</li>
                         <li><b>🔥 在 5MA 上：</b>15m K 線穩定處於 15m 5MA 之上。</li>
                         <li><b>🌀 15K VCP：</b>15m K 線出現「波動收緊」且「成交量縮」特徵，代表賣壓竭盡。</li>
-                        <li><b>🚀 布林+5MA向上：</b>1m、5m 與 15m 三個週期<b>同時滿足</b>「突破 20 布林通道上軌」且「5MA 斜率向上」，屬極強的主升段噴發訊號！</li>
+                        <li><b>🚀 15m+5m布林向上：</b>15m 與 5m 兩個週期<b>同時滿足</b>「突破 20 布林通道上軌」且「5MA 斜率向上」，屬強勁的共振發動訊號！</li>
                     </ul>
                 </div>
             </div>
@@ -381,7 +392,7 @@
                     <div class="name">${item.symbol.replace('USDT', '')}</div>
                     <div>
                         ${item.isAboveMa5 ? '<span class="badge badge-above">1H 5MA上</span>' : '<span class="badge badge-below">1H 5MA下</span>'}
-                        ${item.is1m5m15mBollingerAndSlopeUp ? '<span class="badge badge-bb-slope">🚀 布林+5MA向上</span>' : ''}
+                        ${item.is5m15mBollingerAndSlopeUp ? '<span class="badge badge-bb-slope">🚀 15m+5m布林向上</span>' : ''}
                         ${item.isVcp15m ? '<span class="badge badge-vcp">🌀 15K VCP</span>' : ''}
                         ${item.isCrossed5ma15m ? '<span class="badge badge-cross-5ma">⚡ 剛突破5MA</span>' : ''}
                         ${item.isAbove5ma15m ? '<span class="badge badge-above-5ma">🔥 15m 5MA上</span>' : ''}
