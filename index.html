@@ -47,9 +47,10 @@
         
         .symbol-card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; text-decoration: none; color: inherit; transition: transform 0.15s, border-color 0.15s; }
         .symbol-card:hover { transform: translateY(-2px); border-color: var(--yellow); }
-        .symbol-info .name { font-size: 1.05rem; font-weight: 700; margin-bottom: 4px; }
+        .symbol-info .name-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+        .symbol-info .name { font-size: 1.05rem; font-weight: 700; }
         .symbol-metrics { text-align: right; }
-        .symbol-metrics .price { font-size: 1rem; font-weight: 700; margin-bottom: 4px; font-family: monospace; }
+        .symbol-metrics .price { font-size: 1rem; font-weight: 700; font-family: monospace; }
         
         .badge { font-size: 0.65rem; padding: 3px 6px; border-radius: 4px; font-weight: 600; margin-right: 4px; display: inline-block; margin-top: 2px; }
         .badge-above { background-color: var(--green-bg); color: var(--green); border: 1px solid var(--green); }
@@ -186,7 +187,6 @@
             const closes5m = res5m.map(k => parseFloat(k[4]));
             const ma5_5m = getSMA(closes5m, 5);
 
-            // 判斷條件
             const is1hAbove1hMa5 = price1h > ma5_1h;
             const is1hBelow5mMa5 = price1h < ma5_5m;
             const has15mSqueeze = check15mBollingerSqueeze(res15m);
@@ -322,7 +322,12 @@
         container.innerHTML = data.map(item => `
             <a class="symbol-card" href="https://www.binance.com/zh-TC/futures/${item.symbol}" target="_blank">
                 <div class="symbol-info">
-                    <div class="name">${item.symbol.replace('USDT', '')}</div>
+                    <div class="name-row">
+                        <span class="name">${item.symbol.replace('USDT', '')}</span>
+                        <span class="change-badge ${item.priceChange24h >= 0 ? 'change-up' : 'change-down'}">
+                            ${item.priceChange24h >= 0 ? '+' : ''}${item.priceChange24h.toFixed(2)}%
+                        </span>
+                    </div>
                     <div>
                         ${item.is1hAbove1hMa5 ? '<span class="badge badge-above">🟢 1H 5MA上</span>' : ''}
                         ${item.is1hBelow5mMa5 ? '<span class="badge badge-below">🔴 1H在5分5MA下</span>' : ''}
@@ -331,7 +336,6 @@
                 </div>
                 <div class="symbol-metrics">
                     <div class="price">${item.price}</div>
-                    <span class="change-badge ${item.priceChange24h >= 0 ? 'change-up' : 'change-down'}">${item.priceChange24h.toFixed(2)}%</span>
                 </div>
             </a>
         `).join('');
