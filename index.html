@@ -53,7 +53,7 @@
         
         .badge { font-size: 0.65rem; padding: 3px 6px; border-radius: 4px; font-weight: 600; margin-right: 4px; display: inline-block; margin-top: 2px; }
         .badge-above { background-color: var(--green-bg); color: var(--green); border: 1px solid var(--green); }
-        .badge-below { background-color: rgba(240, 185, 11, 0.15); color: var(--yellow); border: 1px solid var(--yellow); }
+        .badge-below { background-color: rgba(246, 70, 93, 0.15); color: var(--red); border: 1px solid var(--red); }
         .badge-squeeze { background-color: var(--purple-bg); color: #ce93d8; border: 1px solid #ce93d8; }
         
         .change-badge { font-size: 0.8rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; display: inline-block; }
@@ -78,7 +78,7 @@
 <body>
 
     <div class="app-header">
-        <div class="header-title">⚡ 1H K棒與 5分K 5MA 掃描器</div>
+        <div class="header-title">⚡ 1H K棒掃描器</div>
         <button id="scanBtn" class="scan-btn" onclick="startScan()">重新掃描</button>
     </div>
 
@@ -101,9 +101,9 @@
 
     <div class="bottom-nav">
         <button class="nav-item active" onclick="setFilter('ALL', this)"><div>🌐</div><div>全部</div></button>
-        <button class="nav-item" onclick="setFilter('ABOVE_5MA', this)"><div>🟢</div><div>5分K 5MA 上</div></button>
-        <button class="nav-item" onclick="setFilter('BELOW_5MA', this)"><div>🟡</div><div>5分K 5MA 下</div></button>
-        <button class="nav-item" onclick="setFilter('1H_5MA_15M_SQUEEZE', this)"><div>🔮</div><div>1H 5MA上+15M壓縮</div></button>
+        <button class="nav-item" onclick="setFilter('1H_ABOVE_1H_5MA', this)"><div>🟢</div><div>1H 5MA上</div></button>
+        <button class="nav-item" onclick="setFilter('1H_BELOW_5M_5MA', this)"><div>🔴</div><div>1H在5分5MA下</div></button>
+        <button class="nav-item" onclick="setFilter('1H_5MA_15M_SQUEEZE', this)"><div>🔮</div><div>1H上+15M壓縮</div></button>
         <button class="nav-item" onclick="setFilter('INFO', this)"><div>ℹ️</div><div>說明</div></button>
     </div>
 
@@ -186,16 +186,16 @@
             const closes5m = res5m.map(k => parseFloat(k[4]));
             const ma5_5m = getSMA(closes5m, 5);
 
-            const isAbove5mMa5 = price1h > ma5_5m;
-            const isAbove1hMa5 = price1h > ma5_1h;
+            // 判斷條件
+            const is1hAbove1hMa5 = price1h > ma5_1h;
+            const is1hBelow5mMa5 = price1h < ma5_5m;
             const has15mSqueeze = check15mBollingerSqueeze(res15m);
 
             return { 
                 symbol: symbol, 
                 price: price1h, 
-                ma5_5m: ma5_5m,
-                isAboveMa5: isAbove5mMa5,
-                isAbove1hMa5: isAbove1hMa5,
+                is1hAbove1hMa5: is1hAbove1hMa5,
+                is1hBelow5mMa5: is1hBelow5mMa5,
                 has15mSqueeze: has15mSqueeze,
                 priceChange24h: ticker24hMap[symbol] || 0 
             };
@@ -278,9 +278,9 @@
     function getFilteredData() {
         const query = document.getElementById('searchInput').value.toUpperCase().trim();
         return rawResults.filter(item => item.symbol.includes(query)).filter(item => {
-            if (currentFilter === 'ABOVE_5MA') return item.isAboveMa5;
-            if (currentFilter === 'BELOW_5MA') return !item.isAboveMa5;
-            if (currentFilter === '1H_5MA_15M_SQUEEZE') return item.isAbove1hMa5 && item.has15mSqueeze;
+            if (currentFilter === '1H_ABOVE_1H_5MA') return item.is1hAbove1hMa5;
+            if (currentFilter === '1H_BELOW_5M_5MA') return item.is1hBelow5mMa5;
+            if (currentFilter === '1H_5MA_15M_SQUEEZE') return item.is1hAbove1hMa5 && item.has15mSqueeze;
             return true;
         });
     }
@@ -291,9 +291,9 @@
                 <div class="about-title">🔥 超級實戰攻略</div>
                 <div class="about-content">
                     <ul>
-                        <li><b>🟢 順勢做多（5分K 5MA 之上）：</b>1 小時 K 棒收盤價高於 5 分鐘 5MA，代表超短線多頭強勢推進。</li>
-                        <li><b>🟡 回踩關注（5分K 5MA 之下）：</b>1 小時 K 棒收盤價低於 5 分鐘 5MA，代表極短線拉回，可留意止跌點。</li>
-                        <li><b>🔮 蓄勢噴發狙擊（1H 5MA上 + 15M壓縮）：</b>1 小時站上 1H 5MA（中短期偏多），且過去 20 根 15 分鐘 K 棒曾出現布林極致壓縮。這通常是<b>變盤前的蓄勢狀態，極易出現帶量爆發</b>！</li>
+                        <li><b>🟢 1H 5MA上：</b>1 小時 K 棒收盤價高於 1H 5MA。代表中短期趨勢強勢，適合尋找順勢多單。</li>
+                        <li><b>🔴 1H在5分5MA下：</b>1 小時 K 棒收盤價低於 5 分鐘 5MA。代表極短線出現較強跌勢或回調，不宜貿然追多。</li>
+                        <li><b>🔮 1H上+15M壓縮：</b>1 小時站上 1H 5MA，且過去 20 根 15 分鐘 K 棒曾出現布林極致壓縮。這通常是<b>變盤前的蓄勢狀態，極易出現帶量爆發</b>！</li>
                     </ul>
                 </div>
             </div>
@@ -301,7 +301,7 @@
             <div class="about-card">
                 <div class="about-title">🎯 工具核心設計理念</div>
                 <div class="about-content">
-                    本工具專為<b>幣安 USDT 永續合約</b>打造，提供極簡的強弱篩選，並結合 <b>15M 布林壓縮</b> 特徵，幫助交易者迅速掌握壓縮後即將發動的多頭標的。
+                    本工具專為<b>幣安 USDT 永續合約</b>打造。核心邏輯比較 1 小時價格與 1 小時 5MA 判斷趨勢，同時比較 1 小時價格與 5 分鐘 5MA 判斷極短線強弱。
                 </div>
             </div>
         `;
@@ -324,8 +324,9 @@
                 <div class="symbol-info">
                     <div class="name">${item.symbol.replace('USDT', '')}</div>
                     <div>
-                        ${item.isAboveMa5 ? '<span class="badge badge-above">🟢 5分K 5MA 上</span>' : '<span class="badge badge-below">🟡 5分K 5MA 下</span>'}
-                        ${(item.isAbove1hMa5 && item.has15mSqueeze) ? '<span class="badge badge-squeeze">🔮 1H 5MA上+15M壓縮</span>' : ''}
+                        ${item.is1hAbove1hMa5 ? '<span class="badge badge-above">🟢 1H 5MA上</span>' : ''}
+                        ${item.is1hBelow5mMa5 ? '<span class="badge badge-below">🔴 1H在5分5MA下</span>' : ''}
+                        ${(item.is1hAbove1hMa5 && item.has15mSqueeze) ? '<span class="badge badge-squeeze">🔮 1H上+15M壓縮</span>' : ''}
                     </div>
                 </div>
                 <div class="symbol-metrics">
