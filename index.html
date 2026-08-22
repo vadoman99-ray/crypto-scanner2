@@ -22,6 +22,8 @@
             --blue-bg: rgba(24, 119, 242, 0.15);
             --purple: #9c27b0;
             --purple-bg: rgba(156, 39, 176, 0.15);
+            --orange: #ff9800;
+            --orange-bg: rgba(255, 152, 0, 0.15);
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding-bottom: 75px; }
@@ -47,13 +49,14 @@
         .badge-below { background-color: rgba(240, 185, 11, 0.15); color: var(--yellow); border: 1px solid var(--yellow); }
         .badge-cross-5ma { background-color: var(--purple-bg); color: #ce93d8; border: 1px solid #ce93d8; }
         .badge-above-5ma { background-color: var(--blue-bg); color: #90caf9; border: 1px solid #90caf9; }
+        .badge-vcp { background-color: var(--orange-bg); color: #ffb74d; border: 1px solid #ffb74d; }
         
         .change-badge { font-size: 0.8rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
         .change-up { color: var(--green); background-color: var(--green-bg); }
         .change-down { color: var(--red); background-color: var(--red-bg); }
         
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background-color: var(--card-bg); border-top: 1px solid var(--card-border); display: flex; z-index: 100; }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-sub); font-size: 0.65rem; cursor: pointer; border: none; background: none; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-sub); font-size: 0.6rem; cursor: pointer; border: none; background: none; }
         .nav-item.active { color: var(--yellow); font-weight: bold; }
         
         .about-card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-left: 4px solid var(--yellow); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
@@ -92,6 +95,7 @@
         <button class="nav-item" onclick="setFilter('BELOW_5MA', this)"><div>🟡</div><div>5MA 下</div></button>
         <button class="nav-item" onclick="setFilter('CROSS_5MA', this)"><div>⚡</div><div>突破 5MA</div></button>
         <button class="nav-item" onclick="setFilter('ABOVE_5MA_15M', this)"><div>🔥</div><div>在 5MA 上</div></button>
+        <button class="nav-item" onclick="setFilter('VCP_1H', this)"><div>🌀</div><div>1H VCP</div></button>
         <button class="nav-item" onclick="setFilter('INFO', this)"><div>ℹ️</div><div>說明</div></button>
     </div>
 
@@ -103,6 +107,41 @@
 
     function getSMA(data, period) { if (data.length < period) return 0; return data.slice(-period).reduce((a, b) => a + b, 0) / period; }
     
+    // 檢查 1H 是否符合 VCP (價格波動收縮 + 成交量縮)
+    function checkVCP1H(klines) {
+        if (klines.length < 24) return false;
+        
+        // 取最近 12 根 K 線 (近段) 與 前 12 根 K 線 (前段)
+        const recent = klines.slice(-12);
+        const previous = klines.slice(-24, -12);
+        
+        // 計算近段與前段的高低振幅幅度 %
+        const getRangePct = (arr) => {
+            const highs = arr.map(k => parseFloat(k[2]));
+            const lows = arr.map(k => parseFloat(k[3]));
+            const maxHigh = Math.max(...highs);
+            const minLow = Math.min(...lows);
+            return (maxHigh - minLow) / minLow;
+        };
+
+        // 計算平均成交量
+        const getAvgVol = (arr) => {
+            return arr.reduce((acc, k) => acc + parseFloat(k[5]), 0) / arr.length;
+        };
+
+        const recentRange = getRangePct(recent);
+        const previousRange = getRangePct(previous);
+        
+        const recentVol = getAvgVol(recent);
+        const previousVol = getAvgVol(previous);
+
+        // VCP條件：1. 近期波幅縮小至先前波幅的 75% 以下 2. 近期均量小於先前均量 (成交量乾涸)
+        const isContraction = recentRange < (previousRange * 0.75);
+        const isVolumeDryUp = recentVol < previousVol;
+
+        return isContraction && isVolumeDryUp;
+    }
+
     async function fetch24hTickers() { try { const res = await fetch('https://fapi.binance.com/fapi/v1/ticker/24hr'); const data = await res.json(); const map = {}; data.forEach(item => { map[item.symbol] = parseFloat(item.priceChangePercent); }); return map; } catch(e) { return {}; } }
     async function getUSDTFuturesSymbols() { const res = await fetch('https://fapi.binance.com/fapi/v1/exchangeInfo'); const data = await res.json(); return data.symbols.filter(s => s.quoteAsset === 'USDT' && s.contractType === 'PERPETUAL' && s.status === 'TRADING').map(s => s.symbol); }
 
@@ -118,6 +157,7 @@
             // 1H 邏輯
             const ma20 = getSMA(closes1h, 20);
             const ma5 = getSMA(closes1h, 5);
+            const isVcp1h = checkVCP1H(res1h);
             
             // 15m 邏輯
             const curr15Idx = closes15m.length - 1;
@@ -132,6 +172,7 @@
                     isAboveMa5: closes1h[closes1h.length - 1] >= ma5,
                     isAbove5ma15m: closes15m[curr15Idx] > ma5_15m,
                     isCrossed5ma15m: (closes15m[prev15Idx] <= ma5_prev_15m && closes15m[curr15Idx] > ma5_15m),
+                    isVcp1h: isVcp1h,
                     priceChange24h: ticker24hMap[symbol] || 0 
                 };
             }
@@ -172,6 +213,7 @@
             if (currentFilter === 'BELOW_5MA') return !item.isAboveMa5;
             if (currentFilter === 'CROSS_5MA') return item.isCrossed5ma15m;
             if (currentFilter === 'ABOVE_5MA_15M') return item.isAbove5ma15m;
+            if (currentFilter === 'VCP_1H') return item.isVcp1h;
             return true;
         });
     }
@@ -203,7 +245,8 @@
                         <li><b>🟢 5MA 上：</b>1H 價格站上 5MA，代表極短期多頭強勢推進中。</li>
                         <li><b>🟡 5MA 下：</b>1H 價格位於 5MA 下方但仍在 20MA 之上，代表多頭回踩修正，為潛在的逢低布局觀察點。</li>
                         <li><b>⚡ 突破 5MA：</b>15m K 線剛突破並站上 15m 5MA，代表短線發動攻擊的瞬間。</li>
-                        <li><b>🔥 在 5MA 上：</b>15m K 線穩定處於 15m 5MA 之上，屬於持續推升的強勢行情。</li>
+                        <li><b>🔥 在 5MA 上：</b>15m K 線穩定處於 15m 5MA 之上，屬持續推升的強勢行情。</li>
+                        <li><b>🌀 1H VCP：</b>1H K 線出現「波動幅度由寬變窄」且「成交量顯著乾涸」特徵，代表賣壓竭盡、即將爆發突破。</li>
                     </ul>
                 </div>
             </div>
@@ -213,6 +256,7 @@
                 <div class="about-content">
                     <ul>
                         <li><b>動能突破流：</b>優先切換至 <b>⚡ 突破 5MA</b> 分頁，尋找成交量放大的標的順勢跟進。</li>
+                        <li><b>VCP 布局流：</b>切換至 <b>🌀 1H VCP</b> 分頁，尋找波幅緊縮至極致的標的，在帶量突破 Pivot 點時進場。</li>
                         <li><b>回踩拉回流：</b>切換至 <b>🟡 5MA 下</b> 分頁，尋找大趨勢向上但短線拉回到 20MA 附近的支撐買點。</li>
                         <li>點擊任意幣種卡片可直接跳轉至幣安 App / 網頁進行即時下單與深度圖表確認。</li>
                     </ul>
@@ -246,6 +290,7 @@
                     <div class="name">${item.symbol.replace('USDT', '')}</div>
                     <div>
                         ${item.isAboveMa5 ? '<span class="badge badge-above">1H 5MA上</span>' : '<span class="badge badge-below">1H 5MA下</span>'}
+                        ${item.isVcp1h ? '<span class="badge badge-vcp">🌀 VCP收縮</span>' : ''}
                         ${item.isCrossed5ma15m ? '<span class="badge badge-cross-5ma">⚡ 剛突破5MA</span>' : ''}
                         ${item.isAbove5ma15m ? '<span class="badge badge-above-5ma">🔥 15m 5MA上</span>' : ''}
                     </div>
