@@ -52,14 +52,14 @@
         .badge-cross-5ma { background-color: var(--purple-bg); color: #ce93d8; border: 1px solid #ce93d8; }
         .badge-above-5ma { background-color: var(--blue-bg); color: #90caf9; border: 1px solid #90caf9; }
         .badge-vcp { background-color: var(--orange-bg); color: #ffb74d; border: 1px solid #ffb74d; }
-        .badge-1m5m { background-color: var(--pink-bg); color: #f48fb1; border: 1px solid #f48fb1; }
+        .badge-1m5m15m { background-color: var(--pink-bg); color: #f48fb1; border: 1px solid #f48fb1; }
         
         .change-badge { font-size: 0.8rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
         .change-up { color: var(--green); background-color: var(--green-bg); }
         .change-down { color: var(--red); background-color: var(--red-bg); }
         
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background-color: var(--card-bg); border-top: 1px solid var(--card-border); display: flex; z-index: 100; overflow-x: auto; }
-        .nav-item { flex: 1; min-width: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-sub); font-size: 0.58rem; cursor: pointer; border: none; background: none; white-space: nowrap; padding: 0 2px; }
+        .nav-item { flex: 1; min-width: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-sub); font-size: 0.58rem; cursor: pointer; border: none; background: none; white-space: nowrap; padding: 0 2px; }
         .nav-item.active { color: var(--yellow); font-weight: bold; }
         
         .about-card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-left: 4px solid var(--yellow); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
@@ -99,7 +99,7 @@
         <button class="nav-item" onclick="setFilter('CROSS_5MA', this)"><div>⚡</div><div>突破 5MA</div></button>
         <button class="nav-item" onclick="setFilter('ABOVE_5MA_15M', this)"><div>🔥</div><div>在 5MA 上</div></button>
         <button class="nav-item" onclick="setFilter('VCP_1H', this)"><div>🌀</div><div>1H VCP</div></button>
-        <button class="nav-item" onclick="setFilter('ABOVE_1M5M', this)"><div>🎊</div><div>1m+5m</div></button>
+        <button class="nav-item" onclick="setFilter('ABOVE_1M5M15M', this)"><div>🎊</div><div>1m+5m+15m</div></button>
         <button class="nav-item" onclick="setFilter('INFO', this)"><div>ℹ️</div><div>說明</div></button>
     </div>
 
@@ -154,10 +154,12 @@
             const ma5_15m = getSMA(closes15m, 5);
             const ma5_prev_15m = getSMA(closes15m.slice(0, -1), 5);
 
-            // 1m & 5m 邏輯
+            // 1m, 5m & 15m 邏輯
             const ma5_5m = getSMA(closes5m, 5);
             const ma5_1m = getSMA(closes1m, 5);
-            const is1mAnd5mAbove5ma = (closes1m[closes1m.length - 1] > ma5_1m) && (closes5m[closes5m.length - 1] > ma5_5m);
+            const is1m5m15mAbove5ma = (closes1m[closes1m.length - 1] > ma5_1m) && 
+                                     (closes5m[closes5m.length - 1] > ma5_5m) && 
+                                     (closes15m[curr15Idx] > ma5_15m);
 
             if (closes1h[closes1h.length - 1] > ma20) {
                 return { 
@@ -167,7 +169,7 @@
                     isAbove5ma15m: closes15m[curr15Idx] > ma5_15m,
                     isCrossed5ma15m: (closes15m[prev15Idx] <= ma5_prev_15m && closes15m[curr15Idx] > ma5_15m),
                     isVcp1h: isVcp1h,
-                    is1mAnd5mAbove5ma: is1mAnd5mAbove5ma,
+                    is1m5m15mAbove5ma: is1m5m15mAbove5ma,
                     priceChange24h: ticker24hMap[symbol] || 0 
                 };
             }
@@ -209,7 +211,7 @@
             if (currentFilter === 'CROSS_5MA') return item.isCrossed5ma15m;
             if (currentFilter === 'ABOVE_5MA_15M') return item.isAbove5ma15m;
             if (currentFilter === 'VCP_1H') return item.isVcp1h;
-            if (currentFilter === 'ABOVE_1M5M') return item.is1mAnd5mAbove5ma;
+            if (currentFilter === 'ABOVE_1M5M15M') return item.is1m5m15mAbove5ma;
             return true;
         });
     }
@@ -243,7 +245,7 @@
                         <li><b>⚡ 突破 5MA：</b>15m K 線剛突破並站上 15m 5MA，代表短線發動攻擊的瞬間。</li>
                         <li><b>🔥 在 5MA 上：</b>15m K 線穩定處於 15m 5MA 之上，屬持續推升的強勢行情。</li>
                         <li><b>🌀 1H VCP：</b>1H K 線出現「波動幅度由寬變窄」且「成交量顯著乾涸」特徵，代表賣壓竭盡、即將爆發突破。</li>
-                        <li><b>🎊 1m+5m：</b>1分K與5分K價格皆站在各自的5MA之上，代表超短線多頭極強且高度同步。</li>
+                        <li><b>🎊 1m+5m+15m：</b>1分K、5分K與15分K價格皆站在各自的5MA之上，代表三週期多頭極致同步強勢。</li>
                     </ul>
                 </div>
             </div>
@@ -252,7 +254,7 @@
                 <div class="about-title">💡 實戰交易操作建議</div>
                 <div class="about-content">
                     <ul>
-                        <li><b>超短線衝刺流：</b>優先切換至 <b>🎊 1m+5m</b> 分頁，鎖定極短線多頭同步點位的爆發標的。</li>
+                        <li><b>極致共振流：</b>優先切換至 <b>🎊 1m+5m+15m</b> 分頁，鎖定微觀到短線全部順勢、多頭共振強度最高的標的。</li>
                         <li><b>動能突破流：</b>切換至 <b>⚡ 突破 5MA</b> 分頁，尋找成交量放大的標的順勢跟進。</li>
                         <li><b>VCP 布局流：</b>切換至 <b>🌀 1H VCP</b> 分頁，尋找波幅緊縮至極致的標的，在帶量突破 Pivot 點時進場。</li>
                         <li><b>回踩拉回流：</b>切換至 <b>🟡 5MA 下</b> 分頁，尋找大趨勢向上但短線拉回到 20MA 附近的支撐買點。</li>
@@ -291,7 +293,7 @@
                         ${item.isVcp1h ? '<span class="badge badge-vcp">🌀 VCP收縮</span>' : ''}
                         ${item.isCrossed5ma15m ? '<span class="badge badge-cross-5ma">⚡ 剛突破5MA</span>' : ''}
                         ${item.isAbove5ma15m ? '<span class="badge badge-above-5ma">🔥 15m 5MA上</span>' : ''}
-                        ${item.is1mAnd5mAbove5ma ? '<span class="badge badge-1m5m">🎊 1m+5m 5MA上</span>' : ''}
+                        ${item.is1m5m15mAbove5ma ? '<span class="badge badge-1m5m15m">🎊 1m+5m+15m 5MA上</span>' : ''}
                     </div>
                 </div>
                 <div class="symbol-metrics">
