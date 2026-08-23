@@ -165,7 +165,7 @@
         }
         .modal-card {
             background: #fff; border: var(--card-border);
-            border-radius: 20px; width: 100%; max-width: 520px;
+            border-radius: 20px; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto;
             box-shadow: 8px 8px 0px var(--manga-black);
             padding: 16px; position: relative;
             animation: modalPop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -180,16 +180,17 @@
         }
         .modal-title {
             font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 900;
-            display: flex; align-items: center; gap: 8px;
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
         }
         .modal-close {
             background: var(--manga-red); color: #fff; border: var(--card-border);
             border-radius: 10px; width: 32px; height: 32px; font-weight: 900;
             cursor: pointer; box-shadow: 2px 2px 0 #000; display: flex; justify-content: center; align-items: center;
+            flex-shrink: 0;
         }
         .chart-info {
             display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 900;
-            margin-bottom: 8px; font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 8px; font-family: 'JetBrains Mono', monospace; flex-wrap: wrap; gap: 4px;
         }
         .chart-container {
             width: 100%; height: 260px; background: #fafafa;
@@ -198,8 +199,8 @@
         }
         canvas { width: 100%; height: 100%; display: block; }
         .chart-legend {
-            display: flex; justify-content: center; gap: 14px; margin-top: 10px;
-            font-size: 0.7rem; font-weight: 900;
+            display: flex; justify-content: center; gap: 12px; margin-top: 10px;
+            font-size: 0.7rem; font-weight: 900; flex-wrap: wrap;
         }
         .legend-item { display: flex; align-items: center; gap: 4px; }
         .legend-color { width: 10px; height: 10px; border: 1px solid #000; border-radius: 2px; }
@@ -278,6 +279,7 @@
             <div class="chart-legend">
                 <div class="legend-item"><div class="legend-color" style="background:#00e676;"></div>陽線</div>
                 <div class="legend-item"><div class="legend-color" style="background:#ff3366;"></div>陰線</div>
+                <div class="legend-item"><div class="legend-color" style="background:#f59e0b;"></div>5MA</div>
                 <div class="legend-item"><div class="legend-color" style="background:#a855f7;"></div>上軌(UP)</div>
                 <div class="legend-item"><div class="legend-color" style="background:#94a3b8;"></div>中軌(MB)</div>
             </div>
@@ -286,7 +288,6 @@
     </div>
 
 <script>
-    // 網路超級優化配置 (極速 API 節點池 + 快取機制)
     const API_ENDPOINTS = [
         'https://fapi.binance.com',
         'https://fapi1.binance.com',
@@ -302,7 +303,6 @@
     let totalSymbolCount = 0;
     let currentFilter = 'ALL';
 
-    // 智能節點容錯與超時控制 (HTTP/2 多路複用優化)
     async function fetchWithFallback(path, timeoutMs = 800) {
         for (let i = 0; i < API_ENDPOINTS.length; i++) {
             const endpoint = API_ENDPOINTS[(currentEndpointIdx + i) % API_ENDPOINTS.length];
@@ -363,10 +363,8 @@
             .map(s => s.symbol); 
     }
 
-    // 零記憶體分配 (Zero-allocation TypedArrays) 與極速指標計算
     async function processSymbol(symbol) {
         try {
-            // 縮減 K 棒請求筆數至 65 根，精準符合 60MA 需求，減少 30% 傳輸量
             const res1h = await fetchWithFallback(`/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=65`, 700);
             if (!res1h || res1h.length < 60) return null;
 
@@ -388,10 +386,9 @@
             const currentOpen = opens[len - 1];
             const currentVol = volumes[len - 1];
 
-            // 多頭排列 (30MA > 45MA > 60MA) 快速剪枝（Early Return）
             const ma30 = calculateSMA(closes, 30);
             const ma45 = calculateSMA(closes, 45);
-            if (ma30 <= ma45) return null; // 快速失敗機制
+            if (ma30 <= ma45) return null;
 
             const ma60 = calculateSMA(closes, 60);
             if (ma45 <= ma60) return null;
@@ -420,7 +417,6 @@
         } catch (e) { return null; }
     }
 
-    // 併發管道流（Concurrent Pipeline Queue）——最大化瀏覽器 TCP Socket 利用率
     async function runFastScanner(symbols, poolLimit = 120, onProgress) {
         let completed = 0;
         const results = [];
@@ -473,13 +469,11 @@
 
         let lastRenderTime = Date.now();
 
-        // 開啟 120 併發管道通道
         rawResults = await runFastScanner(symbols, 120, (completed, total) => {
             const pct = Math.floor((completed / total) * 100);
             document.getElementById('progress').style.width = `${pct}%`;
             statusText.innerText = `超速掃描中 (${completed}/${total})...`;
 
-            // 使用 requestAnimationFrame 與 throttled 渲染優化 UI 順暢度
             const now = Date.now();
             if (now - lastRenderTime > 150) {
                 lastRenderTime = now;
@@ -593,6 +587,7 @@
         const displayCount = 20;
         
         const klines = [];
+        const ma5s = [];
         const uppers = [];
         const mbs = [];
         const lowers = [];
@@ -604,6 +599,11 @@
             const close = parseFloat(raw[i][4]);
             klines.push({ open, high, low, close });
 
+            // 計算 5MA
+            const ma5Slice = raw.slice(i - 4, i + 1).map(k => parseFloat(k[4]));
+            ma5s.push(calculateSMA(ma5Slice, 5));
+
+            // 計算布林通道 (20 週期)
             const closesSlice = raw.slice(i - 19, i + 1).map(k => parseFloat(k[4]));
             const boll = calculateBollingerBands(closesSlice, 20, 2);
             uppers.push(boll.upperBand);
@@ -613,10 +613,10 @@
 
         document.getElementById('modalUpper').innerText = uppers[uppers.length - 1].toFixed(4);
 
-        requestAnimationFrame(() => drawCanvasChart(klines, uppers, mbs, lowers));
+        requestAnimationFrame(() => drawCanvasChart(klines, ma5s, uppers, mbs, lowers));
     }
 
-    function drawCanvasChart(klines, uppers, mbs, lowers) {
+    function drawCanvasChart(klines, ma5s, uppers, mbs, lowers) {
         const canvas = document.getElementById('bollingerCanvas');
         const ctx = canvas.getContext('2d');
         const rect = canvas.parentElement.getBoundingClientRect();
@@ -634,8 +634,8 @@
         let maxP = -Infinity;
         let minP = Infinity;
         for (let i = 0; i < klines.length; i++) {
-            maxP = Math.max(maxP, klines[i].high, uppers[i]);
-            minP = Math.min(minP, klines[i].low, lowers[i]);
+            maxP = Math.max(maxP, klines[i].high, uppers[i], ma5s[i]);
+            minP = Math.min(minP, klines[i].low, lowers[i], ma5s[i]);
         }
         const pRange = (maxP - minP) || 1;
 
@@ -646,6 +646,7 @@
         const step = (width - padding.left - padding.right) / klines.length;
         const barWidth = step * 0.55;
 
+        // 繪製布林通道陰影背景
         ctx.beginPath();
         ctx.fillStyle = 'rgba(168, 85, 247, 0.08)';
         for (let i = 0; i < klines.length; i++) {
@@ -662,10 +663,10 @@
         ctx.closePath();
         ctx.fill();
 
-        function drawLine(data, color, isDashed = false) {
+        function drawLine(data, color, lineWidth = 2, isDashed = false) {
             ctx.beginPath();
             ctx.strokeStyle = color;
-            ctx.lineWidth = 2;
+            ctx.lineWidth = lineWidth;
             if (isDashed) ctx.setLineDash([4, 4]); else ctx.setLineDash([]);
             for (let i = 0; i < data.length; i++) {
                 const x = padding.left + i * step + step / 2;
@@ -677,16 +678,22 @@
             ctx.setLineDash([]);
         }
 
-        drawLine(uppers, '#a855f7');
-        drawLine(mbs, '#94a3b8');
-        drawLine(lowers, '#a855f7', true);
+        // 繪製布林上下軌與中軌
+        drawLine(uppers, '#a855f7', 2);
+        drawLine(mbs, '#94a3b8', 2);
+        drawLine(lowers, '#a855f7', 2, true);
 
+        // 繪製 5MA (暖橘黃色)
+        drawLine(ma5s, '#f59e0b', 2.5);
+
+        // 繪製 K 線
         for (let i = 0; i < klines.length; i++) {
             const k = klines[i];
             const x = padding.left + i * step + step / 2;
             const isUp = k.close >= k.open;
             const color = isUp ? '#00e676' : '#ff3366';
 
+            // 影線
             ctx.beginPath();
             ctx.strokeStyle = color;
             ctx.lineWidth = 1.8;
@@ -694,6 +701,7 @@
             ctx.lineTo(x, getY(k.low));
             ctx.stroke();
 
+            // 實體
             const yOpen = getY(k.open);
             const yClose = getY(k.close);
             const bodyY = Math.min(yOpen, yClose);
