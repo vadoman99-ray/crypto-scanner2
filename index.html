@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>時間波動能 - 極速 Terminal Pro</title>
+    <title>MA多頭趨勢掃描 (1H) - Terminal Pro</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
 
@@ -20,13 +20,6 @@
             --green-bg: rgba(14, 203, 129, 0.12);
             --red: #f6465d;
             --red-bg: rgba(246, 70, 93, 0.12);
-            --orange: #ff9800;
-            --orange-bg: rgba(255, 152, 0, 0.12);
-            --blue: #2196f3;
-            --blue-bg: rgba(33, 150, 243, 0.12);
-            --purple: #b388ff;
-            --purple-bg: rgba(179, 136, 255, 0.15);
-            --purple-border: rgba(179, 136, 255, 0.4);
         }
         
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
@@ -35,7 +28,7 @@
             background-color: var(--bg-color); 
             color: var(--text-main); 
             margin: 0; 
-            padding-bottom: 80px; 
+            padding-bottom: 30px; 
             -webkit-font-smoothing: antialiased;
         }
 
@@ -72,16 +65,16 @@
         
         /* Dashboard 數據統計卡片 */
         .dashboard {
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
             padding: 12px 16px 4px 16px;
         }
         .stat-card {
             background: var(--card-bg); border: 1px solid var(--card-border);
-            border-radius: 10px; padding: 8px 10px; text-align: center;
+            border-radius: 10px; padding: 10px; text-align: center;
         }
-        .stat-card .val { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 700; color: #fff; }
-        .stat-card .lbl { font-size: 0.65rem; color: var(--text-sub); margin-top: 2px; font-weight: 500; }
-        .stat-card.perfect .val { color: var(--purple); }
+        .stat-card .val { font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; font-weight: 700; color: #fff; }
+        .stat-card .lbl { font-size: 0.7rem; color: var(--text-sub); margin-top: 2px; font-weight: 500; }
+        .stat-card.perfect .val { color: var(--green); }
 
         /* 工具列 */
         .toolbar { padding: 8px 16px 12px 16px; display: flex; gap: 8px; align-items: center; }
@@ -125,60 +118,19 @@
         /* 標籤 Badge 樣式 */
         .badge-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
         .badge { font-size: 0.65rem; padding: 3px 8px; border-radius: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 3px; }
-        .badge-breakout { background-color: var(--blue-bg); color: var(--blue); border: 1px solid rgba(33, 150, 243, 0.3); }
-        .badge-volume { background-color: var(--orange-bg); color: var(--orange); border: 1px solid rgba(255, 152, 0, 0.3); }
-        .badge-perfect { 
-            background: linear-gradient(135deg, rgba(156, 39, 176, 0.25), rgba(240, 185, 11, 0.25)); 
-            color: #e0b0ff; border: 1px solid var(--purple-border); 
-            box-shadow: 0 0 10px rgba(179, 136, 255, 0.2);
-            animation: pulse 2s infinite;
-        }
-        .badge-ema { background-color: rgba(255,255,255,0.05); color: var(--text-sub); border: 1px solid var(--card-border); }
-        
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(179, 136, 255, 0.4); }
-            70% { box-shadow: 0 0 0 6px rgba(179, 136, 255, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(179, 136, 255, 0); }
-        }
+        .badge-ma { background-color: var(--green-bg); color: var(--green); border: 1px solid rgba(14, 203, 129, 0.3); }
 
         .change-badge { font-size: 0.75rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; }
         .change-up { color: var(--green); background-color: var(--green-bg); }
         .change-down { color: var(--red); background-color: var(--red-bg); }
         
-        /* 底部導覽列 */
-        .bottom-nav { 
-            position: fixed; bottom: 0; left: 0; right: 0; height: 65px; 
-            background-color: rgba(18, 22, 28, 0.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            border-top: 1px solid var(--card-border); display: flex; z-index: 100; padding: 0 6px;
-        }
-        .nav-item { 
-            flex: 1; display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; color: var(--text-sub); 
-            font-size: 0.65rem; cursor: pointer; border: none; background: none; 
-            padding: 6px 0; transition: all 0.2s; border-radius: 8px;
-        }
-        .nav-item.active { color: var(--yellow); font-weight: 700; }
-        .nav-icon { font-size: 1.2rem; margin-bottom: 2px; transition: transform 0.2s; }
-        .nav-item.active .nav-icon { transform: translateY(-2px); }
-        
-        /* 說明卡片 */
-        .about-card { 
-            background-color: var(--card-bg); border: 1px solid var(--card-border); 
-            border-left: 4px solid var(--yellow); border-radius: 14px; padding: 18px; margin-top: 10px;
-        }
-        .about-card.strategy { border-left-color: var(--green); }
-        .about-title { font-size: 1rem; font-weight: 700; color: var(--yellow); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
-        .about-card.strategy .about-title { color: var(--green); }
-        .about-content { font-size: 0.85rem; color: #cbd5e1; line-height: 1.7; }
-        .about-content ul { padding-left: 18px; margin: 0; }
-        .about-content li { margin-bottom: 10px; }
         .empty-tip { text-align: center; padding: 60px 0; color: var(--text-sub); font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
     <div class="app-header">
-        <div class="header-title">⚡ 時間波動能 Pro</div>
+        <div class="header-title">📈 1H MA 多頭趨勢掃描</div>
         <button id="scanBtn" class="scan-btn" onclick="startScan()">極速掃描</button>
     </div>
 
@@ -188,19 +140,11 @@
     <div class="dashboard" id="dashboard">
         <div class="stat-card">
             <div class="val" id="statTotal">0</div>
-            <div class="lbl">掃描池</div>
-        </div>
-        <div class="stat-card">
-            <div class="val" id="statEma">0</div>
-            <div class="lbl">EMA多頭</div>
-        </div>
-        <div class="stat-card">
-            <div class="val" id="statBreak">0</div>
-            <div class="lbl">123突破</div>
+            <div class="lbl">掃描總數</div>
         </div>
         <div class="stat-card perfect">
-            <div class="val" id="statPerfect">0</div>
-            <div class="lbl">完美共振</div>
+            <div class="val" id="statMaBull">0</div>
+            <div class="lbl">1H MA 多頭排列</div>
         </div>
     </div>
 
@@ -219,17 +163,8 @@
 
     <div class="container" id="symbolList"></div>
 
-    <div class="bottom-nav">
-        <button class="nav-item active" onclick="setFilter('ALL', this)"><div class="nav-icon">🌐</div><div>全部多頭</div></button>
-        <button class="nav-item" onclick="setFilter('PERFECT', this)"><div class="nav-icon">🔥</div><div>全滿足訊號</div></button>
-        <button class="nav-item" onclick="setFilter('BREAKOUT', this)"><div class="nav-icon">⚡</div><div>123突破</div></button>
-        <button class="nav-item" onclick="setFilter('VOLUME', this)"><div class="nav-icon">🌊</div><div>量能爆發</div></button>
-        <button class="nav-item" onclick="setFilter('INFO', this)"><div class="nav-icon">ℹ️</div><div>說明</div></button>
-    </div>
-
 <script>
     let rawResults = [];
-    let currentFilter = 'ALL';
     let ticker24hMap = {};
     let sortDesc = true;
     let isScanning = false;
@@ -246,17 +181,14 @@
         return null;
     }
 
-    function calculateEMA(closes, period) {
+    function calculateSMA(closes, period) {
         const len = closes.length;
         if (len < period) return 0;
-        const k = 2 / (period + 1);
-        let ema = 0;
-        for (let i = 0; i < period; i++) ema += closes[i];
-        ema /= period;
-        for (let i = period; i < len; i++) {
-            ema = (closes[i] * k) + (ema * (1 - k));
+        let sum = 0;
+        for (let i = len - period; i < len; i++) {
+            sum += closes[i];
         }
-        return ema;
+        return sum / period;
     }
 
     async function fetch24hTickers() { 
@@ -279,49 +211,29 @@
 
     async function processSymbol(symbol) {
         try {
-            const res15m = await fetchWithTimeout(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=15m&limit=220`);
-            if (!res15m || res15m.length < 220) return null;
+            // 改為請求 1h K線
+            const res1h = await fetchWithTimeout(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=70`);
+            if (!res1h || res1h.length < 60) return null;
 
-            const len = res15m.length;
+            const len = res1h.length;
             const closes = new Float64Array(len);
-            for (let i = 0; i < len; i++) closes[i] = parseFloat(res15m[i][4]);
+            for (let i = 0; i < len; i++) closes[i] = parseFloat(res1h[i][4]);
 
             const currentPrice = closes[len - 1];
 
-            const ema20 = calculateEMA(closes, 20);
-            const ema50 = calculateEMA(closes, 50);
-            const ema200 = calculateEMA(closes, 200);
+            const ma30 = calculateSMA(closes, 30);
+            const ma45 = calculateSMA(closes, 45);
+            const ma60 = calculateSMA(closes, 60);
 
-            if (!(ema20 > ema50 && ema50 > ema200 && currentPrice >= ema20)) return null;
-
-            let prevHigh = parseFloat(res15m[len - 21][2]);
-            let sumVol = 0;
-            for (let i = len - 21; i < len - 1; i++) {
-                const h = parseFloat(res15m[i][2]);
-                if (h > prevHigh) prevHigh = h;
-                sumVol += parseFloat(res15m[i][5]);
+            // 判斷多頭趨勢：價格 >= MA30 > MA45 > MA60
+            if (currentPrice >= ma30 && ma30 > ma45 && ma45 > ma60) {
+                return { 
+                    symbol, 
+                    price: currentPrice, 
+                    priceChange24h: ticker24hMap[symbol] || 0 
+                };
             }
-            const isBreakout123 = currentPrice > prevHigh;
-
-            const latestBar = res15m[len - 1];
-            const openPrice = parseFloat(latestBar[1]);
-            const highPrice = parseFloat(latestBar[2]);
-            const lowPrice = parseFloat(latestBar[3]);
-            const volume = parseFloat(latestBar[5]);
-
-            const avgVolume = sumVol / 20;
-            const isVolumeSurge = (volume >= avgVolume * 1.8) && 
-                                  (currentPrice > openPrice) && 
-                                  ((currentPrice - openPrice) / (highPrice - lowPrice || 1) >= 0.6);
-
-            return { 
-                symbol, 
-                price: currentPrice, 
-                isEmaBullish: true,
-                isBreakout123,
-                isVolumeSurge,
-                priceChange24h: ticker24hMap[symbol] || 0 
-            };
+            return null;
         } catch (e) { return null; }
     }
 
@@ -344,9 +256,7 @@
 
     function updateDashboard() {
         document.getElementById('statTotal').innerText = totalSymbolCount;
-        document.getElementById('statEma').innerText = rawResults.length;
-        document.getElementById('statBreak').innerText = rawResults.filter(r => r.isBreakout123).length;
-        document.getElementById('statPerfect').innerText = rawResults.filter(r => r.isBreakout123 && r.isVolumeSurge).length;
+        document.getElementById('statMaBull').innerText = rawResults.length;
     }
 
     async function startScan() {
@@ -381,7 +291,7 @@
             if (now - lastRenderTime > 250) {
                 lastRenderTime = now;
                 updateDashboard();
-                if (currentFilter !== 'INFO') renderList();
+                renderList();
             }
         });
 
@@ -389,7 +299,7 @@
         statusText.innerText = "掃描完畢，即時數據已更新";
         btn.disabled = false; btn.innerText = "極速掃描";
         isScanning = false;
-        if (currentFilter !== 'INFO') renderList();
+        renderList();
     }
 
     function toggleSort() { 
@@ -411,47 +321,9 @@
         renderList();
     }
 
-    function setFilter(filter, el) { 
-        currentFilter = filter; 
-        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); 
-        el.classList.add('active'); 
-        if (filter === 'INFO') { 
-            document.getElementById('toolbar').style.display = 'none'; 
-            document.getElementById('statusBar').style.display = 'none'; 
-            document.getElementById('dashboard').style.display = 'none';
-            renderInfoPage(); 
-        } else { 
-            document.getElementById('toolbar').style.display = 'flex'; 
-            document.getElementById('statusBar').style.display = 'flex'; 
-            document.getElementById('dashboard').style.display = 'grid';
-            renderList(); 
-        } 
-    }
-
     function getFilteredData() {
         const query = document.getElementById('searchInput').value.toUpperCase().trim();
-        return rawResults.filter(item => item.symbol.includes(query)).filter(item => {
-            if (currentFilter === 'PERFECT') return item.isBreakout123 && item.isVolumeSurge;
-            if (currentFilter === 'BREAKOUT') return item.isBreakout123;
-            if (currentFilter === 'VOLUME') return item.isVolumeSurge;
-            return true;
-        });
-    }
-
-    function renderInfoPage() {
-        document.getElementById('symbolList').innerHTML = `
-            <div class="about-card strategy">
-                <div class="about-title">時間波動能 - 漏斗式三重訊號系統</div>
-                <div class="about-content">
-                    <ul>
-                        <li><b>1號門檻（基礎多頭）：</b>必須率先滿足 <b>EMA 20 > EMA 50 > EMA 200</b> 且最新價格在 EMA 20 上方。未滿足此條件者會直接被濾除。</li>
-                        <li><b>2號訊號 (123法則突破)：</b>價格強勢<b>突破前 20 根 15M K 線的最高價</b>，代表結構轉折突破，主升段觸發。</li>
-                        <li><b>3號訊號 (波動能爆發)：</b>成交量達到前 20 根均量的 <b>1.8 倍以上</b>，且收在陽棒實體高位，代表主力資金爆量拉升。</li>
-                        <li><b>🔥 全滿足訊號 (完美共振)：</b>同時滿足【EMA多頭 + 123突破 + 爆量噴發】，為勝率最高的主攻標的！</li>
-                    </ul>
-                </div>
-            </div>
-        `;
+        return rawResults.filter(item => item.symbol.includes(query));
     }
 
     function renderList() {
@@ -467,7 +339,6 @@
         }
 
         container.innerHTML = data.map(item => {
-            const isPerfect = item.isBreakout123 && item.isVolumeSurge;
             return `
             <a class="symbol-card" href="https://www.binance.com/zh-TC/futures/${item.symbol}" target="_blank">
                 <div class="symbol-info">
@@ -478,10 +349,7 @@
                         </span>
                     </div>
                     <div class="badge-list">
-                        ${isPerfect ? '<span class="badge badge-perfect">🔥 完美共振 (突破+爆量)</span>' : ''}
-                        ${!isPerfect && item.isBreakout123 ? '<span class="badge badge-breakout">⚡ 123結構突破</span>' : ''}
-                        ${!isPerfect && item.isVolumeSurge ? '<span class="badge badge-volume">🌊 波動能爆發</span>' : ''}
-                        ${!item.isBreakout123 && !item.isVolumeSurge ? '<span class="badge badge-ema">🌐 EMA多頭順勢</span>' : ''}
+                        <span class="badge badge-ma">🚀 1H 多頭趨勢 (現價 ≥ MA30 > MA45 > MA60)</span>
                     </div>
                 </div>
                 <div class="symbol-metrics">
