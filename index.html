@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>⚡ 1H MA 多頭排列（45MA排行 - 價格在60MA上）</title>
+    <title>⚡ 1H MA 多頭排列（中均排行 - 價格在長均上）</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@800&display=swap');
 
@@ -103,7 +103,7 @@
 <body>
 
     <div class="app-header">
-        <div class="header-title">⚡ 1H 多頭排列 (45MA排行 / 現價>60MA)</div>
+        <div class="header-title">⚡ 1H 多頭排列 (中均排行 / 現價>長均)</div>
         <button id="scanBtn" class="scan-btn" onclick="startScan()">啟動極速掃描</button>
     </div>
 
@@ -143,13 +143,13 @@
 
             <div class="info-box">
                 <div class="info-row"><span>當前現價:</span><b id="valPrice" style="color:var(--manga-yellow);">0</b></div>
-                <div class="info-row"><span>距 45MA 幅度 (排行基準):</span><b id="valMa2Dist" class="highlight-ma2">0%</b></div>
-                <div class="info-row"><span>距 30MA 幅度:</span><b id="valMa1Dist">0%</b></div>
-                <div class="info-row"><span>距 60MA 幅度:</span><b id="valMa3Dist">0%</b></div>
+                <div class="info-row"><span>距中均幅度 (排行基準):</span><b id="valMa2Dist" class="highlight-ma2">0%</b></div>
+                <div class="info-row"><span>距短均幅度:</span><b id="valMa1Dist">0%</b></div>
+                <div class="info-row"><span>距長均幅度:</span><b id="valMa3Dist">0%</b></div>
                 <div class="info-row"><span>24H 波動幅度:</span><b id="val24hChange">0%</b></div>
-                <div class="info-row"><span>短期均線 (30):</span><b id="valMA1" style="color:var(--manga-pink);">0</b></div>
-                <div class="info-row"><span>中期均線 (45):</span><b id="valMA2" style="color:var(--manga-purple);">0</b></div>
-                <div class="info-row"><span>長期均線 (60):</span><b id="valMA3" style="color:var(--manga-green);">0</b></div>
+                <div class="info-row"><span>短期均線:</span><b id="valMA1" style="color:var(--manga-pink);">0</b></div>
+                <div class="info-row"><span>中期均線:</span><b id="valMA2" style="color:var(--manga-purple);">0</b></div>
+                <div class="info-row"><span>長期均線:</span><b id="valMA3" style="color:var(--manga-green);">0</b></div>
             </div>
         </div>
     </div>
@@ -222,7 +222,6 @@
             const ma2 = mas[P2][len - 1];
             const ma3 = mas[P3][len - 1];
 
-            // 條件：1. 均線多頭排列 (30MA > 45MA > 60MA)  2. 現價要在 60MA 上方 (price >= ma3)
             if (ma1 > ma2 && ma2 > ma3 && price >= ma3) {
                 const ma1DistPercent = ((price - ma1) / ma1) * 100;
                 const ma2DistPercent = ((price - ma2) / ma2) * 100;
@@ -277,7 +276,6 @@
         btn.innerText = "🔍 閃電計算 1H 均線中...";
         const results = await asyncPool(50, candidateSymbols, sym => evaluateSymbolMA(sym, updateProgress));
 
-        // 改依據「距 45MA 幅度」由高到低（降序）排序
         rawResults = results.filter(Boolean).sort((a, b) => b.ma2DistPercent - a.ma2DistPercent);
         document.getElementById('statEntry').innerText = rawResults.length;
 
@@ -310,7 +308,6 @@
             const dist3Class = item.ma3DistPercent >= 0 ? 'val-up' : 'val-down';
             const dist3Sign = item.ma3DistPercent >= 0 ? '+' : '';
 
-            // 名次標籤
             let rankTag = `<span class="badge-rank">#${index + 1}</span>`;
             if (index === 0) rankTag = `<span class="badge-rank" style="background:#ffd700;">🏆 TOP 1</span>`;
             else if (index === 1) rankTag = `<span class="badge-rank" style="background:#c0c0c0;">🥈 TOP 2</span>`;
@@ -321,15 +318,15 @@
                     <div style="display:flex; align-items:center; gap:8px;">
                         ${rankTag}
                         <span class="symbol-name">${item.symbol.replace('USDT','')}</span>
-                        <span class="badge" style="background:var(--manga-purple);">45MA 排行</span>
+                        <span class="badge" style="background:var(--manga-purple);">中均排行</span>
                     </div>
                     <div class="detail-row">
-                        <b class="highlight-ma2">距45MA: <span class="${dist2Class}">${dist2Sign}${item.ma2DistPercent.toFixed(2)}%</span></b> | 
-                        距30MA: <span class="${dist1Class}">${dist1Sign}${item.ma1DistPercent.toFixed(2)}%</span>
+                        <b class="highlight-ma2">距中均: <span class="${dist2Class}">${dist2Sign}${item.ma2DistPercent.toFixed(2)}%</span></b> | 
+                        距短均: <span class="${dist1Class}">${dist1Sign}${item.ma1DistPercent.toFixed(2)}%</span>
                     </div>
                     <div class="detail-row" style="opacity: 0.8;">
                         24H: <span class="${chg24Class}">${chg24Sign}${item.priceChange24h.toFixed(2)}%</span> | 
-                        距60MA: <span class="${dist3Class}">${dist3Sign}${item.ma3DistPercent.toFixed(2)}%</span>
+                        距長均: <span class="${dist3Class}">${dist3Sign}${item.ma3DistPercent.toFixed(2)}%</span>
                     </div>
                 </div>
                 <div style="text-align:right;">
