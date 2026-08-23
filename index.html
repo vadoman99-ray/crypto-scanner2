@@ -91,6 +91,9 @@
         .info-box { background: #070a12; border: 1px solid #2a3a5c; padding: 10px; border-radius: 6px; }
         .info-row { display: flex; justify-content: space-between; font-size: 0.85rem; font-family: 'JetBrains Mono', monospace; margin-bottom: 6px; }
         .info-row:last-child { margin-bottom: 0; }
+        
+        .val-up { color: var(--manga-green); }
+        .val-down { color: var(--manga-red); }
     </style>
 </head>
 <body>
@@ -136,6 +139,8 @@
 
             <div class="info-box">
                 <div class="info-row"><span>當前現價:</span><b id="valPrice" style="color:var(--manga-yellow);">0</b></div>
+                <div class="info-row"><span>24H 波動幅度:</span><b id="val24hChange">0%</b></div>
+                <div class="info-row"><span>距長均幅度:</span><b id="valMa3Dist">0%</b></div>
                 <div class="info-row"><span>短期均線:</span><b id="valMA1" style="color:var(--manga-pink);">0</b></div>
                 <div class="info-row"><span>中期均線:</span><b id="valMA2" style="color:#a855f7;">0</b></div>
                 <div class="info-row"><span>長期均線:</span><b id="valMA3" style="color:var(--manga-green);">0</b></div>
@@ -147,13 +152,13 @@
     const API_BASE = 'https://fapi.binance.com';
     let rawResults = [];
     let currentItem = null;
+    let tickerMap = {}; // 儲存 24H 漲跌幅等資訊
 
     const P1 = 30;
     const P2 = 45;
     const P3 = 60;
-    const DISPLAY_COUNT = 100; // 固定顯示與計算的 K 棒數
+    const DISPLAY_COUNT = 100;
 
-    // ⚡ 效能優化 1：高併發控制池 (Concurrency Pool 提高至 50)
     async function asyncPool(poolLimit, array, iteratorFn) {
         const ret = [];
         const executing = new Set();
@@ -170,7 +175,6 @@
         return Promise.all(ret);
     }
 
-    // ⚡ 效能優化 2：O(N) 滑動視窗均線計算 (Sliding Window Algorithm)
     function calculateAllSMA(closes, periods) {
         const result = {};
         const len = closes.length;
@@ -194,10 +198,8 @@
         return result;
     }
 
-    // ⚡ 效能優化 3：網路傳輸最小化 (精簡 limit 參數)
     async function evaluateSymbolMA(symbol, updateProgress) {
         try {
-            // limit 為 100 根，傳輸體積最小、載入速度最快
             const res = await fetch(`${API_BASE}/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=${DISPLAY_COUNT}`);
             updateProgress();
             if (!res.ok) return null;
@@ -209,14 +211,28 @@
             const closes = klines.map(k => parseFloat(k[4]));
             const price = closes[len - 1];
 
-            // 一次性計算 3 條均線的最新值
             const mas = calculateAllSMA(closes, [P1, P2, P3]);
             const ma1 = mas[P1][len - 1];
             const ma2 = mas[P2][len - 1];
             const ma3 = mas[P3][len - 1];
 
-            if (price > ma1 && ma1 > ma2 && ma2 > ma3) {
-                return { symbol, price, ma1, ma2, ma3, klines, maSeries: mas };
+            // 多頭排列判斷：短均 > 中均 > 長均
+            if (ma1 > ma2 && ma2 > ma3) {
+                // 計算現價距長均幅度 (%)
+                const ma3DistPercent = ((price - ma3) / ma3) * 100;
+                const priceChange24h = tickerMap[symbol] ? parseFloat(tickerMap[symbol].priceChangePercent) : 0;
+
+                return { 
+                    symbol, 
+                    price, 
+                    ma1, 
+                    ma2, 
+                    ma3, 
+                    ma3DistPercent, 
+                    priceChange24h, 
+                    klines, 
+                    maSeries: mas 
+                };
             }
             return null;
         } catch {
@@ -229,11 +245,14 @@
         const btn = document.getElementById('scanBtn');
         btn.disabled = true; btn.innerText = "⚡ 全網初篩中...";
         rawResults = [];
+        tickerMap = {};
         document.getElementById('symbolList').innerHTML = '';
 
         const tickers = await fetch(`${API_BASE}/fapi/v1/ticker/24hr`).then(r => r.json());
         
-        // 快速過濾合格標的
+        // 將 24h 漲跌幅建立快取字典
+        tickers.forEach(t => { tickerMap[t.symbol] = t; });
+
         const candidateSymbols = tickers.filter(t => 
             t.symbol.endsWith('USDT') && 
             parseFloat(t.priceChangePercent) > 0 && 
@@ -249,7 +268,6 @@
         };
 
         btn.innerText = "🔍 閃電計算 1H 均線中...";
-        // 併發量調高至 50，大幅加快掃描速度
         const results = await asyncPool(50, candidateSymbols, sym => evaluateSymbolMA(sym, updateProgress));
 
         rawResults = results.filter(Boolean);
@@ -259,7 +277,6 @@
         renderList();
     }
 
-    // ⚡ 效能優化 4：DocumentFragment 批量 DOM 渲染
     function renderList() {
         const container = document.getElementById('symbolList');
         if (rawResults.length === 0) {
@@ -272,6 +289,13 @@
             const card = document.createElement('div');
             card.className = 'symbol-card';
             card.onclick = () => openModal(item.symbol);
+
+            const chg24Class = item.priceChange24h >= 0 ? 'val-up' : 'val-down';
+            const chg24Sign = item.priceChange24h >= 0 ? '+' : '';
+            
+            const distClass = item.ma3DistPercent >= 0 ? 'val-up' : 'val-down';
+            const distSign = item.ma3DistPercent >= 0 ? '+' : '';
+
             card.innerHTML = `
                 <div style="flex: 1;">
                     <div style="display:flex; align-items:center; gap:8px;">
@@ -279,6 +303,10 @@
                         <span class="badge">📈 1H 多頭排列</span>
                     </div>
                     <div class="detail-row">
+                        24H: <span class="${chg24Class}">${chg24Sign}${item.priceChange24h.toFixed(2)}%</span> | 
+                        距長均: <span class="${distClass}">${distSign}${item.ma3DistPercent.toFixed(2)}%</span>
+                    </div>
+                    <div class="detail-row" style="opacity: 0.8;">
                         短均: <span style="color:var(--manga-pink);">${item.ma1.toFixed(4)}</span> | 
                         中均: <span style="color:#a855f7;">${item.ma2.toFixed(4)}</span> | 
                         長均: <span style="color:var(--manga-green);">${item.ma3.toFixed(4)}</span>
@@ -295,7 +323,6 @@
         container.appendChild(fragment);
     }
 
-    // ⚡ 效能優化 5：Path2D 批量 Canvas 渲染，減少繪圖耗時
     function drawChart(item) {
         const canvas = document.getElementById('klineCanvas');
         const ctx = canvas.getContext('2d');
@@ -306,7 +333,6 @@
 
         const klines = item.klines;
         const displayCount = klines.length;
-        const closes = klines.map(k => parseFloat(k[4]));
 
         let minPrice = Infinity;
         let maxPrice = -Infinity;
@@ -326,7 +352,6 @@
         const candleWidth = (width / displayCount) * 0.7;
         const stepX = width / displayCount;
 
-        // 使用 Path2D 批次繪製上漲與下跌 K 棒
         const upPath = new Path2D();
         const downPath = new Path2D();
 
@@ -340,30 +365,25 @@
             const isUp = close >= open;
             const targetPath = isUp ? upPath : downPath;
 
-            // 影線
             targetPath.moveTo(x, getY(high));
             targetPath.lineTo(x, getY(low));
 
-            // 實體
             const topY = getY(Math.max(open, close));
             const bottomY = getY(Math.min(open, close));
             const h = Math.max(2, bottomY - topY);
             targetPath.rect(x - candleWidth / 2, topY, candleWidth, h);
         });
 
-        // 批量渲染上漲 K 棒
         ctx.strokeStyle = '#00ff66';
         ctx.fillStyle = '#00ff66';
         ctx.stroke(upPath);
         ctx.fill(upPath);
 
-        // 批量渲染下跌 K 棒
         ctx.strokeStyle = '#ff3366';
         ctx.fillStyle = '#ff3366';
         ctx.stroke(downPath);
         ctx.fill(downPath);
 
-        // 繪製 3 條均線
         const drawMA = (maValues, color) => {
             ctx.beginPath();
             ctx.strokeStyle = color;
@@ -386,9 +406,9 @@
             ctx.stroke();
         };
 
-        drawMA(item.maSeries[P1], '#ff007f'); // 短均
-        drawMA(item.maSeries[P2], '#a855f7'); // 中均
-        drawMA(item.maSeries[P3], '#00ff66'); // 長均
+        drawMA(item.maSeries[P1], '#ff007f');
+        drawMA(item.maSeries[P2], '#a855f7');
+        drawMA(item.maSeries[P3], '#00ff66');
     }
 
     function openModal(symbol) {
@@ -397,6 +417,19 @@
 
         document.getElementById('modalSymbol').innerText = symbol;
         document.getElementById('valPrice').innerText = currentItem.price.toFixed(4);
+
+        // 24H 變動數值 rendering
+        const chgEl = document.getElementById('val24hChange');
+        const chgSign = currentItem.priceChange24h >= 0 ? '+' : '';
+        chgEl.innerText = `${chgSign}${currentItem.priceChange24h.toFixed(2)}%`;
+        chgEl.className = currentItem.priceChange24h >= 0 ? 'val-up' : 'val-down';
+
+        // 距長均幅度 rendering
+        const distEl = document.getElementById('valMa3Dist');
+        const distSign = currentItem.ma3DistPercent >= 0 ? '+' : '';
+        distEl.innerText = `${distSign}${currentItem.ma3DistPercent.toFixed(2)}%`;
+        distEl.className = currentItem.ma3DistPercent >= 0 ? 'val-up' : 'val-down';
+
         document.getElementById('valMA1').innerText = currentItem.ma1.toFixed(4);
         document.getElementById('valMA2').innerText = currentItem.ma2.toFixed(4);
         document.getElementById('valMA3').innerText = currentItem.ma3.toFixed(4);
