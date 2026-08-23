@@ -25,7 +25,6 @@
         body { 
             font-family: 'Noto Sans TC', sans-serif; 
             background-color: #f0f3f8; 
-            /* 漫畫網點背景 Screentone Pattern */
             background-image: radial-gradient(var(--manga-black) 15%, transparent 16%);
             background-size: 12px 12px;
             color: var(--manga-black); 
@@ -34,7 +33,7 @@
             overflow-x: hidden;
         }
 
-        /* 頁首漫畫 Header */
+        /* Header */
         .app-header { 
             position: sticky; top: 0; z-index: 100; 
             background: var(--manga-yellow); 
@@ -45,9 +44,8 @@
         }
         .header-title { 
             font-family: 'Bangers', 'Noto Sans TC', cursive;
-            font-size: 1.3rem; 
+            font-size: 1.2rem; 
             letter-spacing: 1px;
-            text-transform: uppercase;
             text-shadow: 2px 2px 0px #fff, -2px -2px 0px #fff, 2px -2px 0px #fff, -2px 2px 0px #fff, 3px 3px 0px var(--manga-black);
             display: flex; align-items: center; gap: 6px;
         }
@@ -67,7 +65,7 @@
         .scan-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0px var(--manga-black); }
         .scan-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: var(--pop-shadow); }
 
-        /* 漫畫風格進度條 */
+        /* Progress Bar */
         .progress-container { 
             height: 10px; background: #fff; width: 100%; 
             border-bottom: var(--card-border); position: relative; overflow: hidden;
@@ -79,7 +77,7 @@
             transition: width 0.1s linear; 
         }
 
-        /* 策略頁籤 Tab */
+        /* Tabs */
         .strategy-selector { display: flex; gap: 10px; padding: 14px 16px 0 16px; }
         .tab-btn {
             flex: 1; padding: 10px 4px; border-radius: 10px; font-size: 0.85rem; font-weight: 900;
@@ -91,7 +89,7 @@
         .tab-btn.active-entry { background: var(--manga-green); color: #000; transform: translate(-2px, -2px); box-shadow: var(--pop-shadow-lg); }
         .tab-btn.active-exit { background: var(--manga-red); color: #fff; text-shadow: 1px 1px 0 #000; transform: translate(-2px, -2px); box-shadow: var(--pop-shadow-lg); }
 
-        /* 漫畫儀表板 Dashboard */
+        /* Dashboard */
         .dashboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 12px 16px 4px 16px; }
         .stat-card {
             background: #fff; border: var(--card-border);
@@ -103,7 +101,7 @@
         .stat-card.entry { background: rgba(0, 230, 118, 0.2); }
         .stat-card.exit { background: rgba(255, 51, 102, 0.2); }
 
-        /* 工具列與搜尋 */
+        /* Toolbar */
         .toolbar { padding: 10px 16px; display: flex; gap: 8px; align-items: center; }
         .search-wrapper { position: relative; flex: 1; display: flex; align-items: center; }
         .search-input { 
@@ -123,14 +121,14 @@
         .status-bar { padding: 0 16px 8px 16px; font-size: 0.75rem; font-weight: 900; color: #555; display: flex; justify-content: space-between; }
         .container { padding: 0 16px; }
         
-        /* 漫畫卡片動畫與樣式 */
+        /* Card Style */
         .symbol-card { 
             background: #fff; border: var(--card-border); 
             border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; 
             display: flex; justify-content: space-between; align-items: center; 
-            text-decoration: none; color: inherit; box-shadow: var(--pop-shadow);
+            color: inherit; box-shadow: var(--pop-shadow);
             transition: all 0.15s ease;
-            position: relative; overflow: hidden;
+            cursor: pointer; position: relative; overflow: hidden;
         }
         .symbol-card:hover { 
             transform: translate(-3px, -3px); 
@@ -144,7 +142,6 @@
         .symbol-metrics { text-align: right; }
         .symbol-metrics .price { font-size: 1.15rem; font-weight: 900; font-family: 'JetBrains Mono', monospace; }
         
-        /* 漫畫對話框 / 對比標籤 */
         .badge-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
         .badge { 
             font-size: 0.7rem; padding: 3px 8px; border-radius: 6px; font-weight: 900; 
@@ -158,6 +155,62 @@
         .change-down { color: #fff; background-color: var(--manga-red); }
 
         .empty-tip { text-align: center; padding: 50px 0; font-weight: 900; font-size: 1rem; color: #666; }
+
+        /* ---------------- Modal 彈出漫畫圖表框 ---------------- */
+        .modal-backdrop {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px);
+            z-index: 999; display: none; justify-content: center; align-items: center;
+            padding: 16px;
+        }
+        .modal-card {
+            background: #fff; border: var(--card-border);
+            border-radius: 20px; width: 100%; max-width: 520px;
+            box-shadow: 8px 8px 0px var(--manga-black);
+            padding: 16px; position: relative;
+            animation: modalPop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes modalPop { 
+            from { transform: scale(0.8); opacity: 0; } 
+            to { transform: scale(1); opacity: 1; } 
+        }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: var(--card-border); padding-bottom: 10px; margin-bottom: 12px;
+        }
+        .modal-title {
+            font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 900;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .modal-close {
+            background: var(--manga-red); color: #fff; border: var(--card-border);
+            border-radius: 10px; width: 32px; height: 32px; font-weight: 900;
+            cursor: pointer; box-shadow: 2px 2px 0 #000; display: flex; justify-content: center; align-items: center;
+        }
+        .chart-info {
+            display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 900;
+            margin-bottom: 8px; font-family: 'JetBrains Mono', monospace;
+        }
+        .chart-container {
+            width: 100%; height: 260px; background: #fafafa;
+            border: var(--card-border); border-radius: 12px;
+            position: relative; overflow: hidden;
+        }
+        canvas { width: 100%; height: 100%; display: block; }
+        .chart-legend {
+            display: flex; justify-content: center; gap: 14px; margin-top: 10px;
+            font-size: 0.7rem; font-weight: 900;
+        }
+        .legend-item { display: flex; align-items: center; gap: 4px; }
+        .legend-color { width: 10px; height: 10px; border: 1px solid #000; border-radius: 2px; }
+
+        .binance-link-btn {
+            display: block; width: 100%; text-align: center; margin-top: 12px;
+            background: var(--manga-yellow); border: var(--card-border);
+            padding: 10px; border-radius: 12px; font-weight: 900; color: #000;
+            text-decoration: none; box-shadow: var(--pop-shadow); transition: all 0.15s;
+        }
+        .binance-link-btn:hover { background: #ffe680; transform: translate(-2px, -2px); box-shadow: var(--pop-shadow-lg); }
     </style>
 </head>
 <body>
@@ -205,6 +258,33 @@
 
     <div class="container" id="symbolList"></div>
 
+    <!-- ---------------- Modal 布林通道 K棒彈出視窗 ---------------- -->
+    <div class="modal-backdrop" id="chartModal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span id="modalSymbol">BTCUSDT</span>
+                    <span id="modalBadge" class="badge badge-entry">🎯 觸布林上軌</span>
+                </div>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="chart-info">
+                <span>1H K線 (近20根)</span>
+                <span>當前價: <span id="modalPrice">0.00</span> | 上軌: <span id="modalUpper">0.00</span></span>
+            </div>
+            <div class="chart-container">
+                <canvas id="bollingerCanvas"></canvas>
+            </div>
+            <div class="chart-legend">
+                <div class="legend-item"><div class="legend-color" style="background:#00e676;"></div>陽線</div>
+                <div class="legend-item"><div class="legend-color" style="background:#ff3366;"></div>陰線</div>
+                <div class="legend-item"><div class="legend-color" style="background:#a855f7;"></div>上軌(UP)</div>
+                <div class="legend-item"><div class="legend-color" style="background:#94a3b8;"></div>中軌(MB)</div>
+            </div>
+            <a id="binanceLink" class="binance-link-btn" href="#" target="_blank">前往幣安永續合約交易 ↗</a>
+        </div>
+    </div>
+
 <script>
     const API_ENDPOINTS = [
         'https://fapi.binance.com',
@@ -220,7 +300,6 @@
     let totalSymbolCount = 0;
     let currentFilter = 'ALL';
 
-    // 網路請求優化 (帶節流與自動切換)
     async function fetchWithFallback(path, timeoutMs = 1000) {
         for (let i = 0; i < API_ENDPOINTS.length; i++) {
             const endpoint = API_ENDPOINTS[(currentEndpointIdx + i) % API_ENDPOINTS.length];
@@ -256,7 +335,7 @@
             varianceSum += Math.pow(closes[i] - mb, 2);
         }
         const stdDev = Math.sqrt(varianceSum / period);
-        return { upperBand: mb + (multiplier * stdDev), mb };
+        return { upperBand: mb + (multiplier * stdDev), mb, lowerBand: mb - (multiplier * stdDev) };
     }
 
     async function fetch24hTickers() { 
@@ -277,7 +356,6 @@
             .map(s => s.symbol); 
     }
 
-    // 單個幣種高敏運算
     async function processSymbol(symbol) {
         try {
             const res1h = await fetchWithFallback(`/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=70`, 900);
@@ -301,22 +379,18 @@
             const currentOpen = opens[len - 1];
             const currentVol = volumes[len - 1];
 
-            // 多頭排列 (30MA > 45MA > 60MA)
             const ma30 = calculateSMA(closes, 30);
             const ma45 = calculateSMA(closes, 45);
             const ma60 = calculateSMA(closes, 60);
 
             if (!(ma30 > ma45 && ma45 > ma60)) return null;
 
-            // 成交量指標
             const volMa5 = calculateSMA(volumes, 5);
             const volMa15 = calculateSMA(volumes, 15);
 
-            // 布林通道 BOLL(20, 2)
             const boll = calculateBollingerBands(closes, 20, 2);
             if (!boll) return null;
 
-            // 條件判斷
             const isTouchingUpperBand = currentHigh >= boll.upperBand || currentPrice >= boll.upperBand;
             const isEntrySignal = (volMa5 > volMa15) && isTouchingUpperBand;
             const isExitSignal = (currentPrice < currentOpen) && (currentVol > volMa15 * 1.5);
@@ -327,14 +401,14 @@
                     price: currentPrice, 
                     priceChange24h: ticker24hMap[symbol] || 0, 
                     isEntrySignal, 
-                    isExitSignal 
+                    isExitSignal,
+                    klinesRaw: res1h.slice(-40) // 儲存最後40根K線供計算布林通道圖表
                 };
             }
             return null;
         } catch (e) { return null; }
     }
 
-    // 高併發池加速執行器
     async function runFastScanner(symbols, poolLimit = 80, onProgress) {
         let completed = 0;
         const results = [];
@@ -457,8 +531,8 @@
             return;
         }
 
-        container.innerHTML = data.map((item) => `
-            <a class="symbol-card" href="https://www.binance.com/zh-TC/futures/${item.symbol}" target="_blank">
+        container.innerHTML = data.map((item, idx) => `
+            <div class="symbol-card" onclick="openChartModal('${item.symbol}')">
                 <div class="symbol-info">
                     <div class="name-row">
                         <span class="name">${item.symbol.replace('USDT', '')}</span>
@@ -474,8 +548,166 @@
                 <div class="symbol-metrics">
                     <div class="price">${item.price}</div>
                 </div>
-            </a>
+            </div>
         `).join('');
+    }
+
+    /* ---------------- Canvas 動態繪製 20根 K棒 + BOLL(20, 2) ---------------- */
+    function openChartModal(symbol) {
+        const item = rawResults.find(r => r.symbol === symbol);
+        if (!item || !item.klinesRaw) return;
+
+        document.getElementById('modalSymbol').innerText = symbol;
+        document.getElementById('modalPrice').innerText = item.price;
+        document.getElementById('binanceLink').href = `https://www.binance.com/zh-TC/futures/${symbol}`;
+        
+        const badge = document.getElementById('modalBadge');
+        if (item.isEntrySignal) {
+            badge.className = "badge badge-entry";
+            badge.innerText = "🎯 買入 (觸布林上軌)";
+        } else {
+            badge.className = "badge badge-exit";
+            badge.innerText = "🚨 爆量離場";
+        }
+
+        const modal = document.getElementById('chartModal');
+        modal.style.display = 'flex';
+
+        // 解析 K棒數據並計算滾動布林通道 (針對最後 20 根 K線繪製)
+        const raw = item.klinesRaw;
+        const total = raw.length;
+        const displayCount = 20;
+        
+        // 提取近20根顯示數值的同時，算好其指標
+        const klines = [];
+        const uppers = [];
+        const mbs = [];
+        const lowers = [];
+
+        for (let i = total - displayCount; i < total; i++) {
+            const open = parseFloat(raw[i][1]);
+            const high = parseFloat(raw[i][2]);
+            const low = parseFloat(raw[i][3]);
+            const close = parseFloat(raw[i][4]);
+            klines.push({ open, high, low, close });
+
+            // 計算該時間點的 20周期 BOLL
+            const closesSlice = raw.slice(i - 19, i + 1).map(k => parseFloat(k[4]));
+            const boll = calculateBollingerBands(closesSlice, 20, 2);
+            uppers.push(boll.upperBand);
+            mbs.push(boll.mb);
+            lowers.push(boll.lowerBand);
+        }
+
+        document.getElementById('modalUpper').innerText = uppers[uppers.length - 1].toFixed(4);
+
+        // Canvas 繪圖邏輯
+        setTimeout(() => drawCanvasChart(klines, uppers, mbs, lowers), 50);
+    }
+
+    function drawCanvasChart(klines, uppers, mbs, lowers) {
+        const canvas = document.getElementById('bollingerCanvas');
+        const ctx = canvas.getContext('2d');
+        const rect = canvas.parentElement.getBoundingClientRect();
+        
+        canvas.width = rect.width * 2; // 高清 DPR
+        canvas.height = rect.height * 2;
+        ctx.scale(2, 2);
+
+        const width = rect.width;
+        const height = rect.height;
+        const padding = { top: 20, bottom: 20, left: 15, right: 15 };
+
+        ctx.clearRect(0, 0, width, height);
+
+        // 算出價格最大值與最小值
+        let maxP = -Infinity;
+        let minP = Infinity;
+        for (let i = 0; i < klines.length; i++) {
+            maxP = Math.max(maxP, klines[i].high, uppers[i]);
+            minP = Math.min(minP, klines[i].low, lowers[i]);
+        }
+        const pRange = (maxP - minP) || 1;
+
+        function getY(p) {
+            return height - padding.bottom - ((p - minP) / pRange) * (height - padding.top - padding.bottom);
+        }
+
+        const step = (width - padding.left - padding.right) / klines.length;
+        const barWidth = step * 0.55;
+
+        // 1. 繪製布林通道區域背景色 (上軌與下軌間)
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(168, 85, 247, 0.08)';
+        for (let i = 0; i < klines.length; i++) {
+            const x = padding.left + i * step + step / 2;
+            const yUp = getY(uppers[i]);
+            if (i === 0) ctx.moveTo(x, yUp);
+            else ctx.lineTo(x, yUp);
+        }
+        for (let i = klines.length - 1; i >= 0; i--) {
+            const x = padding.left + i * step + step / 2;
+            const yLow = getY(lowers[i]);
+            ctx.lineTo(x, yLow);
+        }
+        ctx.closePath();
+        ctx.fill();
+
+        // 2. 繪製布林軌道線 (上軌/中軌/下軌)
+        function drawLine(data, color, isDashed = false) {
+            ctx.beginPath();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            if (isDashed) ctx.setLineDash([4, 4]); else ctx.setLineDash([]);
+            for (let i = 0; i < data.length; i++) {
+                const x = padding.left + i * step + step / 2;
+                const y = getY(data[i]);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        drawLine(uppers, '#a855f7'); // 紫色上軌
+        drawLine(mbs, '#94a3b8');     // 灰色中軌
+        drawLine(lowers, '#a855f7', true); // 紫色虛線下軌
+
+        // 3. 繪製 20 根 K 棒 (影線與實體)
+        for (let i = 0; i < klines.length; i++) {
+            const k = klines[i];
+            const x = padding.left + i * step + step / 2;
+            const isUp = k.close >= k.open;
+            const color = isUp ? '#00e676' : '#ff3366';
+
+            // 影線 (High-Low)
+            ctx.beginPath();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1.8;
+            ctx.moveTo(x, getY(k.high));
+            ctx.lineTo(x, getY(k.low));
+            ctx.stroke();
+
+            // 實體 (Open-Close)
+            const yOpen = getY(k.open);
+            const yClose = getY(k.close);
+            const bodyY = Math.min(yOpen, yClose);
+            const bodyHeight = Math.max(Math.abs(yOpen - yClose), 2);
+
+            ctx.fillStyle = color;
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 1;
+            ctx.fillRect(x - barWidth / 2, bodyY, barWidth, bodyHeight);
+            ctx.strokeRect(x - barWidth / 2, bodyY, barWidth, bodyHeight);
+        }
+    }
+
+    function closeModal() {
+        document.getElementById('chartModal').style.display = 'none';
+    }
+
+    function closeModalOnBackdrop(e) {
+        if (e.target.id === 'chartModal') closeModal();
     }
 </script>
 </body>
