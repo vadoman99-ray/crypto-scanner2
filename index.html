@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>⚡ 1H MA 多頭排列（30>45>60 & 現價>=60MA）</title>
+    <title>⚡ 1H MA 多頭排列篩選器</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@800&display=swap');
 
@@ -103,7 +103,7 @@
 <body>
 
     <div class="app-header">
-        <div class="header-title">⚡ 1H 多頭排列 (30>45>60 & 現價>=60MA)</div>
+        <div class="header-title">⚡ 1H 多頭排列篩選器</div>
         <button id="scanBtn" class="scan-btn" onclick="startScan()">啟動極速掃描</button>
     </div>
 
@@ -133,9 +133,9 @@
                 <div class="chart-title">
                     <span>1H 近 100 根 K 線圖</span>
                     <span style="font-weight:900;">
-                        <span style="color:var(--manga-pink);">● 30MA</span> 
-                        <span style="color:var(--manga-purple);">● 45MA</span> 
-                        <span style="color:var(--manga-green);">● 60MA</span>
+                        <span style="color:var(--manga-pink);">● 快線</span> 
+                        <span style="color:var(--manga-purple);">● 中線</span> 
+                        <span style="color:var(--manga-green);">● 慢線</span>
                     </span>
                 </div>
                 <canvas id="klineCanvas" width="480" height="200"></canvas>
@@ -143,11 +143,11 @@
 
             <div class="info-box">
                 <div class="info-row"><span>當前現價:</span><b id="valPrice" style="color:var(--manga-yellow);">0</b></div>
-                <div class="info-row"><span>距 60MA 幅度 (排行):</span><b id="valMa3Dist" class="highlight-ma3">0%</b></div>
+                <div class="info-row"><span>距慢線幅度 (排行):</span><b id="valMa3Dist" class="highlight-ma3">0%</b></div>
                 <div class="info-row"><span>24H 漲跌幅:</span><b id="val24hChange">0%</b></div>
-                <div class="info-row"><span>30MA:</span><b id="valMA1" style="color:var(--manga-pink);">0</b></div>
-                <div class="info-row"><span>45MA:</span><b id="valMA2" style="color:var(--manga-purple);">0</b></div>
-                <div class="info-row"><span>60MA:</span><b id="valMA3" style="color:var(--manga-green);">0</b></div>
+                <div class="info-row"><span>快線:</span><b id="valMA1" style="color:var(--manga-pink);">0</b></div>
+                <div class="info-row"><span>中線:</span><b id="valMA2" style="color:var(--manga-purple);">0</b></div>
+                <div class="info-row"><span>慢線:</span><b id="valMA3" style="color:var(--manga-green);">0</b></div>
             </div>
         </div>
     </div>
@@ -161,7 +161,7 @@
     const P1 = 30;
     const P2 = 45;
     const P3 = 60;
-    const DISPLAY_COUNT = 100; // 已改為近 100 根 K 棒
+    const DISPLAY_COUNT = 100;
 
     async function asyncPool(poolLimit, array, iteratorFn) {
         const ret = [];
@@ -204,7 +204,6 @@
 
     async function evaluateSymbolMA(symbol, updateProgress) {
         try {
-            // 多拿 P3 根 K 棒，確保裁切出 100 根後繪圖時 60MA 能完整連線
             const fetchLimit = DISPLAY_COUNT + P3;
             const res = await fetch(`${API_BASE}/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=${fetchLimit}`);
             updateProgress();
@@ -218,16 +217,14 @@
             const price = closes[totalLen - 1];
 
             const fullMas = calculateAllSMA(closes, [P1, P2, P3]);
-            const ma1 = fullMas[P1][totalLen - 1]; // 30MA
-            const ma2 = fullMas[P2][totalLen - 1]; // 45MA
-            const ma3 = fullMas[P3][totalLen - 1]; // 60MA
+            const ma1 = fullMas[P1][totalLen - 1];
+            const ma2 = fullMas[P2][totalLen - 1];
+            const ma3 = fullMas[P3][totalLen - 1];
 
-            // 策略邏輯：30MA > 45MA > 60MA 且 現價 >= 60MA
             if (ma1 > ma2 && ma2 > ma3 && price >= ma3) {
                 const ma3DistPercent = ((price - ma3) / ma3) * 100;
                 const priceChange24h = tickerMap[symbol] ? parseFloat(tickerMap[symbol].priceChangePercent) : 0;
 
-                // 裁切顯示近 100 根的 K 線與 MA 數值
                 const displayKlines = klinesRaw.slice(-DISPLAY_COUNT);
                 const displayMas = {
                     [P1]: fullMas[P1].slice(-DISPLAY_COUNT),
@@ -281,7 +278,6 @@
         btn.innerText = "🔍 閃電計算 1H 均線中...";
         const results = await asyncPool(50, candidateSymbols, sym => evaluateSymbolMA(sym, updateProgress));
 
-        // 依據「距 60MA 幅度」排序
         rawResults = results.filter(Boolean).sort((a, b) => b.ma3DistPercent - a.ma3DistPercent);
         document.getElementById('statEntry').innerText = rawResults.length;
 
@@ -292,7 +288,7 @@
     function renderList() {
         const container = document.getElementById('symbolList');
         if (rawResults.length === 0) {
-            container.innerHTML = `<div style="text-align:center; padding:40px; color:#5a7094; font-weight:900;">無符合 30>45>60 多頭排列標的</div>`;
+            container.innerHTML = `<div style="text-align:center; padding:40px; color:#5a7094; font-weight:900;">無符合多頭排列標的</div>`;
             return;
         }
 
@@ -318,10 +314,10 @@
                     <div style="display:flex; align-items:center; gap:8px;">
                         ${rankTag}
                         <span class="symbol-name">${item.symbol.replace('USDT','')}</span>
-                        <span class="badge">60MA幅度排行</span>
+                        <span class="badge">均線幅度排行</span>
                     </div>
                     <div class="detail-row">
-                        <b class="highlight-ma3">距 60MA: <span class="${dist3Class}">${dist3Sign}${item.ma3DistPercent.toFixed(2)}%</span></b>
+                        <b class="highlight-ma3">距慢線: <span class="${dist3Class}">${dist3Sign}${item.ma3DistPercent.toFixed(2)}%</span></b>
                     </div>
                     <div class="detail-row" style="opacity: 0.8;">
                         24H 漲跌: <span class="${chg24Class}">${chg24Sign}${item.priceChange24h.toFixed(2)}%</span>
@@ -421,9 +417,9 @@
             ctx.stroke();
         };
 
-        drawMA(item.maSeries[P1], '#ff007f'); // 30MA
-        drawMA(item.maSeries[P2], '#a855f7'); // 45MA
-        drawMA(item.maSeries[P3], '#00ff66'); // 60MA
+        drawMA(item.maSeries[P1], '#ff007f');
+        drawMA(item.maSeries[P2], '#a855f7');
+        drawMA(item.maSeries[P3], '#00ff66');
     }
 
     function openModal(symbol) {
