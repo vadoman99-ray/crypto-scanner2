@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>⚡ 1H MA 多頭排列（30MA 幅度排行版）</title>
+    <title>⚡ 1H MA 多頭排列（45MA排行 - 價格在60MA上）</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@800&display=swap');
 
@@ -11,6 +11,7 @@
             --manga-dark: #0a0e1a;
             --manga-navy: #121b2d;
             --manga-pink: #ff007f;
+            --manga-purple: #a855f7;
             --manga-cyan: #00f0ff;
             --manga-yellow: #ffe600;
             --manga-green: #00ff66;
@@ -33,7 +34,7 @@
             padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; 
             box-shadow: 0 4px 15px rgba(0, 240, 255, 0.3);
         }
-        .header-title { font-size: 1.1rem; font-weight: 900; color: #fff; text-shadow: 0 0 8px var(--manga-cyan); }
+        .header-title { font-size: 1.05rem; font-weight: 900; color: #fff; text-shadow: 0 0 8px var(--manga-cyan); }
         .scan-btn { 
             background: linear-gradient(135deg, #ff007f 0%, #ff5500 100%); 
             color: #fff; border: 2px solid #fff; padding: 8px 16px; border-radius: 6px; 
@@ -57,7 +58,7 @@
         .container { padding: 0 16px; }
         .symbol-card { 
             background: rgba(20, 30, 50, 0.9); border: 2px solid #2a3a5c; 
-            border-left: 6px solid var(--manga-pink); border-radius: 8px; 
+            border-left: 6px solid var(--manga-purple); border-radius: 8px; 
             padding: 12px 14px; margin-bottom: 12px; 
             display: flex; justify-content: space-between; align-items: center; 
             box-shadow: var(--pop-shadow); cursor: pointer; transition: transform 0.1s;
@@ -96,13 +97,13 @@
         
         .val-up { color: var(--manga-green); }
         .val-down { color: var(--manga-red); }
-        .highlight-ma1 { color: var(--manga-cyan); font-weight: 900; }
+        .highlight-ma2 { color: var(--manga-purple); font-weight: 900; }
     </style>
 </head>
 <body>
 
     <div class="app-header">
-        <div class="header-title">⚡ 1H 多頭排列 (30MA排行)</div>
+        <div class="header-title">⚡ 1H 多頭排列 (45MA排行 / 現價>60MA)</div>
         <button id="scanBtn" class="scan-btn" onclick="startScan()">啟動極速掃描</button>
     </div>
 
@@ -115,7 +116,7 @@
         </div>
         <div class="stat-card entry">
             <div class="val" id="statEntry">0</div>
-            <div style="font-size:0.75rem;">1H 多頭排列標的</div>
+            <div style="font-size:0.75rem;">符合條件標的</div>
         </div>
     </div>
 
@@ -130,10 +131,10 @@
             
             <div class="chart-container">
                 <div class="chart-title">
-                    <span>1H 近 100 根 K 線圖</span>
+                    <span>1H 近 80 根 K 線圖</span>
                     <span style="font-weight:900;">
                         <span style="color:var(--manga-pink);">● 短均</span> 
-                        <span style="color:#a855f7;">● 中均</span> 
+                        <span style="color:var(--manga-purple);">● 中均</span> 
                         <span style="color:var(--manga-green);">● 長均</span>
                     </span>
                 </div>
@@ -142,11 +143,12 @@
 
             <div class="info-box">
                 <div class="info-row"><span>當前現價:</span><b id="valPrice" style="color:var(--manga-yellow);">0</b></div>
-                <div class="info-row"><span>距 30MA 幅度 (排行基準):</span><b id="valMa1Dist" class="highlight-ma1">0%</b></div>
+                <div class="info-row"><span>距 45MA 幅度 (排行基準):</span><b id="valMa2Dist" class="highlight-ma2">0%</b></div>
+                <div class="info-row"><span>距 30MA 幅度:</span><b id="valMa1Dist">0%</b></div>
                 <div class="info-row"><span>距 60MA 幅度:</span><b id="valMa3Dist">0%</b></div>
                 <div class="info-row"><span>24H 波動幅度:</span><b id="val24hChange">0%</b></div>
                 <div class="info-row"><span>短期均線 (30):</span><b id="valMA1" style="color:var(--manga-pink);">0</b></div>
-                <div class="info-row"><span>中期均線 (45):</span><b id="valMA2" style="color:#a855f7;">0</b></div>
+                <div class="info-row"><span>中期均線 (45):</span><b id="valMA2" style="color:var(--manga-purple);">0</b></div>
                 <div class="info-row"><span>長期均線 (60):</span><b id="valMA3" style="color:var(--manga-green);">0</b></div>
             </div>
         </div>
@@ -161,7 +163,7 @@
     const P1 = 30;
     const P2 = 45;
     const P3 = 60;
-    const DISPLAY_COUNT = 100;
+    const DISPLAY_COUNT = 80;
 
     async function asyncPool(poolLimit, array, iteratorFn) {
         const ret = [];
@@ -220,9 +222,10 @@
             const ma2 = mas[P2][len - 1];
             const ma3 = mas[P3][len - 1];
 
-            // 多頭排列條件：30MA > 45MA > 60MA
-            if (ma1 > ma2 && ma2 > ma3) {
+            // 條件：1. 均線多頭排列 (30MA > 45MA > 60MA)  2. 現價要在 60MA 上方 (price >= ma3)
+            if (ma1 > ma2 && ma2 > ma3 && price >= ma3) {
                 const ma1DistPercent = ((price - ma1) / ma1) * 100;
+                const ma2DistPercent = ((price - ma2) / ma2) * 100;
                 const ma3DistPercent = ((price - ma3) / ma3) * 100;
                 const priceChange24h = tickerMap[symbol] ? parseFloat(tickerMap[symbol].priceChangePercent) : 0;
 
@@ -233,6 +236,7 @@
                     ma2, 
                     ma3, 
                     ma1DistPercent,
+                    ma2DistPercent,
                     ma3DistPercent, 
                     priceChange24h, 
                     klines, 
@@ -273,8 +277,8 @@
         btn.innerText = "🔍 閃電計算 1H 均線中...";
         const results = await asyncPool(50, candidateSymbols, sym => evaluateSymbolMA(sym, updateProgress));
 
-        // 依據「距 30MA 幅度」由高到低（降序）排序
-        rawResults = results.filter(Boolean).sort((a, b) => b.ma1DistPercent - a.ma1DistPercent);
+        // 改依據「距 45MA 幅度」由高到低（降序）排序
+        rawResults = results.filter(Boolean).sort((a, b) => b.ma2DistPercent - a.ma2DistPercent);
         document.getElementById('statEntry').innerText = rawResults.length;
 
         btn.disabled = false; btn.innerText = "啟動極速掃描";
@@ -300,6 +304,9 @@
             const dist1Class = item.ma1DistPercent >= 0 ? 'val-up' : 'val-down';
             const dist1Sign = item.ma1DistPercent >= 0 ? '+' : '';
 
+            const dist2Class = item.ma2DistPercent >= 0 ? 'val-up' : 'val-down';
+            const dist2Sign = item.ma2DistPercent >= 0 ? '+' : '';
+
             const dist3Class = item.ma3DistPercent >= 0 ? 'val-up' : 'val-down';
             const dist3Sign = item.ma3DistPercent >= 0 ? '+' : '';
 
@@ -314,14 +321,15 @@
                     <div style="display:flex; align-items:center; gap:8px;">
                         ${rankTag}
                         <span class="symbol-name">${item.symbol.replace('USDT','')}</span>
+                        <span class="badge" style="background:var(--manga-purple);">45MA 排行</span>
                     </div>
                     <div class="detail-row">
-                        <b class="highlight-ma1">距30MA: <span class="${dist1Class}">${dist1Sign}${item.ma1DistPercent.toFixed(2)}%</span></b> | 
-                        距60MA: <span class="${dist3Class}">${dist3Sign}${item.ma3DistPercent.toFixed(2)}%</span>
+                        <b class="highlight-ma2">距45MA: <span class="${dist2Class}">${dist2Sign}${item.ma2DistPercent.toFixed(2)}%</span></b> | 
+                        距30MA: <span class="${dist1Class}">${dist1Sign}${item.ma1DistPercent.toFixed(2)}%</span>
                     </div>
                     <div class="detail-row" style="opacity: 0.8;">
                         24H: <span class="${chg24Class}">${chg24Sign}${item.priceChange24h.toFixed(2)}%</span> | 
-                        30MA: <span style="color:var(--manga-pink);">${item.ma1.toFixed(4)}</span>
+                        距60MA: <span class="${dist3Class}">${dist3Sign}${item.ma3DistPercent.toFixed(2)}%</span>
                     </div>
                 </div>
                 <div style="text-align:right;">
@@ -430,9 +438,14 @@
         document.getElementById('modalSymbol').innerText = symbol;
         document.getElementById('valPrice').innerText = currentItem.price.toFixed(4);
 
+        const dist2El = document.getElementById('valMa2Dist');
+        const dist2Sign = currentItem.ma2DistPercent >= 0 ? '+' : '';
+        dist2El.innerText = `${dist2Sign}${currentItem.ma2DistPercent.toFixed(2)}%`;
+
         const dist1El = document.getElementById('valMa1Dist');
         const dist1Sign = currentItem.ma1DistPercent >= 0 ? '+' : '';
         dist1El.innerText = `${dist1Sign}${currentItem.ma1DistPercent.toFixed(2)}%`;
+        dist1El.className = currentItem.ma1DistPercent >= 0 ? 'val-up' : 'val-down';
 
         const dist3El = document.getElementById('valMa3Dist');
         const dist3Sign = currentItem.ma3DistPercent >= 0 ? '+' : '';
