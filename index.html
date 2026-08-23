@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>⚡ 1H MA(30,45,60) 多頭排列極速策略</title>
+    <title>⚡ 1H MA 多頭排列策略</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@800&display=swap');
 
@@ -41,15 +41,7 @@
         }
         .scan-btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
 
-        .param-panel {
-            background: var(--manga-navy); border: 2px solid var(--manga-cyan);
-            margin: 14px 16px 0 16px; padding: 12px; border-radius: 8px; box-shadow: var(--pop-shadow);
-        }
-        .param-panel h3 { margin: 0 0 10px 0; font-size: 0.95rem; color: var(--manga-yellow); }
-        .param-row { display: flex; gap: 12px; font-size: 0.85rem; flex-wrap: wrap; }
-        .param-row input { background: #070a12; border: 1px solid #2a3a5c; color: var(--manga-yellow); padding: 4px 6px; border-radius: 4px; width: 60px; text-align: center; font-family: 'JetBrains Mono'; }
-
-        .progress-container { height: 6px; background: #090d16; width: 100%; margin-top: 10px; }
+        .progress-container { height: 6px; background: #090d16; width: 100%; margin-top: 0; }
         .progress-fill { height: 100%; width: 0%; background: var(--manga-cyan); transition: width 0.05s ease-out; }
 
         .dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 14px 16px; }
@@ -104,17 +96,8 @@
 <body>
 
     <div class="app-header">
-        <div class="header-title">⚡ 1H MA(30,45,60) 多頭排列策略</div>
+        <div class="header-title">⚡ 1H MA 多頭排列策略</div>
         <button id="scanBtn" class="scan-btn" onclick="startScan()">啟動極速掃描</button>
-    </div>
-
-    <div class="param-panel">
-        <h3>📊 均線策略設定 (以 1小時 K 棒計算)</h3>
-        <div class="param-row">
-            <span>短均 MA1: <input type="number" id="ma1Period" value="30"></span>
-            <span>中均 MA2: <input type="number" id="ma2Period" value="45"></span>
-            <span>長均 MA3: <input type="number" id="ma3Period" value="60"></span>
-        </div>
     </div>
 
     <div class="progress-container"><div id="progress" class="progress-fill"></div></div>
@@ -139,10 +122,10 @@
                 <button onclick="closeModal()" style="background:var(--manga-pink); color:#fff; border:none; border-radius:4px; font-weight:900; padding:4px 8px; cursor:pointer;">✕</button>
             </div>
             
-            <!-- 50 根 1H K線圖與 3 條均線 -->
+            <!-- 100 根 1H K線圖與 3 條均線 -->
             <div class="chart-container">
                 <div class="chart-title">
-                    <span>1H 近 50 根 K 線圖</span>
+                    <span>1H 近 100 根 K 線圖</span>
                     <span style="font-weight:900;">
                         <span style="color:var(--manga-pink);">● MA30</span> 
                         <span style="color:#a855f7;">● MA45</span> 
@@ -165,6 +148,11 @@
     const API_BASE = 'https://fapi.binance.com';
     let rawResults = [];
     let currentItem = null;
+
+    // 固定指標參數
+    const P1 = 30;
+    const P2 = 45;
+    const P3 = 60;
 
     async function asyncPool(poolLimit, array, iteratorFn) {
         const ret = [];
@@ -194,10 +182,8 @@
 
     async function evaluateSymbolMA(symbol, updateProgress) {
         try {
-            const p1 = parseInt(document.getElementById('ma1Period').value) || 30;
-            const p2 = parseInt(document.getElementById('ma2Period').value) || 45;
-            const p3 = parseInt(document.getElementById('ma3Period').value) || 60;
-            const maxPeriod = Math.max(p1, p2, p3) + 50; 
+            // 請求足夠計算長均線與 100 根 K 棒所需的歷史資料
+            const maxPeriod = Math.max(P1, P2, P3) + 100; 
 
             const res = await fetch(`${API_BASE}/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=${maxPeriod}`);
             updateProgress();
@@ -208,12 +194,12 @@
             const price = closes[closes.length - 1];
             const len = closes.length;
 
-            const ma1 = calcSMA(closes, p1, len - 1);
-            const ma2 = calcSMA(closes, p2, len - 1);
-            const ma3 = calcSMA(closes, p3, len - 1);
+            const ma1 = calcSMA(closes, P1, len - 1);
+            const ma2 = calcSMA(closes, P2, len - 1);
+            const ma3 = calcSMA(closes, P3, len - 1);
 
             if (price > ma1 && ma1 > ma2 && ma2 > ma3) {
-                return { symbol, price, ma1, ma2, ma3, klines, p1, p2, p3 };
+                return { symbol, price, ma1, ma2, ma3, klines, p1: P1, p2: P2, p3: P3 };
             }
             return null;
         } catch {
@@ -281,7 +267,7 @@
         `).join('');
     }
 
-    // 繪製 50 根 1H K線圖與 MA30/45/60 均線
+    // 繪製 100 根 1H K線圖與 MA30/45/60 均線
     function drawChart(item) {
         const canvas = document.getElementById('klineCanvas');
         const ctx = canvas.getContext('2d');
@@ -292,7 +278,7 @@
 
         const klines = item.klines;
         const totalKlines = klines.length;
-        const displayCount = 50; // 只顯示近 50 根 K 棒
+        const displayCount = 100; // 改為顯示近 100 根 K 棒
         const sliceKlines = klines.slice(totalKlines - displayCount);
         const closes = klines.map(k => parseFloat(k[4]));
 
@@ -344,7 +330,7 @@
         const drawMA = (period, color) => {
             ctx.beginPath();
             ctx.strokeStyle = color;
-            ctx.lineWidth = 1.8;
+            ctx.lineWidth = 1.5;
             let started = false;
 
             for (let i = 0; i < displayCount; i++) {
