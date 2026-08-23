@@ -131,7 +131,7 @@
             
             <div class="chart-container">
                 <div class="chart-title">
-                    <span>1H 近 60 根 K 線圖</span>
+                    <span>1H 近 100 根 K 線圖</span>
                     <span style="font-weight:900;">
                         <span style="color:var(--manga-pink);">● 30MA</span> 
                         <span style="color:var(--manga-purple);">● 45MA</span> 
@@ -161,7 +161,7 @@
     const P1 = 30;
     const P2 = 45;
     const P3 = 60;
-    const DISPLAY_COUNT = 60; // 已改為近 60 根 K 棒
+    const DISPLAY_COUNT = 100; // 已改為近 100 根 K 棒
 
     async function asyncPool(poolLimit, array, iteratorFn) {
         const ret = [];
@@ -204,26 +204,36 @@
 
     async function evaluateSymbolMA(symbol, updateProgress) {
         try {
-            const res = await fetch(`${API_BASE}/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=${DISPLAY_COUNT}`);
+            // 多拿 P3 根 K 棒，確保裁切出 100 根後繪圖時 60MA 能完整連線
+            const fetchLimit = DISPLAY_COUNT + P3;
+            const res = await fetch(`${API_BASE}/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=${fetchLimit}`);
             updateProgress();
             if (!res.ok) return null;
 
-            const klines = await res.json();
-            const len = klines.length;
-            if (len < P3) return null;
+            const klinesRaw = await res.json();
+            const totalLen = klinesRaw.length;
+            if (totalLen < P3) return null;
 
-            const closes = klines.map(k => parseFloat(k[4]));
-            const price = closes[len - 1];
+            const closes = klinesRaw.map(k => parseFloat(k[4]));
+            const price = closes[totalLen - 1];
 
-            const mas = calculateAllSMA(closes, [P1, P2, P3]);
-            const ma1 = mas[P1][len - 1]; // 30MA
-            const ma2 = mas[P2][len - 1]; // 45MA
-            const ma3 = mas[P3][len - 1]; // 60MA
+            const fullMas = calculateAllSMA(closes, [P1, P2, P3]);
+            const ma1 = fullMas[P1][totalLen - 1]; // 30MA
+            const ma2 = fullMas[P2][totalLen - 1]; // 45MA
+            const ma3 = fullMas[P3][totalLen - 1]; // 60MA
 
             // 策略邏輯：30MA > 45MA > 60MA 且 現價 >= 60MA
             if (ma1 > ma2 && ma2 > ma3 && price >= ma3) {
                 const ma3DistPercent = ((price - ma3) / ma3) * 100;
                 const priceChange24h = tickerMap[symbol] ? parseFloat(tickerMap[symbol].priceChangePercent) : 0;
+
+                // 裁切顯示近 100 根的 K 線與 MA 數值
+                const displayKlines = klinesRaw.slice(-DISPLAY_COUNT);
+                const displayMas = {
+                    [P1]: fullMas[P1].slice(-DISPLAY_COUNT),
+                    [P2]: fullMas[P2].slice(-DISPLAY_COUNT),
+                    [P3]: fullMas[P3].slice(-DISPLAY_COUNT)
+                };
 
                 return { 
                     symbol, 
@@ -233,8 +243,8 @@
                     ma3, 
                     ma3DistPercent, 
                     priceChange24h, 
-                    klines, 
-                    maSeries: mas 
+                    klines: displayKlines, 
+                    maSeries: displayMas 
                 };
             }
             return null;
