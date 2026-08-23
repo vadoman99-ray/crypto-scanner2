@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>⚡ 1H MA 多頭排列策略</title>
+    <title>⚡ 1H MA 多頭排列極速策略</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@800&display=swap');
 
@@ -127,9 +127,9 @@
                 <div class="chart-title">
                     <span>1H 近 100 根 K 線圖</span>
                     <span style="font-weight:900;">
-                        <span style="color:var(--manga-pink);">● MA30</span> 
-                        <span style="color:#a855f7;">● MA45</span> 
-                        <span style="color:var(--manga-green);">● MA60</span>
+                        <span style="color:var(--manga-pink);">● 短均</span> 
+                        <span style="color:#a855f7;">● 中均</span> 
+                        <span style="color:var(--manga-green);">● 長均</span>
                     </span>
                 </div>
                 <canvas id="klineCanvas" width="480" height="200"></canvas>
@@ -137,9 +137,9 @@
 
             <div class="info-box">
                 <div class="info-row"><span>當前現價:</span><b id="valPrice" style="color:var(--manga-yellow);">0</b></div>
-                <div class="info-row"><span>MA(30) 短均:</span><b id="valMA1" style="color:var(--manga-pink);">0</b></div>
-                <div class="info-row"><span>MA(45) 中均:</span><b id="valMA2" style="color:#a855f7;">0</b></div>
-                <div class="info-row"><span>MA(60) 長均:</span><b id="valMA3" style="color:var(--manga-green);">0</b></div>
+                <div class="info-row"><span>短期均線:</span><b id="valMA1" style="color:var(--manga-pink);">0</b></div>
+                <div class="info-row"><span>中期均線:</span><b id="valMA2" style="color:#a855f7;">0</b></div>
+                <div class="info-row"><span>長期均線:</span><b id="valMA3" style="color:var(--manga-green);">0</b></div>
             </div>
         </div>
     </div>
@@ -182,7 +182,6 @@
 
     async function evaluateSymbolMA(symbol, updateProgress) {
         try {
-            // 請求足夠計算長均線與 100 根 K 棒所需的歷史資料
             const maxPeriod = Math.max(P1, P2, P3) + 100; 
 
             const res = await fetch(`${API_BASE}/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=${maxPeriod}`);
@@ -255,9 +254,9 @@
                         <span class="badge">📈 1H 多頭排列</span>
                     </div>
                     <div class="detail-row">
-                        MA30: <span style="color:var(--manga-pink);">${item.ma1.toFixed(4)}</span> | 
-                        MA45: <span style="color:#a855f7;">${item.ma2.toFixed(4)}</span> | 
-                        MA60: <span style="color:var(--manga-green);">${item.ma3.toFixed(4)}</span>
+                        短均: <span style="color:var(--manga-pink);">${item.ma1.toFixed(4)}</span> | 
+                        中均: <span style="color:#a855f7;">${item.ma2.toFixed(4)}</span> | 
+                        長均: <span style="color:var(--manga-green);">${item.ma3.toFixed(4)}</span>
                     </div>
                 </div>
                 <div style="text-align:right;">
@@ -267,7 +266,7 @@
         `).join('');
     }
 
-    // 繪製 100 根 1H K線圖與 MA30/45/60 均線
+    // 繪製 100 根 1H K線圖與 3 條均線
     function drawChart(item) {
         const canvas = document.getElementById('klineCanvas');
         const ctx = canvas.getContext('2d');
@@ -278,7 +277,7 @@
 
         const klines = item.klines;
         const totalKlines = klines.length;
-        const displayCount = 100; // 改為顯示近 100 根 K 棒
+        const displayCount = 100;
         const sliceKlines = klines.slice(totalKlines - displayCount);
         const closes = klines.map(k => parseFloat(k[4]));
 
@@ -350,9 +349,9 @@
             ctx.stroke();
         };
 
-        drawMA(item.p1, '#ff007f'); // MA30 粉色
-        drawMA(item.p2, '#a855f7'); // MA45 紫色
-        drawMA(item.p3, '#00ff66'); // MA60 綠色
+        drawMA(item.p1, '#ff007f'); // 短均 粉色
+        drawMA(item.p2, '#a855f7'); // 中均 紫色
+        drawMA(item.p3, '#00ff66'); // 長均 綠色
     }
 
     function openModal(symbol) {
