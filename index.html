@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fox時間波動能 - 極速 Terminal Pro</title>
+    <title>時間波動能 - 極速 Terminal Pro</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
 
@@ -178,7 +178,7 @@
 <body>
 
     <div class="app-header">
-        <div class="header-title">🦊 Fox時間波動能 Pro</div>
+        <div class="header-title">⚡ 時間波動能 Pro</div>
         <button id="scanBtn" class="scan-btn" onclick="startScan()">極速掃描</button>
     </div>
 
@@ -235,7 +235,6 @@
     let isScanning = false;
     let totalSymbolCount = 0;
 
-    // 優化超時設定為 2.5 秒，快速放棄卡頓請求
     async function fetchWithTimeout(url, timeoutMs = 2500) {
         const controller = new AbortController();
         const id = setTimeout(() => controller.abort(), timeoutMs);
@@ -247,7 +246,6 @@
         return null;
     }
 
-    // 計算 EMA 效能優化版
     function calculateEMA(closes, period) {
         const len = closes.length;
         if (len < period) return 0;
@@ -279,7 +277,6 @@
             .map(s => s.symbol); 
     }
 
-    // 核心單幣分析：直接抓取 15m K 線 (limit 220 筆)，大幅降低下載量與運算複雜度
     async function processSymbol(symbol) {
         try {
             const res15m = await fetchWithTimeout(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=15m&limit=220`);
@@ -295,10 +292,8 @@
             const ema50 = calculateEMA(closes, 50);
             const ema200 = calculateEMA(closes, 200);
 
-            // 第一道過濾：EMA 多頭排列
             if (!(ema20 > ema50 && ema50 > ema200 && currentPrice >= ema20)) return null;
 
-            // 第二道過濾：前 20 根 K 線突破
             let prevHigh = parseFloat(res15m[len - 21][2]);
             let sumVol = 0;
             for (let i = len - 21; i < len - 1; i++) {
@@ -308,7 +303,6 @@
             }
             const isBreakout123 = currentPrice > prevHigh;
 
-            // 第三道過濾：波動能爆發 (成交量 1.8 倍)
             const latestBar = res15m[len - 1];
             const openPrice = parseFloat(latestBar[1]);
             const highPrice = parseFloat(latestBar[2]);
@@ -331,7 +325,6 @@
         } catch (e) { return null; }
     }
 
-    // 提升併發至 15，多批次平行處理（Chunking Engine）
     async function runFastScanner(symbols, chunkSize = 15, onProgress) {
         let completed = 0;
         const results = [];
@@ -448,7 +441,7 @@
     function renderInfoPage() {
         document.getElementById('symbolList').innerHTML = `
             <div class="about-card strategy">
-                <div class="about-title">🦊 Fox時間波動能 - 漏斗式三重訊號系統</div>
+                <div class="about-title">時間波動能 - 漏斗式三重訊號系統</div>
                 <div class="about-content">
                     <ul>
                         <li><b>1號門檻（基礎多頭）：</b>必須率先滿足 <b>EMA 20 > EMA 50 > EMA 200</b> 且最新價格在 EMA 20 上方。未滿足此條件者會直接被濾除。</li>
