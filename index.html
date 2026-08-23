@@ -3,220 +3,174 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>1H BOLL + VolMA 策略極速掃描儀 Pro</title>
+    <title>⚡ 超速研判！多頭+觸上軌 漫畫極速雷達</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Bangers&family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@800&display=swap');
 
         :root {
-            --bg-dark: #06080d;
-            --card-bg: rgba(13, 17, 23, 0.65);
-            --card-hover: rgba(22, 29, 41, 0.85);
-            --card-border: rgba(255, 255, 255, 0.08);
-            --text-main: #f8fafc;
-            --text-sub: #64748b;
-            --yellow: #f0b90b;
-            --yellow-glow: rgba(240, 185, 11, 0.3);
-            --green: #10b981;
-            --green-bg: rgba(16, 185, 129, 0.15);
-            --red: #f43f5e;
-            --red-bg: rgba(244, 63, 94, 0.15);
-            --purple: #a855f7;
+            --manga-black: #121212;
+            --manga-white: #fefefe;
+            --manga-yellow: #ffde59;
+            --manga-pink: #ff66c4;
+            --manga-cyan: #00f0ff;
+            --manga-green: #00e676;
+            --manga-red: #ff3366;
+            --card-border: 2.5px solid var(--manga-black);
+            --pop-shadow: 4px 4px 0px var(--manga-black);
+            --pop-shadow-lg: 6px 6px 0px var(--manga-black);
         }
-        
+
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        
         body { 
-            font-family: 'Plus Jakarta Sans', -apple-system, sans-serif; 
-            background-color: var(--bg-dark); 
-            color: var(--text-main); 
+            font-family: 'Noto Sans TC', sans-serif; 
+            background-color: #f0f3f8; 
+            /* 漫畫網點背景 Screentone Pattern */
+            background-image: radial-gradient(var(--manga-black) 15%, transparent 16%);
+            background-size: 12px 12px;
+            color: var(--manga-black); 
             margin: 0; 
-            padding-bottom: 30px; 
+            padding-bottom: 40px; 
             overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
         }
 
-        /* 背景流動光暈動畫 */
-        .ambient-bg {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            pointer-events: none; z-index: -1; overflow: hidden;
-        }
-        .glow-sphere {
-            position: absolute; width: 350px; height: 350px; border-radius: 50%;
-            filter: blur(100px); opacity: 0.18; animation: floatGlow 14s infinite alternate ease-in-out;
-        }
-        .glow-1 { top: -80px; left: -80px; background: var(--yellow); }
-        .glow-2 { bottom: -80px; right: -80px; background: var(--purple); animation-delay: -7s; }
-
-        @keyframes floatGlow {
-            0% { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(70px, 50px) scale(1.25); }
-        }
-
-        /* 頁首 Header */
+        /* 頁首漫畫 Header */
         .app-header { 
             position: sticky; top: 0; z-index: 100; 
-            background: rgba(6, 8, 13, 0.75); 
-            backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
-            padding: 14px 18px; 
-            border-bottom: 1px solid var(--card-border); 
+            background: var(--manga-yellow); 
+            border-bottom: var(--card-border); 
+            padding: 12px 16px; 
             display: flex; justify-content: space-between; align-items: center; 
+            box-shadow: 0 4px 0 var(--manga-black);
         }
         .header-title { 
-            font-weight: 800; font-size: 1.15rem; letter-spacing: -0.4px;
-            display: flex; align-items: center; gap: 8px; 
-            background: linear-gradient(135deg, #ffffff 40%, var(--yellow) 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            font-family: 'Bangers', 'Noto Sans TC', cursive;
+            font-size: 1.3rem; 
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-shadow: 2px 2px 0px #fff, -2px -2px 0px #fff, 2px -2px 0px #fff, -2px 2px 0px #fff, 3px 3px 0px var(--manga-black);
+            display: flex; align-items: center; gap: 6px;
         }
+        
         .scan-btn { 
-            position: relative; overflow: hidden;
-            background: linear-gradient(135deg, var(--yellow), #e0a800); 
-            color: #0d0f14; border: none; 
-            padding: 9px 22px; border-radius: 20px; font-weight: 800; 
-            font-size: 0.85rem; cursor: pointer; 
-            box-shadow: 0 4px 20px var(--yellow-glow);
-            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1); 
+            font-family: 'Noto Sans TC', sans-serif;
+            background: var(--manga-pink); 
+            color: var(--manga-white); 
+            border: var(--card-border); 
+            padding: 8px 18px; border-radius: 12px; 
+            font-weight: 900; font-size: 0.95rem; cursor: pointer; 
+            box-shadow: var(--pop-shadow);
+            transition: all 0.15s ease;
+            text-shadow: 1.5px 1.5px 0px var(--manga-black);
         }
-        .scan-btn::after {
-            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-            background: linear-gradient(60deg, transparent, rgba(255,255,255,0.4), transparent);
-            transform: rotate(30deg); animation: buttonShimmer 3s infinite;
-        }
-        @keyframes buttonShimmer { 0% { transform: translateX(-100%) rotate(30deg); } 100% { transform: translateX(100%) rotate(30deg); } }
-        .scan-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px var(--yellow-glow); }
-        .scan-btn:active { transform: scale(0.95); }
-        .scan-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+        .scan-btn:hover { transform: translate(-2px, -2px); box-shadow: var(--pop-shadow-lg); background: #ff47b5; }
+        .scan-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0px var(--manga-black); }
+        .scan-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: var(--pop-shadow); }
 
-        /* 進度條 */
-        .progress-container { height: 3px; background: rgba(255,255,255,0.03); width: 100%; position: relative; }
+        /* 漫畫風格進度條 */
+        .progress-container { 
+            height: 10px; background: #fff; width: 100%; 
+            border-bottom: var(--card-border); position: relative; overflow: hidden;
+        }
         .progress-fill { 
             height: 100%; width: 0%; 
-            background: linear-gradient(90deg, var(--yellow), var(--green)); 
-            transition: width 0.2s cubic-bezier(0.1, 0.9, 0.2, 1); 
-            box-shadow: 0 0 12px var(--green);
+            background: var(--manga-cyan); 
+            border-right: var(--card-border);
+            transition: width 0.1s linear; 
         }
 
-        /* 切換頁籤 (Tab) */
-        .strategy-selector { display: flex; gap: 8px; padding: 14px 16px 0 16px; }
+        /* 策略頁籤 Tab */
+        .strategy-selector { display: flex; gap: 10px; padding: 14px 16px 0 16px; }
         .tab-btn {
-            flex: 1; padding: 10px 4px; border-radius: 12px; font-size: 0.75rem; font-weight: 700;
-            background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-sub);
-            cursor: pointer; text-align: center; transition: all 0.25s ease; backdrop-filter: blur(12px);
+            flex: 1; padding: 10px 4px; border-radius: 10px; font-size: 0.85rem; font-weight: 900;
+            background: #fff; border: var(--card-border); color: var(--manga-black);
+            cursor: pointer; text-align: center; box-shadow: var(--pop-shadow);
+            transition: all 0.15s ease;
         }
-        .tab-btn.active {
-            background: rgba(240, 185, 11, 0.12); border-color: var(--yellow); color: var(--yellow);
-            box-shadow: 0 0 16px rgba(240, 185, 11, 0.15);
-        }
-        .tab-btn.active-entry {
-            background: var(--green-bg); border-color: var(--green); color: var(--green);
-            box-shadow: 0 0 16px rgba(16, 185, 129, 0.2);
-        }
-        .tab-btn.active-exit {
-            background: var(--red-bg); border-color: var(--red); color: var(--red);
-            box-shadow: 0 0 16px rgba(244, 63, 94, 0.2);
-        }
+        .tab-btn.active { background: var(--manga-yellow); transform: translate(-2px, -2px); box-shadow: var(--pop-shadow-lg); }
+        .tab-btn.active-entry { background: var(--manga-green); color: #000; transform: translate(-2px, -2px); box-shadow: var(--pop-shadow-lg); }
+        .tab-btn.active-exit { background: var(--manga-red); color: #fff; text-shadow: 1px 1px 0 #000; transform: translate(-2px, -2px); box-shadow: var(--pop-shadow-lg); }
 
-        /* 數據看板 */
-        .dashboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px 16px 4px 16px; }
+        /* 漫畫儀表板 Dashboard */
+        .dashboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 12px 16px 4px 16px; }
         .stat-card {
-            background: var(--card-bg); border: 1px solid var(--card-border);
-            border-radius: 14px; padding: 10px 6px; text-align: center; backdrop-filter: blur(12px);
-            transition: transform 0.2s ease;
+            background: #fff; border: var(--card-border);
+            border-radius: 12px; padding: 10px 4px; text-align: center;
+            box-shadow: var(--pop-shadow);
         }
-        .stat-card:hover { transform: translateY(-2px); }
-        .stat-card .val { font-family: 'JetBrains Mono', monospace; font-size: 1.15rem; font-weight: 700; color: #fff; }
-        .stat-card .lbl { font-size: 0.65rem; color: var(--text-sub); margin-top: 3px; font-weight: 600; }
-        .stat-card.entry .val { color: var(--green); }
-        .stat-card.exit .val { color: var(--red); }
+        .stat-card .val { font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 900; }
+        .stat-card .lbl { font-size: 0.7rem; font-weight: 900; margin-top: 2px; }
+        .stat-card.entry { background: rgba(0, 230, 118, 0.2); }
+        .stat-card.exit { background: rgba(255, 51, 102, 0.2); }
 
         /* 工具列與搜尋 */
-        .toolbar { padding: 10px 16px 12px 16px; display: flex; gap: 8px; align-items: center; }
+        .toolbar { padding: 10px 16px; display: flex; gap: 8px; align-items: center; }
         .search-wrapper { position: relative; flex: 1; display: flex; align-items: center; }
         .search-input { 
-            width: 100%; background: var(--card-bg); border: 1px solid var(--card-border); 
-            color: var(--text-main); padding: 9px 30px 9px 12px; border-radius: 12px; 
-            font-size: 0.85rem; transition: all 0.25s ease; backdrop-filter: blur(10px);
+            width: 100%; background: #fff; border: var(--card-border); 
+            color: var(--manga-black); padding: 9px 30px 9px 12px; border-radius: 10px; 
+            font-size: 0.85rem; font-weight: 700; box-shadow: var(--pop-shadow);
         }
-        .search-input:focus { border-color: var(--yellow); box-shadow: 0 0 0 3px var(--yellow-glow); }
-        .clear-btn { position: absolute; right: 10px; background: none; border: none; color: var(--text-sub); cursor: pointer; font-size: 0.9rem; display: none; }
+        .clear-btn { position: absolute; right: 10px; background: none; border: none; font-weight: 900; cursor: pointer; font-size: 1rem; display: none; }
         
         .tool-btn { 
-            background: var(--card-bg); border: 1px solid var(--card-border); 
-            color: var(--text-sub); padding: 9px 14px; border-radius: 12px; 
-            font-size: 0.75rem; cursor: pointer; font-weight: 700; white-space: nowrap; backdrop-filter: blur(10px);
-            transition: all 0.2s ease;
+            background: var(--manga-cyan); border: var(--card-border); 
+            color: var(--manga-black); padding: 9px 12px; border-radius: 10px; 
+            font-size: 0.8rem; cursor: pointer; font-weight: 900; white-space: nowrap;
+            box-shadow: var(--pop-shadow);
         }
-        .tool-btn:hover { border-color: rgba(255,255,255,0.2); color: var(--text-main); }
 
-        .status-bar { padding: 0 16px 8px 16px; font-size: 0.75rem; color: var(--text-sub); display: flex; justify-content: space-between; align-items: center; }
+        .status-bar { padding: 0 16px 8px 16px; font-size: 0.75rem; font-weight: 900; color: #555; display: flex; justify-content: space-between; }
         .container { padding: 0 16px; }
         
-        /* 幣種列表卡片 (動畫靈魂) */
+        /* 漫畫卡片動畫與樣式 */
         .symbol-card { 
-            background: var(--card-bg); border: 1px solid var(--card-border); 
-            border-radius: 16px; padding: 14px 16px; margin-bottom: 10px; 
+            background: #fff; border: var(--card-border); 
+            border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; 
             display: flex; justify-content: space-between; align-items: center; 
-            text-decoration: none; color: inherit; backdrop-filter: blur(12px);
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            animation: cardSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            opacity: 0; transform: translateY(16px);
+            text-decoration: none; color: inherit; box-shadow: var(--pop-shadow);
+            transition: all 0.15s ease;
+            position: relative; overflow: hidden;
         }
         .symbol-card:hover { 
-            transform: translateY(-3px) scale(1.008); 
-            border-color: rgba(240, 185, 11, 0.4); 
-            background: var(--card-hover);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            transform: translate(-3px, -3px); 
+            box-shadow: var(--pop-shadow-lg); 
+            background: #fffde7;
         }
 
-        @keyframes cardSlideUp { to { opacity: 1; transform: translateY(0); } }
-
-        .symbol-info .name-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-        .symbol-info .name { font-size: 1.15rem; font-weight: 800; letter-spacing: 0.2px; }
+        .symbol-info .name-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .symbol-info .name { font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; font-weight: 900; }
         
         .symbol-metrics { text-align: right; }
-        .symbol-metrics .price { font-size: 1.1rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+        .symbol-metrics .price { font-size: 1.15rem; font-weight: 900; font-family: 'JetBrains Mono', monospace; }
         
-        /* 標籤與動態呼吸燈 */
-        .badge-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-        .badge { font-size: 0.68rem; padding: 4px 9px; border-radius: 8px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
-        .badge-entry { background-color: var(--green-bg); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.3); }
-        .badge-exit { background-color: var(--red-bg); color: var(--red); border: 1px solid rgba(244, 63, 94, 0.3); }
-        
-        .pulse-dot {
-            width: 6px; height: 6px; border-radius: 50%; background-color: currentColor;
-            box-shadow: 0 0 8px currentColor; animation: pulseGlow 1.6s infinite ease-in-out;
+        /* 漫畫對話框 / 對比標籤 */
+        .badge-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+        .badge { 
+            font-size: 0.7rem; padding: 3px 8px; border-radius: 6px; font-weight: 900; 
+            border: 1.5px solid #000; box-shadow: 2px 2px 0px #000;
         }
-        @keyframes pulseGlow { 0%, 100% { opacity: 0.4; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.3); } }
+        .badge-entry { background-color: var(--manga-green); color: #000; }
+        .badge-exit { background-color: var(--manga-red); color: #fff; text-shadow: 1px 1px 0 #000; }
 
-        .change-badge { font-size: 0.75rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; }
-        .change-up { color: var(--green); background-color: var(--green-bg); }
-        .change-down { color: var(--red); background-color: var(--red-bg); }
+        .change-badge { font-size: 0.75rem; font-weight: 900; padding: 2px 6px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; border: 1.5px solid #000; }
+        .change-up { color: #000; background-color: var(--manga-green); }
+        .change-down { color: #fff; background-color: var(--manga-red); }
 
-        /* 載入骨架屏 (Skeleton Screen) */
-        .skeleton-card {
-            height: 76px; border-radius: 16px; margin-bottom: 10px;
-            background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 37%, rgba(255,255,255,0.03) 63%);
-            background-size: 400% 100%; animation: skeletonLoading 1.4s ease infinite;
-        }
-        @keyframes skeletonLoading { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
-        
-        .empty-tip { text-align: center; padding: 60px 0; color: var(--text-sub); font-size: 0.9rem; }
+        .empty-tip { text-align: center; padding: 50px 0; font-weight: 900; font-size: 1rem; color: #666; }
     </style>
 </head>
 <body>
 
-    <div class="ambient-bg">
-        <div class="glow-sphere glow-1"></div>
-        <div class="glow-sphere glow-2"></div>
-    </div>
-
     <div class="app-header">
-        <div class="header-title">⚡ 1H 進出場訊號極速掃描儀</div>
-        <button id="scanBtn" class="scan-btn" onclick="startScan()">極速掃描</button>
+        <div class="header-title">⚡ 觸上軌+多頭 漫畫極速雷達</div>
+        <button id="scanBtn" class="scan-btn" onclick="startScan()">極速發動</button>
     </div>
 
     <div class="progress-container"><div id="progress" class="progress-fill"></div></div>
 
     <div class="strategy-selector">
-        <div id="tabAll" class="tab-btn active" onclick="switchTab('ALL')">全部顯示</div>
+        <div id="tabAll" class="tab-btn active" onclick="switchTab('ALL')">全部標的</div>
         <div id="tabEntry" class="tab-btn" onclick="switchTab('ENTRY')">🎯 入場訊號</div>
         <div id="tabExit" class="tab-btn" onclick="switchTab('EXIT')">🚨 出場訊號</div>
     </div>
@@ -245,14 +199,13 @@
     </div>
 
     <div class="status-bar">
-        <span id="statusText">準備就緒，點擊「極速掃描」</span>
+        <span id="statusText">準備就緒，按下「極速發動」！</span>
         <span id="countText">顯示 0 筆</span>
     </div>
 
     <div class="container" id="symbolList"></div>
 
 <script>
-    // Binance API 節點輪詢備援
     const API_ENDPOINTS = [
         'https://fapi.binance.com',
         'https://fapi1.binance.com',
@@ -267,8 +220,8 @@
     let totalSymbolCount = 0;
     let currentFilter = 'ALL';
 
-    // 高效能 Fetch + 併發超時斷路機制 (1.2秒快速響應)
-    async function fetchWithFallback(path, timeoutMs = 1200) {
+    // 網路請求優化 (帶節流與自動切換)
+    async function fetchWithFallback(path, timeoutMs = 1000) {
         for (let i = 0; i < API_ENDPOINTS.length; i++) {
             const endpoint = API_ENDPOINTS[(currentEndpointIdx + i) % API_ENDPOINTS.length];
             const controller = new AbortController();
@@ -293,8 +246,21 @@
         return sum / period;
     }
 
+    function calculateBollingerBands(closes, period = 20, multiplier = 2) {
+        const len = closes.length;
+        if (len < period) return null;
+
+        const mb = calculateSMA(closes, period);
+        let varianceSum = 0;
+        for (let i = len - period; i < len; i++) {
+            varianceSum += Math.pow(closes[i] - mb, 2);
+        }
+        const stdDev = Math.sqrt(varianceSum / period);
+        return { upperBand: mb + (multiplier * stdDev), mb };
+    }
+
     async function fetch24hTickers() { 
-        const data = await fetchWithFallback('/fapi/v1/ticker/24hr', 2000); 
+        const data = await fetchWithFallback('/fapi/v1/ticker/24hr', 1800); 
         if (!data || !Array.isArray(data)) return {};
         const map = {}; 
         for (let i = 0; i < data.length; i++) {
@@ -304,45 +270,55 @@
     }
 
     async function getUSDTFuturesSymbols() { 
-        const data = await fetchWithFallback('/fapi/v1/exchangeInfo', 2000); 
+        const data = await fetchWithFallback('/fapi/v1/exchangeInfo', 1800); 
         if (!data || !data.symbols) return [];
         return data.symbols
             .filter(s => s.quoteAsset === 'USDT' && s.contractType === 'PERPETUAL' && s.status === 'TRADING')
             .map(s => s.symbol); 
     }
 
-    // 核心指標運算
+    // 單個幣種高敏運算
     async function processSymbol(symbol) {
         try {
-            const res1h = await fetchWithFallback(`/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=30`, 1200);
-            if (!res1h || res1h.length < 20) return null;
+            const res1h = await fetchWithFallback(`/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=70`, 900);
+            if (!res1h || res1h.length < 60) return null;
 
             const len = res1h.length;
             const closes = new Float64Array(len);
             const opens = new Float64Array(len);
+            const highs = new Float64Array(len);
             const volumes = new Float64Array(len);
 
             for (let i = 0; i < len; i++) {
                 opens[i] = parseFloat(res1h[i][1]);
+                highs[i] = parseFloat(res1h[i][2]);
                 closes[i] = parseFloat(res1h[i][4]);
                 volumes[i] = parseFloat(res1h[i][5]);
             }
 
             const currentPrice = closes[len - 1];
+            const currentHigh = highs[len - 1];
             const currentOpen = opens[len - 1];
             const currentVol = volumes[len - 1];
 
-            // 1. 計算價格 MA5
-            const ma5 = calculateSMA(closes, 5);
+            // 多頭排列 (30MA > 45MA > 60MA)
+            const ma30 = calculateSMA(closes, 30);
+            const ma45 = calculateSMA(closes, 45);
+            const ma60 = calculateSMA(closes, 60);
 
-            // 2. 計算成交量 Vol MA(5) 與 Vol MA(15)
+            if (!(ma30 > ma45 && ma45 > ma60)) return null;
+
+            // 成交量指標
             const volMa5 = calculateSMA(volumes, 5);
             const volMa15 = calculateSMA(volumes, 15);
 
-            // 【入場訊號】價格 >= MA5 且 5 Vol MA > 15 Vol MA
-            const isEntrySignal = (currentPrice >= ma5) && (volMa5 > volMa15);
+            // 布林通道 BOLL(20, 2)
+            const boll = calculateBollingerBands(closes, 20, 2);
+            if (!boll) return null;
 
-            // 【出場訊號】高位爆量陰線 (Close < Open 且 Volume > 1.5 * Vol MA15)
+            // 條件判斷
+            const isTouchingUpperBand = currentHigh >= boll.upperBand || currentPrice >= boll.upperBand;
+            const isEntrySignal = (volMa5 > volMa15) && isTouchingUpperBand;
             const isExitSignal = (currentPrice < currentOpen) && (currentVol > volMa15 * 1.5);
 
             if (isEntrySignal || isExitSignal) {
@@ -358,35 +334,34 @@
         } catch (e) { return null; }
     }
 
-    // 併發批次調優：chunkSize 由 35 提升至 50，大幅加快速度
-    async function runFastScanner(symbols, chunkSize = 50, onProgress) {
+    // 高併發池加速執行器
+    async function runFastScanner(symbols, poolLimit = 80, onProgress) {
         let completed = 0;
         const results = [];
-        for (let i = 0; i < symbols.length; i += chunkSize) {
-            const chunk = symbols.slice(i, i + chunkSize);
-            const chunkPromises = chunk.map(s => processSymbol(s));
-            const settled = await Promise.allSettled(chunkPromises);
-            
-            for (let res of settled) {
-                if (res.status === 'fulfilled' && res.value) results.push(res.value);
-            }
-            completed += chunk.length;
-            onProgress(completed, symbols.length);
-        }
-        return results;
-    }
+        let index = 0;
 
-    function renderSkeleton() {
-        const container = document.getElementById('symbolList');
-        container.innerHTML = Array(6).fill(0).map(() => `<div class="skeleton-card"></div>`).join('');
+        async function worker() {
+            while (index < symbols.length) {
+                const currentIndex = index++;
+                const symbol = symbols[currentIndex];
+                const res = await processSymbol(symbol);
+                if (res) results.push(res);
+                completed++;
+                if (completed % 10 === 0 || completed === symbols.length) {
+                    onProgress(completed, symbols.length);
+                }
+            }
+        }
+
+        const workers = Array(poolLimit).fill(0).map(() => worker());
+        await Promise.all(workers);
+        return results;
     }
 
     function updateDashboard() {
         document.getElementById('statTotal').innerText = totalSymbolCount;
-        const entryCount = rawResults.filter(r => r.isEntrySignal).length;
-        const exitCount = rawResults.filter(r => r.isExitSignal).length;
-        document.getElementById('statEntry').innerText = entryCount;
-        document.getElementById('statExit').innerText = exitCount;
+        document.getElementById('statEntry').innerText = rawResults.filter(r => r.isEntrySignal).length;
+        document.getElementById('statExit').innerText = rawResults.filter(r => r.isExitSignal).length;
     }
 
     async function startScan() {
@@ -395,31 +370,30 @@
 
         const btn = document.getElementById('scanBtn');
         const statusText = document.getElementById('statusText');
-        btn.disabled = true; btn.innerText = "掃描中..."; 
-        statusText.innerText = "讀取最新行情與量能數據...";
+        btn.disabled = true; btn.innerText = "連擊中..."; 
+        statusText.innerText = "極速抓取全網行情中...";
         rawResults = [];
-        renderSkeleton();
 
         const [tickers, symbols] = await Promise.all([fetch24hTickers(), getUSDTFuturesSymbols()]);
         ticker24hMap = tickers;
         totalSymbolCount = symbols.length;
         
         if (symbols.length === 0) {
-            statusText.innerText = "網路連線失敗，請重試";
-            btn.disabled = false; btn.innerText = "極速掃描";
+            statusText.innerText = "連線失敗，請重試！";
+            btn.disabled = false; btn.innerText = "極速發動";
             isScanning = false;
             return;
         }
 
-        let lastRenderTime = 0;
+        let lastRenderTime = Date.now();
 
-        rawResults = await runFastScanner(symbols, 50, (completed, total) => {
+        rawResults = await runFastScanner(symbols, 80, (completed, total) => {
             const pct = Math.floor((completed / total) * 100);
             document.getElementById('progress').style.width = `${pct}%`;
-            statusText.innerText = `訊號計算中 (${completed}/${total})...`;
+            statusText.innerText = `超速掃描中 (${completed}/${total})...`;
 
             const now = Date.now();
-            if (now - lastRenderTime > 150) {
+            if (now - lastRenderTime > 120) {
                 lastRenderTime = now;
                 updateDashboard();
                 renderList();
@@ -427,8 +401,8 @@
         });
 
         updateDashboard();
-        statusText.innerText = "掃描完成";
-        btn.disabled = false; btn.innerText = "極速掃描";
+        statusText.innerText = "掃描完成！";
+        btn.disabled = false; btn.innerText = "極速發動";
         isScanning = false;
         renderList();
     }
@@ -479,14 +453,12 @@
         document.getElementById('countText').innerText = `顯示 ${data.length} / 符合 ${rawResults.length} 筆`;
 
         if (data.length === 0) {
-            container.innerHTML = `<div class="empty-tip">${rawResults.length === 0 && !isScanning ? '點擊右上角「極速掃描」開啟算力運算' : '尚無符合條件的標的'}</div>`;
+            container.innerHTML = `<div class="empty-tip">${rawResults.length === 0 && !isScanning ? '點擊右上角「極速發動」開始掃描' : '尚無符合條件標的'}</div>`;
             return;
         }
 
-        container.innerHTML = data.map((item, index) => {
-            const animDelay = index < 12 ? (index * 0.025).toFixed(3) : 0;
-            return `
-            <a class="symbol-card" href="https://www.binance.com/zh-TC/futures/${item.symbol}" target="_blank" style="animation-delay: ${animDelay}s;">
+        container.innerHTML = data.map((item) => `
+            <a class="symbol-card" href="https://www.binance.com/zh-TC/futures/${item.symbol}" target="_blank">
                 <div class="symbol-info">
                     <div class="name-row">
                         <span class="name">${item.symbol.replace('USDT', '')}</span>
@@ -495,24 +467,15 @@
                         </span>
                     </div>
                     <div class="badge-list">
-                        ${item.isEntrySignal ? `
-                            <span class="badge badge-entry">
-                                <span class="pulse-dot"></span>
-                                🎯 買入入場 (5Vol > 15Vol)
-                            </span>` : ''}
-                        ${item.isExitSignal ? `
-                            <span class="badge badge-exit">
-                                <span class="pulse-dot"></span>
-                                🚨 爆量出場 (高位陰線)
-                            </span>` : ''}
+                        ${item.isEntrySignal ? `<span class="badge badge-entry">💥 買入 (多頭+觸上軌+5Vol>15Vol)</span>` : ''}
+                        ${item.isExitSignal ? `<span class="badge badge-exit">💣 爆量離場 (高位陰線)</span>` : ''}
                     </div>
                 </div>
                 <div class="symbol-metrics">
                     <div class="price">${item.price}</div>
                 </div>
             </a>
-            `;
-        }).join('');
+        `).join('');
     }
 </script>
 </body>
