@@ -3,135 +3,206 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>幣安合約動態掃描器 Pro</title>
+    <title>Fox時間波動能 - 極速 Terminal Pro</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+
         :root {
-            --bg-color: #0b0e11;
-            --card-bg: #1e2329;
-            --card-hover: #2b313a;
-            --card-border: #2b313a;
-            --text-main: #eaecef;
-            --text-sub: #848e9c;
+            --bg-color: #080a0c;
+            --card-bg: #12161c;
+            --card-hover: #1a2029;
+            --card-border: rgba(255, 255, 255, 0.07);
+            --text-main: #f0f4f8;
+            --text-sub: #828f9e;
             --yellow: #f0b90b;
-            --yellow-hover: #fcd535;
+            --yellow-glow: rgba(240, 185, 11, 0.25);
             --green: #0ecb81;
-            --green-bg: rgba(14, 203, 129, 0.15);
+            --green-bg: rgba(14, 203, 129, 0.12);
             --red: #f6465d;
-            --red-bg: rgba(246, 70, 93, 0.15);
+            --red-bg: rgba(246, 70, 93, 0.12);
             --orange: #ff9800;
-            --orange-bg: rgba(255, 152, 0, 0.15);
+            --orange-bg: rgba(255, 152, 0, 0.12);
             --blue: #2196f3;
-            --blue-bg: rgba(33, 150, 243, 0.15);
-            --purple: #9c27b0;
-            --purple-bg: rgba(156, 39, 176, 0.15);
+            --blue-bg: rgba(33, 150, 243, 0.12);
+            --purple: #b388ff;
+            --purple-bg: rgba(179, 136, 255, 0.15);
+            --purple-border: rgba(179, 136, 255, 0.4);
         }
         
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             background-color: var(--bg-color); 
             color: var(--text-main); 
             margin: 0; 
-            padding-bottom: 75px; 
+            padding-bottom: 80px; 
             -webkit-font-smoothing: antialiased;
         }
-        
+
+        /* 頂部導覽列 */
         .app-header { 
             position: sticky; top: 0; z-index: 100; 
-            background-color: rgba(30, 35, 41, 0.92); 
-            backdrop-filter: blur(10px); 
+            background-color: rgba(18, 22, 28, 0.85); 
+            backdrop-filter: blur(16px); 
+            -webkit-backdrop-filter: blur(16px);
             padding: 12px 16px; 
             border-bottom: 1px solid var(--card-border); 
             display: flex; justify-content: space-between; align-items: center; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4); 
         }
-        .header-title { font-weight: 800; font-size: 1.05rem; display: flex; align-items: center; gap: 6px; }
+        .header-title { 
+            font-weight: 800; font-size: 1.05rem; letter-spacing: -0.3px;
+            display: flex; align-items: center; gap: 8px; 
+            background: linear-gradient(135deg, #ffffff 30%, var(--yellow) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
         .scan-btn { 
-            background-color: var(--yellow); color: #000; border: none; 
+            background: linear-gradient(135deg, var(--yellow), #f39c12); 
+            color: #000; border: none; 
             padding: 8px 18px; border-radius: 20px; font-weight: 700; 
-            font-size: 0.85rem; cursor: pointer; transition: all 0.2s ease; 
+            font-size: 0.85rem; cursor: pointer; 
+            box-shadow: 0 4px 12px var(--yellow-glow);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
         }
-        .scan-btn:active { transform: scale(0.95); }
-        .scan-btn:hover { background-color: var(--yellow-hover); }
-        .scan-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .scan-btn:active { transform: scale(0.94); }
+        .scan-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
 
-        .progress-bar { height: 3px; background: var(--card-border); width: 100%; overflow: hidden; }
-        .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--yellow), #0ecb81); transition: width 0.15s ease-out; }
+        /* 進度條 */
+        .progress-bar { height: 2px; background: rgba(255,255,255,0.05); width: 100%; overflow: hidden; }
+        .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--yellow), var(--green)); transition: width 0.15s ease-out; }
         
-        .toolbar { padding: 10px 16px; background: rgba(30, 35, 41, 0.6); display: flex; gap: 8px; align-items: center; border-bottom: 1px solid var(--card-border); }
+        /* Dashboard 數據統計卡片 */
+        .dashboard {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+            padding: 12px 16px 4px 16px;
+        }
+        .stat-card {
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 10px; padding: 8px 10px; text-align: center;
+        }
+        .stat-card .val { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 700; color: #fff; }
+        .stat-card .lbl { font-size: 0.65rem; color: var(--text-sub); margin-top: 2px; font-weight: 500; }
+        .stat-card.perfect .val { color: var(--purple); }
+
+        /* 工具列 */
+        .toolbar { padding: 8px 16px 12px 16px; display: flex; gap: 8px; align-items: center; }
         .search-wrapper { position: relative; flex: 1; display: flex; align-items: center; }
         .search-input { 
-            width: 100%; background: var(--bg-color); border: 1px solid var(--card-border); 
-            color: var(--text-main); padding: 8px 30px 8px 12px; border-radius: 8px; 
-            font-size: 0.85rem; outline: none; transition: border-color 0.2s;
+            width: 100%; background: var(--card-bg); border: 1px solid var(--card-border); 
+            color: var(--text-main); padding: 8px 30px 8px 12px; border-radius: 10px; 
+            font-size: 0.85rem; transition: all 0.2s;
         }
-        .search-input:focus { border-color: var(--yellow); }
-        .clear-btn { position: absolute; right: 8px; background: none; border: none; color: var(--text-sub); cursor: pointer; font-size: 0.9rem; display: none; }
+        .search-input:focus { border-color: var(--yellow); box-shadow: 0 0 0 2px var(--yellow-glow); }
+        .clear-btn { position: absolute; right: 10px; background: none; border: none; color: var(--text-sub); cursor: pointer; font-size: 0.9rem; display: none; }
         
         .tool-btn { 
             background: var(--card-bg); border: 1px solid var(--card-border); 
-            color: var(--text-sub); padding: 8px 12px; border-radius: 8px; 
+            color: var(--text-sub); padding: 8px 12px; border-radius: 10px; 
             font-size: 0.75rem; cursor: pointer; font-weight: 600; white-space: nowrap; 
             transition: all 0.2s;
         }
         .tool-btn:hover { color: var(--text-main); border-color: var(--text-sub); }
 
-        .status-bar { padding: 8px 16px; font-size: 0.75rem; color: var(--text-sub); display: flex; justify-content: space-between; align-items: center; }
-        .container { padding: 10px 16px; }
+        .status-bar { padding: 0 16px 8px 16px; font-size: 0.75rem; color: var(--text-sub); display: flex; justify-content: space-between; align-items: center; }
+        .container { padding: 0 16px; }
         
+        /* 幣種卡片 */
         .symbol-card { 
             background-color: var(--card-bg); border: 1px solid var(--card-border); 
-            border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; 
+            border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; 
             display: flex; justify-content: space-between; align-items: center; 
-            text-decoration: none; color: inherit; transition: transform 0.15s, border-color 0.15s, background-color 0.15s; 
+            text-decoration: none; color: inherit; 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .symbol-card:hover { transform: translateY(-2px); border-color: var(--yellow); background-color: var(--card-hover); }
-        .symbol-info .name-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-        .symbol-info .name { font-size: 1.05rem; font-weight: 700; letter-spacing: 0.5px; }
+        .symbol-card:hover { transform: translateY(-2px); border-color: rgba(240, 185, 11, 0.4); background-color: var(--card-hover); }
+        .symbol-card:active { transform: scale(0.98); }
+
+        .symbol-info .name-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+        .symbol-info .name { font-size: 1.1rem; font-weight: 800; letter-spacing: 0.3px; }
+        
         .symbol-metrics { text-align: right; }
-        .symbol-metrics .price { font-size: 1rem; font-weight: 700; font-family: "SF Mono", "Roboto Mono", monospace; }
+        .symbol-metrics .price { font-size: 1.05rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
         
-        .badge { font-size: 0.65rem; padding: 3px 6px; border-radius: 4px; font-weight: 600; margin-right: 4px; display: inline-block; margin-top: 2px; }
-        .badge-bb15m { background-color: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue); }
-        .badge-bb1h { background-color: var(--orange-bg); color: var(--orange); border: 1px solid var(--orange); }
-        .badge-both { background-color: var(--purple-bg); color: var(--purple); border: 1px solid var(--purple); }
+        /* 標籤 Badge 樣式 */
+        .badge-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+        .badge { font-size: 0.65rem; padding: 3px 8px; border-radius: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 3px; }
+        .badge-breakout { background-color: var(--blue-bg); color: var(--blue); border: 1px solid rgba(33, 150, 243, 0.3); }
+        .badge-volume { background-color: var(--orange-bg); color: var(--orange); border: 1px solid rgba(255, 152, 0, 0.3); }
+        .badge-perfect { 
+            background: linear-gradient(135deg, rgba(156, 39, 176, 0.25), rgba(240, 185, 11, 0.25)); 
+            color: #e0b0ff; border: 1px solid var(--purple-border); 
+            box-shadow: 0 0 10px rgba(179, 136, 255, 0.2);
+            animation: pulse 2s infinite;
+        }
+        .badge-ema { background-color: rgba(255,255,255,0.05); color: var(--text-sub); border: 1px solid var(--card-border); }
         
-        .change-badge { font-size: 0.8rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; display: inline-block; }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(179, 136, 255, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(179, 136, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(179, 136, 255, 0); }
+        }
+
+        .change-badge { font-size: 0.75rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; }
         .change-up { color: var(--green); background-color: var(--green-bg); }
         .change-down { color: var(--red); background-color: var(--red-bg); }
         
+        /* 底部導覽列 */
         .bottom-nav { 
-            position: fixed; bottom: 0; left: 0; right: 0; height: 60px; 
-            background-color: rgba(30, 35, 41, 0.95); backdrop-filter: blur(10px);
-            border-top: 1px solid var(--card-border); display: flex; z-index: 100; overflow-x: auto; 
+            position: fixed; bottom: 0; left: 0; right: 0; height: 65px; 
+            background-color: rgba(18, 22, 28, 0.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border-top: 1px solid var(--card-border); display: flex; z-index: 100; padding: 0 6px;
         }
         .nav-item { 
-            flex: 1; min-width: 60px; display: flex; flex-direction: column; 
+            flex: 1; display: flex; flex-direction: column; 
             align-items: center; justify-content: center; color: var(--text-sub); 
             font-size: 0.65rem; cursor: pointer; border: none; background: none; 
-            white-space: nowrap; padding: 4px 2px; transition: color 0.2s;
+            padding: 6px 0; transition: all 0.2s; border-radius: 8px;
         }
-        .nav-item.active { color: var(--yellow); font-weight: bold; }
-        .nav-icon { font-size: 1.1rem; margin-bottom: 2px; }
+        .nav-item.active { color: var(--yellow); font-weight: 700; }
+        .nav-icon { font-size: 1.2rem; margin-bottom: 2px; transition: transform 0.2s; }
+        .nav-item.active .nav-icon { transform: translateY(-2px); }
         
-        .about-card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-left: 4px solid var(--yellow); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+        /* 說明卡片 */
+        .about-card { 
+            background-color: var(--card-bg); border: 1px solid var(--card-border); 
+            border-left: 4px solid var(--yellow); border-radius: 14px; padding: 18px; margin-top: 10px;
+        }
         .about-card.strategy { border-left-color: var(--green); }
-        .about-title { font-size: 0.95rem; font-weight: 700; color: var(--yellow); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+        .about-title { font-size: 1rem; font-weight: 700; color: var(--yellow); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
         .about-card.strategy .about-title { color: var(--green); }
-        .about-content { font-size: 0.85rem; color: #d1d5db; line-height: 1.6; }
+        .about-content { font-size: 0.85rem; color: #cbd5e1; line-height: 1.7; }
         .about-content ul { padding-left: 18px; margin: 0; }
-        .about-content li { margin-bottom: 8px; }
-        .empty-tip { text-align: center; padding: 50px 0; color: var(--text-sub); font-size: 0.9rem; }
+        .about-content li { margin-bottom: 10px; }
+        .empty-tip { text-align: center; padding: 60px 0; color: var(--text-sub); font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
     <div class="app-header">
-        <div class="header-title">⚡ 布林帶突破動態掃描器 Ultra</div>
-        <button id="scanBtn" class="scan-btn" onclick="startScan()">重新掃描</button>
+        <div class="header-title">🦊 Fox時間波動能 Pro</div>
+        <button id="scanBtn" class="scan-btn" onclick="startScan()">極速掃描</button>
     </div>
 
     <div class="progress-bar"><div id="progress" class="progress-fill"></div></div>
+
+    <!-- 數據概覽 Dashboard -->
+    <div class="dashboard" id="dashboard">
+        <div class="stat-card">
+            <div class="val" id="statTotal">0</div>
+            <div class="lbl">掃描池</div>
+        </div>
+        <div class="stat-card">
+            <div class="val" id="statEma">0</div>
+            <div class="lbl">EMA多頭</div>
+        </div>
+        <div class="stat-card">
+            <div class="val" id="statBreak">0</div>
+            <div class="lbl">123突破</div>
+        </div>
+        <div class="stat-card perfect">
+            <div class="val" id="statPerfect">0</div>
+            <div class="lbl">完美共振</div>
+        </div>
+    </div>
 
     <div class="toolbar" id="toolbar">
         <div class="search-wrapper">
@@ -142,17 +213,17 @@
     </div>
 
     <div class="status-bar" id="statusBar">
-        <span id="statusText">請點擊「重新掃描」開始運算</span>
-        <span id="countText">共 0 筆</span>
+        <span id="statusText">請點擊「極速掃描」開始運算</span>
+        <span id="countText">符合 0 筆</span>
     </div>
 
     <div class="container" id="symbolList"></div>
 
     <div class="bottom-nav">
-        <button class="nav-item active" onclick="setFilter('ALL', this)"><div class="nav-icon">🌐</div><div>全部</div></button>
-        <button class="nav-item" onclick="setFilter('15M_BB_UPPER', this)"><div class="nav-icon">⚡</div><div>15M 突破</div></button>
-        <button class="nav-item" onclick="setFilter('1H_BB_UPPER', this)"><div class="nav-icon">🔥</div><div>1H 突破</div></button>
-        <button class="nav-item" onclick="setFilter('BOTH', this)"><div class="nav-icon">🚀</div><div>雙週期共振</div></button>
+        <button class="nav-item active" onclick="setFilter('ALL', this)"><div class="nav-icon">🌐</div><div>全部多頭</div></button>
+        <button class="nav-item" onclick="setFilter('PERFECT', this)"><div class="nav-icon">🔥</div><div>全滿足訊號</div></button>
+        <button class="nav-item" onclick="setFilter('BREAKOUT', this)"><div class="nav-icon">⚡</div><div>123突破</div></button>
+        <button class="nav-item" onclick="setFilter('VOLUME', this)"><div class="nav-icon">🌊</div><div>量能爆發</div></button>
         <button class="nav-item" onclick="setFilter('INFO', this)"><div class="nav-icon">ℹ️</div><div>說明</div></button>
     </div>
 
@@ -162,112 +233,127 @@
     let ticker24hMap = {};
     let sortDesc = true;
     let isScanning = false;
+    let totalSymbolCount = 0;
 
-    // 輕量級 Timeout 網路請求包裝
-    async function fetchWithTimeout(url, timeoutMs = 3500) {
+    // 優化超時設定為 2.5 秒，快速放棄卡頓請求
+    async function fetchWithTimeout(url, timeoutMs = 2500) {
         const controller = new AbortController();
         const id = setTimeout(() => controller.abort(), timeoutMs);
         try {
             const response = await fetch(url, { signal: controller.signal });
             clearTimeout(id);
-            if (!response.ok) return null;
-            return await response.json();
-        } catch (e) {
-            clearTimeout(id);
-            return null;
-        }
+            if (response.ok) return await response.json();
+        } catch (e) { clearTimeout(id); }
+        return null;
     }
 
-    // 計算布林通道
-    function calculateBB(closes, period = 20, multiplier = 2) {
-        if (!closes || closes.length < period) return { middle: 0, upper: 0 };
-        const slice = closes.slice(-period);
-        const middle = slice.reduce((a, b) => a + b, 0) / period;
-        const variance = slice.reduce((acc, val) => acc + Math.pow(val - middle, 2), 0) / period;
-        const stdDev = Math.sqrt(variance);
-        return {
-            middle: middle,
-            upper: middle + (multiplier * stdDev)
-        };
-    }
-
-    // 前端重組 K 線（將 5m K線 聚合為 15m 或 1h）
-    function resampleCloses(klines5m, factor) {
-        const closes = [];
-        for (let i = factor - 1; i < klines5m.length; i += factor) {
-            closes.push(parseFloat(klines5m[i][4])); // 抓取週期最後一根的 Close Price
+    // 計算 EMA 效能優化版
+    function calculateEMA(closes, period) {
+        const len = closes.length;
+        if (len < period) return 0;
+        const k = 2 / (period + 1);
+        let ema = 0;
+        for (let i = 0; i < period; i++) ema += closes[i];
+        ema /= period;
+        for (let i = period; i < len; i++) {
+            ema = (closes[i] * k) + (ema * (1 - k));
         }
-        return closes;
+        return ema;
     }
 
     async function fetch24hTickers() { 
-        const data = await fetchWithTimeout('https://fapi.binance.com/fapi/v1/ticker/24hr', 5000); 
+        const data = await fetchWithTimeout('https://fapi.binance.com/fapi/v1/ticker/24hr', 3000); 
         if (!data || !Array.isArray(data)) return {};
         const map = {}; 
-        data.forEach(item => { map[item.symbol] = parseFloat(item.priceChangePercent); }); 
+        for (let i = 0; i < data.length; i++) {
+            map[data[i].symbol] = parseFloat(data[i].priceChangePercent);
+        }
         return map; 
     }
 
     async function getUSDTFuturesSymbols() { 
-        const data = await fetchWithTimeout('https://fapi.binance.com/fapi/v1/exchangeInfo', 5000); 
+        const data = await fetchWithTimeout('https://fapi.binance.com/fapi/v1/exchangeInfo', 3000); 
         if (!data || !data.symbols) return [];
         return data.symbols
             .filter(s => s.quoteAsset === 'USDT' && s.contractType === 'PERPETUAL' && s.status === 'TRADING')
             .map(s => s.symbol); 
     }
 
+    // 核心單幣分析：直接抓取 15m K 線 (limit 220 筆)，大幅降低下載量與運算複雜度
     async function processSymbol(symbol) {
         try {
-            // 一次請求 240 根 5m K線 (涵蓋 20 個 1h 與 20 個 15m 週期需求)，節約 50% 請求次數
-            const res5m = await fetchWithTimeout(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=5m&limit=240`);
-            if (!res5m || res5m.length < 240) return null;
+            const res15m = await fetchWithTimeout(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=15m&limit=220`);
+            if (!res15m || res15m.length < 220) return null;
 
-            const currentPrice = parseFloat(res5m[res5m.length - 1][4]);
+            const len = res15m.length;
+            const closes = new Float64Array(len);
+            for (let i = 0; i < len; i++) closes[i] = parseFloat(res15m[i][4]);
 
-            // 重組 15m (每 3 根 5m = 1 根 15m)
-            const closes15m = resampleCloses(res5m, 3);
-            const bb15m = calculateBB(closes15m, 20, 2);
-            const is15mUpper = currentPrice > bb15m.middle && currentPrice >= (bb15m.upper * 0.998);
+            const currentPrice = closes[len - 1];
 
-            // 重組 1h (每 12 根 5m = 1 根 1h)
-            const closes1h = resampleCloses(res5m, 12);
-            const bb1h = calculateBB(closes1h, 20, 2);
-            const is1hUpper = currentPrice > bb1h.middle && currentPrice >= (bb1h.upper * 0.998);
+            const ema20 = calculateEMA(closes, 20);
+            const ema50 = calculateEMA(closes, 50);
+            const ema200 = calculateEMA(closes, 200);
+
+            // 第一道過濾：EMA 多頭排列
+            if (!(ema20 > ema50 && ema50 > ema200 && currentPrice >= ema20)) return null;
+
+            // 第二道過濾：前 20 根 K 線突破
+            let prevHigh = parseFloat(res15m[len - 21][2]);
+            let sumVol = 0;
+            for (let i = len - 21; i < len - 1; i++) {
+                const h = parseFloat(res15m[i][2]);
+                if (h > prevHigh) prevHigh = h;
+                sumVol += parseFloat(res15m[i][5]);
+            }
+            const isBreakout123 = currentPrice > prevHigh;
+
+            // 第三道過濾：波動能爆發 (成交量 1.8 倍)
+            const latestBar = res15m[len - 1];
+            const openPrice = parseFloat(latestBar[1]);
+            const highPrice = parseFloat(latestBar[2]);
+            const lowPrice = parseFloat(latestBar[3]);
+            const volume = parseFloat(latestBar[5]);
+
+            const avgVolume = sumVol / 20;
+            const isVolumeSurge = (volume >= avgVolume * 1.8) && 
+                                  (currentPrice > openPrice) && 
+                                  ((currentPrice - openPrice) / (highPrice - lowPrice || 1) >= 0.6);
 
             return { 
-                symbol: symbol, 
+                symbol, 
                 price: currentPrice, 
-                is15mUpper: is15mUpper,
-                is1hUpper: is1hUpper,
+                isEmaBullish: true,
+                isBreakout123,
+                isVolumeSurge,
                 priceChange24h: ticker24hMap[symbol] || 0 
             };
         } catch (e) { return null; }
     }
 
-    // 動態網路併發控制池 (Concurrency Pool)
-    async function runConcurrentScanner(symbols, concurrency = 8, onProgress) {
-        let index = 0;
+    // 提升併發至 15，多批次平行處理（Chunking Engine）
+    async function runFastScanner(symbols, chunkSize = 15, onProgress) {
         let completed = 0;
         const results = [];
 
-        async function worker() {
-            while (index < symbols.length) {
-                const currentIndex = index++;
-                const symbol = symbols[currentIndex];
-                
-                // 微幅間隔防刷
-                if (currentIndex % 5 === 0) await new Promise(r => setTimeout(r, 5));
-                
-                const res = await processSymbol(symbol);
-                if (res) results.push(res);
-                completed++;
-                onProgress(completed, symbols.length);
+        for (let i = 0; i < symbols.length; i += chunkSize) {
+            const chunk = symbols.slice(i, i + chunkSize);
+            const chunkResults = await Promise.all(chunk.map(s => processSymbol(s)));
+            
+            for (let r of chunkResults) {
+                if (r) results.push(r);
             }
+            completed += chunk.length;
+            onProgress(completed, symbols.length);
         }
-
-        const workers = Array.from({ length: Math.min(concurrency, symbols.length) }, () => worker());
-        await Promise.all(workers);
         return results;
+    }
+
+    function updateDashboard() {
+        document.getElementById('statTotal').innerText = totalSymbolCount;
+        document.getElementById('statEma').innerText = rawResults.length;
+        document.getElementById('statBreak').innerText = rawResults.filter(r => r.isBreakout123).length;
+        document.getElementById('statPerfect').innerText = rawResults.filter(r => r.isBreakout123 && r.isVolumeSurge).length;
     }
 
     async function startScan() {
@@ -276,39 +362,39 @@
 
         const btn = document.getElementById('scanBtn');
         const statusText = document.getElementById('statusText');
-        btn.disabled = true; 
-        btn.innerText = "掃描中..."; 
-        statusText.innerText = "建立幣安高頻連線...";
+        btn.disabled = true; btn.innerText = "極速掃描中"; 
+        statusText.innerText = "初始化行情連線...";
         rawResults = [];
         
         ticker24hMap = await fetch24hTickers();
         const symbols = await getUSDTFuturesSymbols();
+        totalSymbolCount = symbols.length;
         
         if (symbols.length === 0) {
-            statusText.innerText = "連線失敗，請稍後重試";
-            btn.disabled = false;
-            btn.innerText = "重新掃描";
+            statusText.innerText = "連線失敗，請檢查網路環境";
+            btn.disabled = false; btn.innerText = "極速掃描";
             isScanning = false;
             return;
         }
 
         let lastRenderTime = 0;
 
-        rawResults = await runConcurrentScanner(symbols, 8, (completed, total) => {
+        rawResults = await runFastScanner(symbols, 15, (completed, total) => {
             const pct = Math.floor((completed / total) * 100);
             document.getElementById('progress').style.width = `${pct}%`;
-            statusText.innerText = `高速極速掃描中 (${completed}/${total})...`;
+            statusText.innerText = `極速計算中 (${completed}/${total})...`;
 
             const now = Date.now();
-            if (now - lastRenderTime > 350) {
+            if (now - lastRenderTime > 250) {
                 lastRenderTime = now;
+                updateDashboard();
                 if (currentFilter !== 'INFO') renderList();
             }
         });
 
-        statusText.innerText = "掃描完成";
-        btn.disabled = false; 
-        btn.innerText = "重新掃描";
+        updateDashboard();
+        statusText.innerText = "掃描完畢，即時數據已更新";
+        btn.disabled = false; btn.innerText = "極速掃描";
         isScanning = false;
         if (currentFilter !== 'INFO') renderList();
     }
@@ -339,10 +425,12 @@
         if (filter === 'INFO') { 
             document.getElementById('toolbar').style.display = 'none'; 
             document.getElementById('statusBar').style.display = 'none'; 
+            document.getElementById('dashboard').style.display = 'none';
             renderInfoPage(); 
         } else { 
             document.getElementById('toolbar').style.display = 'flex'; 
             document.getElementById('statusBar').style.display = 'flex'; 
+            document.getElementById('dashboard').style.display = 'grid';
             renderList(); 
         } 
     }
@@ -350,9 +438,9 @@
     function getFilteredData() {
         const query = document.getElementById('searchInput').value.toUpperCase().trim();
         return rawResults.filter(item => item.symbol.includes(query)).filter(item => {
-            if (currentFilter === '15M_BB_UPPER') return item.is15mUpper;
-            if (currentFilter === '1H_BB_UPPER') return item.is1hUpper;
-            if (currentFilter === 'BOTH') return item.is15mUpper && item.is1hUpper;
+            if (currentFilter === 'PERFECT') return item.isBreakout123 && item.isVolumeSurge;
+            if (currentFilter === 'BREAKOUT') return item.isBreakout123;
+            if (currentFilter === 'VOLUME') return item.isVolumeSurge;
             return true;
         });
     }
@@ -360,12 +448,13 @@
     function renderInfoPage() {
         document.getElementById('symbolList').innerHTML = `
             <div class="about-card strategy">
-                <div class="about-title">🔥 布林通道突破/貼軌策略選股邏輯</div>
+                <div class="about-title">🦊 Fox時間波動能 - 漏斗式三重訊號系統</div>
                 <div class="about-content">
                     <ul>
-                        <li><b>⚡ 15M 突破/貼軌：</b>15 分鐘 K 棒收盤價高於 20MA 布林中軌，且<b>收盤價 ≥ 15M 上軌門檻（99.8%）</b>。適合極短線尋找當下正在強勢噴發或貼軌續漲的標的。</li>
-                        <li><b>🔥 1H 突破/貼軌：</b>1 小時 K 棒收盤價高於 20MA 布林中軌，且<b>收盤價 ≥ 1H 上軌門檻（99.8%）</b>。代表中短線趨勢明確、主升段發動。</li>
-                        <li><b>🚀 雙週期共振：</b>同時滿足 15M 與 1H 布林上軌強勢條件，代表大小週期多頭動能一致，發動勝率極高。</li>
+                        <li><b>1號門檻（基礎多頭）：</b>必須率先滿足 <b>EMA 20 > EMA 50 > EMA 200</b> 且最新價格在 EMA 20 上方。未滿足此條件者會直接被濾除。</li>
+                        <li><b>2號訊號 (123法則突破)：</b>價格強勢<b>突破前 20 根 15M K 線的最高價</b>，代表結構轉折突破，主升段觸發。</li>
+                        <li><b>3號訊號 (波動能爆發)：</b>成交量達到前 20 根均量的 <b>1.8 倍以上</b>，且收在陽棒實體高位，代表主力資金爆量拉升。</li>
+                        <li><b>🔥 全滿足訊號 (完美共振)：</b>同時滿足【EMA多頭 + 123突破 + 爆量噴發】，為勝率最高的主攻標的！</li>
                     </ul>
                 </div>
             </div>
@@ -377,15 +466,15 @@
         let data = getFilteredData();
         data.sort((a, b) => sortDesc ? b.priceChange24h - a.priceChange24h : a.priceChange24h - b.priceChange24h);
         
-        document.getElementById('countText').innerText = `符合 ${data.length} / 總計 ${rawResults.length} 筆`;
+        document.getElementById('countText').innerText = `顯示 ${data.length} / 符合 ${rawResults.length} 筆`;
 
         if (data.length === 0) {
-            container.innerHTML = `<div class="empty-tip">${rawResults.length === 0 ? '請點擊右上角「重新掃描」按鈕開始運算' : '無符合篩選條件的標的'}</div>`;
+            container.innerHTML = `<div class="empty-tip">${rawResults.length === 0 ? '點擊右上角「極速掃描」開始運算' : '無符合條件的標的'}</div>`;
             return;
         }
 
         container.innerHTML = data.map(item => {
-            const isBoth = item.is15mUpper && item.is1hUpper;
+            const isPerfect = item.isBreakout123 && item.isVolumeSurge;
             return `
             <a class="symbol-card" href="https://www.binance.com/zh-TC/futures/${item.symbol}" target="_blank">
                 <div class="symbol-info">
@@ -395,10 +484,11 @@
                             ${item.priceChange24h >= 0 ? '+' : ''}${item.priceChange24h.toFixed(2)}%
                         </span>
                     </div>
-                    <div>
-                        ${isBoth ? '<span class="badge badge-both">🚀 15M+1H 雙強</span>' : ''}
-                        ${!isBoth && item.is15mUpper ? '<span class="badge badge-bb15m">⚡ 15M 突破</span>' : ''}
-                        ${!isBoth && item.is1hUpper ? '<span class="badge badge-bb1h">🔥 1H 突破</span>' : ''}
+                    <div class="badge-list">
+                        ${isPerfect ? '<span class="badge badge-perfect">🔥 完美共振 (突破+爆量)</span>' : ''}
+                        ${!isPerfect && item.isBreakout123 ? '<span class="badge badge-breakout">⚡ 123結構突破</span>' : ''}
+                        ${!isPerfect && item.isVolumeSurge ? '<span class="badge badge-volume">🌊 波動能爆發</span>' : ''}
+                        ${!item.isBreakout123 && !item.isVolumeSurge ? '<span class="badge badge-ema">🌐 EMA多頭順勢</span>' : ''}
                     </div>
                 </div>
                 <div class="symbol-metrics">
