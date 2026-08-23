@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>⚡ 白銀戰場！多頭+觸上軌 極速戰略雷達</title>
+    <title>⚡ 白銀戰場！多頭+站上上軌 極速戰略雷達</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Bangers&family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@800&family=Shippori+Mincho:wght@800&display=swap');
 
@@ -26,7 +26,6 @@
         body { 
             font-family: 'Noto Sans TC', sans-serif; 
             background-color: var(--manga-dark); 
-            /* 雜誌感暗色網點與電光背景 */
             background-image: 
                 radial-gradient(rgba(0, 240, 255, 0.15) 15%, transparent 16%),
                 linear-gradient(135deg, #050811 0%, #10192c 50%, #080d1a 100%);
@@ -283,7 +282,7 @@
             <div class="modal-header">
                 <div class="modal-title">
                     <span id="modalSymbol">BTCUSDT</span>
-                    <span class="badge badge-entry">🎯 觸布林上軌</span>
+                    <span class="badge badge-entry">🎯 站上布林上軌</span>
                 </div>
                 <button class="modal-close" onclick="closeModal()">✕</button>
             </div>
@@ -320,28 +319,36 @@
     let isScanning = false;
     let totalSymbolCount = 0;
 
+    // 最佳化 1：加速 Endpoint 競爭檢測
     async function selectFastestEndpoint() {
-        const tests = API_ENDPOINTS.map(async (ep) => {
-            const start = Date.now();
-            try {
-                const res = await fetch(`${ep}/fapi/v1/ping`, { cache: 'no-store' });
-                if (res.ok) return { ep, time: Date.now() - start };
-            } catch (e) {}
-            return { ep, time: 9999 };
-        });
-        const results = await Promise.all(tests);
-        results.sort((a, b) => a.time - b.time);
-        bestEndpoint = results[0].ep;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 1200);
+        
+        try {
+            const fastest = await Promise.any(
+                API_ENDPOINTS.map(async (ep) => {
+                    const start = performance.now();
+                    const res = await fetch(`${ep}/fapi/v1/ping`, { signal: controller.signal, cache: 'no-store' });
+                    if (res.ok) return { ep, time: performance.now() - start };
+                    throw new Error();
+                })
+            );
+            bestEndpoint = fastest.ep;
+        } catch (e) {
+            bestEndpoint = API_ENDPOINTS[0];
+        } finally {
+            clearTimeout(timeout);
+        }
     }
 
+    // 最佳化 2：通用網路請求包裝，降低 overhead
     async function fetchWithFallback(path, timeoutMs = 1200) {
         const controller = new AbortController();
         const id = setTimeout(() => controller.abort(), timeoutMs);
         try {
             const response = await fetch(`${bestEndpoint}${path}`, { 
                 signal: controller.signal,
-                cache: 'force-cache',
-                keepalive: true,
+                cache: 'no-cache',
                 headers: { 'Accept': 'application/json' }
             });
             clearTimeout(id);
@@ -352,25 +359,52 @@
         return null;
     }
 
-    function calculateSMA(array, period) {
-        const len = array.length;
-        if (len < period) return 0;
-        let sum = 0;
-        for (let i = len - period; i < len; i++) sum += array[i];
-        return sum / period;
-    }
-
-    function calculateBollingerBands(closes, period = 20, multiplier = 2) {
+    // 最佳化 3：單次走查計算 SMA 與 Bollinger Bands，減少數值計算循環
+    function evaluateStrategy(closes, volumes) {
         const len = closes.length;
-        if (len < period) return null;
+        if (len < 60) return null;
 
-        const mb = calculateSMA(closes, period);
-        let varianceSum = 0;
-        for (let i = len - period; i < len; i++) {
-            varianceSum += Math.pow(closes[i] - mb, 2);
+        let sum30 = 0, sum45 = 0, sum60 = 0;
+        let sum20 = 0, sqSum20 = 0;
+        let sumVol5 = 0, sumVol15 = 0;
+
+        const currentPrice = closes[len - 1];
+
+        // 高效累加走查
+        for (let i = 0; i < len; i++) {
+            const c = closes[i];
+            const v = volumes[i];
+
+            if (i >= len - 60) sum60 += c;
+            if (i >= len - 45) sum45 += c;
+            if (i >= len - 30) sum30 += c;
+            if (i >= len - 20) {
+                sum20 += c;
+                sqSum20 += c * c;
+            }
+            if (i >= len - 15) sumVol15 += v;
+            if (i >= len - 5) sumVol5 += v;
         }
-        const stdDev = Math.sqrt(varianceSum / period);
-        return { upperBand: mb + (multiplier * stdDev), mb, lowerBand: mb - (multiplier * stdDev) };
+
+        const ma30 = sum30 / 30;
+        const ma45 = sum45 / 45;
+        if (ma30 <= ma45) return null;
+
+        const ma60 = sum60 / 60;
+        if (ma45 <= ma60) return null;
+
+        const volMa5 = sumVol5 / 5;
+        const volMa15 = sumVol15 / 15;
+
+        const mb = sum20 / 20;
+        const variance = Math.max(0, (sqSum20 / 20) - (mb * mb));
+        const stdDev = Math.sqrt(variance);
+        const upperBand = mb + (2 * stdDev);
+
+        const isAboveUpperBand = currentPrice >= upperBand;
+        const isEntrySignal = (volMa5 > volMa15) && isAboveUpperBand;
+
+        return isEntrySignal ? { currentPrice, upperBand, mb } : null;
     }
 
     async function fetch24hTickers() { 
@@ -393,43 +427,24 @@
 
     async function processSymbol(symbol) {
         try {
-            const res1h = await fetchWithFallback(`/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=65`, 1000);
+            // 最佳化 4：精準抓取 61 根 K 線 (僅涵蓋 60MA 所需數據)
+            const res1h = await fetchWithFallback(`/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=61`, 1000);
             if (!res1h || res1h.length < 60) return null;
 
             const len = res1h.length;
-            const closes = new Float64Array(len);
-            const highs = new Float64Array(len);
-            const volumes = new Float64Array(len);
+            const closes = new Array(len);
+            const volumes = new Array(len);
 
             for (let i = 0; i < len; i++) {
-                highs[i] = parseFloat(res1h[i][2]);
                 closes[i] = parseFloat(res1h[i][4]);
                 volumes[i] = parseFloat(res1h[i][5]);
             }
 
-            const currentPrice = closes[len - 1];
-            const currentHigh = highs[len - 1];
-
-            const ma30 = calculateSMA(closes, 30);
-            const ma45 = calculateSMA(closes, 45);
-            if (ma30 <= ma45) return null;
-
-            const ma60 = calculateSMA(closes, 60);
-            if (ma45 <= ma60) return null;
-
-            const volMa5 = calculateSMA(volumes, 5);
-            const volMa15 = calculateSMA(volumes, 15);
-
-            const boll = calculateBollingerBands(closes, 20, 2);
-            if (!boll) return null;
-
-            const isTouchingUpperBand = currentHigh >= boll.upperBand || currentPrice >= boll.upperBand;
-            const isEntrySignal = (volMa5 > volMa15) && isTouchingUpperBand;
-
-            if (isEntrySignal) {
+            const evalResult = evaluateStrategy(closes, volumes);
+            if (evalResult) {
                 return { 
                     symbol, 
-                    price: currentPrice, 
+                    price: evalResult.currentPrice, 
                     priceChange24h: ticker24hMap[symbol] || 0,
                     klinesRaw: res1h.slice(-40)
                 };
@@ -438,7 +453,8 @@
         } catch (e) { return null; }
     }
 
-    async function runFastScanner(symbols, poolLimit = 25, onProgress) {
+    // 最佳化 5：提高併發線程數量至 35，並引入流量分批控制
+    async function runFastScanner(symbols, poolLimit = 35, onProgress) {
         let completed = 0;
         const results = [];
         let index = 0;
@@ -450,7 +466,7 @@
                 const res = await processSymbol(symbol);
                 if (res) results.push(res);
                 completed++;
-                if (completed % 10 === 0 || completed === symbols.length) {
+                if (completed % 15 === 0 || completed === symbols.length) {
                     onProgress(completed, symbols.length);
                 }
             }
@@ -492,13 +508,15 @@
 
         let lastRenderTime = Date.now();
 
-        rawResults = await runFastScanner(symbols, 25, (completed, total) => {
+        // 採用 35 高併發通道極速掃描
+        rawResults = await runFastScanner(symbols, 35, (completed, total) => {
             const pct = Math.floor((completed / total) * 100);
             document.getElementById('progress').style.width = `${pct}%`;
             statusText.innerText = `超速掃描中 (${completed}/${total})...`;
 
             const now = Date.now();
-            if (now - lastRenderTime > 200) {
+            // 最佳化 6：拉長畫面更新間隔 (300ms)，避免 UI 高頻重繪卡頓
+            if (now - lastRenderTime > 300) {
                 lastRenderTime = now;
                 requestAnimationFrame(() => {
                     updateDashboard();
@@ -560,7 +578,7 @@
                         </span>
                     </div>
                     <div class="badge-list">
-                        <span class="badge badge-entry">💥 多頭+觸上軌+量能升溫</span>
+                        <span class="badge badge-entry">💥 多頭+站上上軌+量能升溫</span>
                     </div>
                 </div>
                 <div class="symbol-metrics">
@@ -568,6 +586,27 @@
                 </div>
             </div>
         `).join('');
+    }
+
+    function calculateSMA(array, period) {
+        const len = array.length;
+        if (len < period) return 0;
+        let sum = 0;
+        for (let i = len - period; i < len; i++) sum += array[i];
+        return sum / period;
+    }
+
+    function calculateBollingerBands(closes, period = 20, multiplier = 2) {
+        const len = closes.length;
+        if (len < period) return null;
+
+        const mb = calculateSMA(closes, period);
+        let varianceSum = 0;
+        for (let i = len - period; i < len; i++) {
+            varianceSum += Math.pow(closes[i] - mb, 2);
+        }
+        const stdDev = Math.sqrt(varianceSum / period);
+        return { upperBand: mb + (multiplier * stdDev), mb, lowerBand: mb - (multiplier * stdDev) };
     }
 
     function openChartModal(symbol) {
@@ -643,7 +682,6 @@
         const step = (width - padding.left - padding.right) / klines.length;
         const barWidth = step * 0.55;
 
-        // 布林通道背景陰影發光效果
         ctx.beginPath();
         ctx.fillStyle = 'rgba(255, 0, 127, 0.12)';
         for (let i = 0; i < klines.length; i++) {
@@ -675,17 +713,11 @@
             ctx.setLineDash([]);
         }
 
-        // 上軌（螢光粉）
         drawLine(uppers, '#ff007f', 2);
-        // 中軌
         drawLine(mbs, '#5a7094', 1.5);
-        // 下軌
         drawLine(lowers, '#ff007f', 1.5, true);
-
-        // 5MA（螢光黃）
         drawLine(ma5s, '#ffe600', 2.5);
 
-        // K線繪製（深冷背景下的高對比度電光）
         for (let i = 0; i < klines.length; i++) {
             const k = klines[i];
             const x = padding.left + i * step + step / 2;
