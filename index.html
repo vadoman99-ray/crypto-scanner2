@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>⚡ 多週期策略 (帶移動止損) + 幣安自動交易網頁版</title>
+    <title>⚡ 高效多週期策略 (極速優化版)</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@800&family=Shippori+Mincho:wght@800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@800&display=swap');
 
         :root {
             --manga-dark: #0a0e1a;
@@ -19,7 +19,6 @@
         }
 
         * { box-sizing: border-box; outline: none; }
-        
         body { 
             font-family: 'Noto Sans TC', sans-serif; 
             background-color: var(--manga-dark); 
@@ -34,36 +33,24 @@
             padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; 
             box-shadow: 0 4px 15px rgba(0, 240, 255, 0.3);
         }
-        .header-title { 
-            font-family: 'Shippori Mincho', serif; font-size: 1.1rem; font-weight: 900;
-            color: #fff; text-shadow: 0 0 8px var(--manga-cyan);
-        }
-        
+        .header-title { font-size: 1.1rem; font-weight: 900; color: #fff; text-shadow: 0 0 8px var(--manga-cyan); }
         .scan-btn { 
             background: linear-gradient(135deg, #ff007f 0%, #ff5500 100%); 
             color: #fff; border: 2px solid #fff; padding: 8px 16px; border-radius: 6px; 
-            font-weight: 900; font-size: 0.9rem; cursor: pointer; 
-            box-shadow: var(--pop-shadow);
+            font-weight: 900; font-size: 0.9rem; cursor: pointer; box-shadow: var(--pop-shadow);
         }
         .scan-btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
 
-        .api-panel {
+        .param-panel {
             background: var(--manga-navy); border: 2px solid var(--manga-cyan);
             margin: 14px 16px 0 16px; padding: 12px; border-radius: 8px; box-shadow: var(--pop-shadow);
         }
-        .api-panel h3 { margin: 0 0 10px 0; font-size: 0.95rem; color: var(--manga-yellow); display: flex; justify-content: space-between; align-items: center; }
-        .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
-        .input-group input {
-            background: #070a12; border: 1px solid var(--manga-cyan); color: #fff;
-            padding: 8px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;
-        }
-        .param-row { display: flex; gap: 8px; font-size: 0.8rem; margin-bottom: 8px; }
+        .param-panel h3 { margin: 0 0 10px 0; font-size: 0.95rem; color: var(--manga-yellow); }
+        .param-row { display: flex; gap: 12px; font-size: 0.85rem; }
         .param-row input { background: #070a12; border: 1px solid #2a3a5c; color: var(--manga-yellow); padding: 4px 6px; border-radius: 4px; width: 60px; text-align: center; font-family: 'JetBrains Mono'; }
 
-        .toggle-container { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 900; }
-
         .progress-container { height: 6px; background: #090d16; width: 100%; margin-top: 10px; }
-        .progress-fill { height: 100%; width: 0%; background: var(--manga-cyan); transition: width 0.1s; }
+        .progress-fill { height: 100%; width: 0%; background: var(--manga-cyan); transition: width 0.05s ease-out; }
 
         .dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 14px 16px; }
         .stat-card {
@@ -80,15 +67,14 @@
             border-left: 6px solid var(--manga-pink); border-radius: 8px; 
             padding: 12px 14px; margin-bottom: 12px; 
             display: flex; justify-content: space-between; align-items: center; 
-            box-shadow: var(--pop-shadow); cursor: pointer;
+            box-shadow: var(--pop-shadow); cursor: pointer; transition: transform 0.1s;
         }
-
+        .symbol-card:hover { transform: translateY(-2px); border-color: var(--manga-cyan); }
         .symbol-name { font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; font-weight: 900; }
         .symbol-price { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; color: var(--manga-yellow); }
+        .detail-row { font-size: 0.78rem; font-family: 'JetBrains Mono', monospace; color: #a0aec0; margin-top: 4px; }
         .badge { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 900; background: var(--manga-pink); color: #fff; }
-        .badge.traded { background: var(--manga-green); color: #000; }
 
-        /* Modal */
         .modal-backdrop {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: rgba(5, 8, 17, 0.85); backdrop-filter: blur(8px);
@@ -96,47 +82,36 @@
         }
         .modal-card {
             background: var(--manga-navy); border: 2px solid var(--manga-cyan);
-            border-radius: 12px; width: 100%; max-width: 520px; padding: 18px; position: relative;
+            border-radius: 12px; width: 100%; max-width: 480px; padding: 18px;
             box-shadow: 0 0 25px rgba(0, 240, 255, 0.3);
         }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .chart-container { width: 100%; height: 240px; background: #070a12; border: 2px solid #2a3a5c; border-radius: 8px; }
-        canvas { width: 100%; height: 100%; display: block; }
-        .info-row { display: flex; justify-content: space-between; font-size: 0.78rem; margin-top: 10px; font-family: 'JetBrains Mono', monospace; }
+        .input-group { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
+        .input-group input {
+            background: #070a12; border: 1px solid var(--manga-cyan); color: #fff;
+            padding: 8px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;
+        }
+        .info-box { background: #070a12; border: 1px solid #2a3a5c; padding: 10px; border-radius: 6px; margin-bottom: 12px; }
+        .info-row { display: flex; justify-content: space-between; font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; margin-bottom: 4px; }
         .action-btn {
-            width: 100%; margin-top: 12px; padding: 10px; background: var(--manga-green); color: #000;
+            width: 100%; padding: 10px; background: var(--manga-green); color: #000;
             border: none; border-radius: 6px; font-weight: 900; font-size: 1rem; cursor: pointer; box-shadow: var(--pop-shadow);
         }
     </style>
-    <!-- CryptoJS 用於簽署 Binance API HMAC SHA256 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 </head>
 <body>
 
     <div class="app-header">
-        <div class="header-title">⚡ 多週期策略 (移動止損版)</div>
-        <button id="scanBtn" class="scan-btn" onclick="startScan()">發動監控</button>
+        <div class="header-title">⚡ 多週期策略 (極速閃電版)</div>
+        <button id="scanBtn" class="scan-btn" onclick="startScan()">啟動極速掃描</button>
     </div>
 
-    <!-- API 設定與風控參數區塊 -->
-    <div class="api-panel">
-        <h3>🔑 幣安 API 實盤自動下單設定 <span>(U本位合約)</span></h3>
-        <div class="input-group">
-            <input type="password" id="apiKey" placeholder="Binance API Key">
-            <input type="password" id="apiSecret" placeholder="Binance API Secret">
-        </div>
-        
+    <div class="param-panel">
+        <h3>⚙️ 移動止損試算參數</h3>
         <div class="param-row">
-            <span>下單(USDT): <input type="number" id="tradeUsdt" value="100"></span>
-            <span>啟動倍數: <input type="number" id="trailTrigger" value="1.0" step="0.1"></span>
-            <span>追蹤距離: <input type="number" id="trailOffset" value="1.0" step="0.1"></span>
-        </div>
-
-        <div style="display: flex; gap: 10px; align-items: center; margin-top: 6px;">
-            <div class="toggle-container">
-                <input type="checkbox" id="autoTradeToggle" style="width:18px; height:18px; cursor:pointer;">
-                <label for="autoTradeToggle" style="color:var(--manga-pink); cursor:pointer;">開啟觸發即自動下單</label>
-            </div>
+            <span>啟動門檻 (ATR倍數): <input type="number" id="trailTrigger" value="1.0" step="0.1"></span>
+            <span>追蹤距離 (ATR倍數): <input type="number" id="trailOffset" value="1.0" step="0.1"></span>
         </div>
     </div>
 
@@ -155,142 +130,225 @@
 
     <div class="container" id="symbolList"></div>
 
-    <!-- Modal 圖表與手動下單 -->
-    <div class="modal-backdrop" id="chartModal" onclick="if(event.target.id==='chartModal') closeModal()">
+    <div class="modal-backdrop" id="tradeModal" onclick="if(event.target.id==='tradeModal') closeModal()">
         <div class="modal-card">
             <div class="modal-header">
                 <span id="modalSymbol" style="font-family:'JetBrains Mono'; font-weight:900; font-size:1.2rem;">BTCUSDT</span>
                 <button onclick="closeModal()" style="background:var(--manga-pink); color:#fff; border:none; border-radius:4px; font-weight:900; cursor:pointer;">✕</button>
             </div>
-            <div class="chart-container">
-                <canvas id="strategyCanvas"></canvas>
+            
+            <div class="info-box">
+                <div class="info-row"><span>當前現價:</span><b id="valPrice" style="color:var(--manga-yellow);">0</b></div>
+                <div class="info-row"><span>初始止損:</span><b id="valStop" style="color:var(--manga-red);">0</b></div>
+                <div class="info-row"><span>移動啟動點:</span><b id="valTrigger" style="color:var(--manga-cyan);">0</b></div>
+                <div class="info-row"><span>盈虧比止盈:</span><b id="valTake" style="color:var(--manga-green);">0</b></div>
             </div>
-            <div class="info-row">
-                <span>現價: <b id="valPrice" style="color:var(--manga-yellow);">0</b></span>
-                <span>初始止損: <b id="valStop" style="color:var(--manga-red);">0</b></span>
-                <span>移動啟動點: <b id="valTrigger" style="color:var(--manga-cyan);">0</b></span>
-                <span>止盈(2.5): <b id="valTake" style="color:var(--manga-green);">0</b></span>
+
+            <div class="input-group">
+                <input type="password" id="apiKey" placeholder="Binance API Key">
+                <input type="password" id="apiSecret" placeholder="Binance API Secret">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+                    <span style="font-size:0.8rem;">下單金額 (USDT):</span>
+                    <input type="number" id="tradeUsdt" value="100" style="width:100px; text-align:center;">
+                </div>
             </div>
-            <button class="action-btn" id="manualTradeBtn" onclick="executeManualTrade()">立即依此風控下單 (U本位做多)</button>
+
+            <button class="action-btn" onclick="executeTrade()">確認市價買進並掛載移動止損</button>
         </div>
     </div>
 
 <script>
     const API_BASE = 'https://fapi.binance.com';
     let rawResults = [];
-    let currentSelectedItem = null;
+    let currentItem = null;
 
-    // --- 1. 技術指標計算 ---
-    async function fetchKlines(symbol, interval, limit = 30) {
+    // 提高併發上限至 20
+    async function asyncPool(poolLimit, array, iteratorFn) {
+        const ret = [];
+        const executing = [];
+        for (const item of array) {
+            const p = Promise.resolve().then(() => iteratorFn(item));
+            ret.push(p);
+            if (poolLimit <= array.length) {
+                const e = p.then(() => executing.splice(executing.indexOf(e), 1));
+                executing.push(e);
+                if (executing.length >= poolLimit) {
+                    await Promise.race(executing);
+                }
+            }
+        }
+        return Promise.all(ret);
+    }
+
+    async function fetchKlinesOptimized(symbol) {
         try {
-            const res = await fetch(`${API_BASE}/fapi/v1/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`);
-            if (!res.ok) return null;
-            return await res.json();
+            const [r5m, r15m, r1h] = await Promise.all([
+                fetch(`${API_BASE}/fapi/v1/klines?symbol=${symbol}&interval=5m&limit=25`),
+                fetch(`${API_BASE}/fapi/v1/klines?symbol=${symbol}&interval=15m&limit=25`),
+                fetch(`${API_BASE}/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=20`)
+            ]);
+
+            if (!r5m.ok || !r15m.ok || !r1h.ok) return null;
+            return { k5m: await r5m.json(), k15m: await r15m.json(), k1h: await r1h.json() };
         } catch { return null; }
     }
 
     function calcBollingerUpper(closes, period = 20, mult = 2.0) {
-        if (closes.length < period) return 0;
-        const slice = closes.slice(-period);
-        const mean = slice.reduce((a, b) => a + b, 0) / period;
-        const variance = slice.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / period;
-        return mean + (mult * Math.sqrt(variance));
+        let sum = 0;
+        for(let i = closes.length - period; i < closes.length; i++) sum += closes[i];
+        const mean = sum / period;
+        let variance = 0;
+        for(let i = closes.length - period; i < closes.length; i++) variance += Math.pow(closes[i] - mean, 2);
+        return mean + (mult * Math.sqrt(variance / period));
     }
 
     function calcSMA(closes, period) {
-        if (closes.length < period) return 0;
-        const slice = closes.slice(-period);
-        return slice.reduce((a, b) => a + b, 0) / period;
+        let sum = 0;
+        for(let i = closes.length - period; i < closes.length; i++) sum += closes[i];
+        return sum / period;
     }
 
     function calcATR(klines, period = 14) {
-        if (klines.length < period + 1) return 0;
         let trSum = 0;
-        for (let i = klines.length - period; i < klines.length; i++) {
-            const high = parseFloat(klines[i][2]);
-            const low = parseFloat(klines[i][3]);
-            const prevClose = parseFloat(klines[i - 1][4]);
-            const tr = Math.max(high - low, Math.abs(high - prevClose), Math.abs(low - prevClose));
-            trSum += tr;
+        const len = klines.length;
+        for (let i = len - period; i < len; i++) {
+            const h = parseFloat(klines[i][2]), l = parseFloat(klines[i][3]), pc = parseFloat(klines[i-1][4]);
+            trSum += Math.max(h - l, Math.abs(h - pc), Math.abs(l - pc));
         }
         return trSum / period;
     }
 
-    // --- 2. 多週期與移動止損邏輯掃描 ---
-    async function evaluateSymbol(symbol) {
-        const [k5m, k15m, k1h] = await Promise.all([
-            fetchKlines(symbol, '5m', 25),
-            fetchKlines(symbol, '15m', 25),
-            fetchKlines(symbol, '1h', 20)
-        ]);
+    async function evaluateSymbolOptimized(symbol, updateProgress) {
+        const data = await fetchKlinesOptimized(symbol);
+        updateProgress();
+        if (!data) return null;
 
-        if (!k5m || !k15m || !k1h) return null;
+        const { k5m, k15m, k1h } = data;
 
-        // 5m 觸上軌
         const c5m = k5m.map(k => parseFloat(k[4]));
         const h5m = parseFloat(k5m[k5m.length - 1][2]);
-        const upper5m = calcBollingerUpper(c5m);
-        const cond5m = h5m >= upper5m;
+        if (h5m < calcBollingerUpper(c5m)) return null;
 
-        // 15m 觸上軌
         const c15m = k15m.map(k => parseFloat(k[4]));
         const h15m = parseFloat(k15m[k15m.length - 1][2]);
-        const upper15m = calcBollingerUpper(c15m);
-        const cond15m = h15m >= upper15m;
+        if (h15m < calcBollingerUpper(c15m)) return null;
 
-        // 1h 收盤 > 5MA
         const c1h = k1h.map(k => parseFloat(k[4]));
-        const close1h = c1h[c1h.length - 1];
-        const ma5_1h = calcSMA(c1h, 5);
-        const cond1h = close1h > ma5_1h;
+        if (c1h[c1h.length - 1] <= calcSMA(c1h, 5)) return null;
 
-        if (cond5m && cond15m && cond1h) {
-            const price = c5m[c5m.length - 1];
-            const atr = calcATR(k5m, 14);
-            
-            const triggerMult = parseFloat(document.getElementById('trailTrigger').value) || 1.0;
-            const offsetMult = parseFloat(document.getElementById('trailOffset').value) || 1.0;
+        const price = c5m[c5m.length - 1];
+        const atr = calcATR(k5m, 14);
+        const triggerMult = parseFloat(document.getElementById('trailTrigger').value) || 1.0;
+        const offsetMult = parseFloat(document.getElementById('trailOffset').value) || 1.0;
 
-            const stopDist = atr * 1.5;
-            const initialStop = price - stopDist;
-            const trailTrigger = price + (atr * triggerMult);
-            const takeProfit = price + (stopDist * 2.5);
+        const stopDist = atr * 1.5;
+        const initialStop = price - stopDist;
+        const trailTrigger = price + (atr * triggerMult);
+        const takeProfit = price + (stopDist * 2.5);
 
-            // 類比移動止損：計算近期 K 線中移動止損抬升後的動態止損點
-            let dynamicStop = initialStop;
-            let highestP = price;
+        let dynamicStop = initialStop;
+        let highestP = price;
 
-            for (let i = k5m.length - 5; i < k5m.length; i++) {
-                const h = parseFloat(k5m[i][2]);
-                if (h > highestP) highestP = h;
-                if (highestP >= trailTrigger) {
-                    const trailedStop = highestP - (atr * offsetMult);
-                    if (trailedStop > dynamicStop) dynamicStop = trailedStop;
-                }
+        for (let i = k5m.length - 5; i < k5m.length; i++) {
+            const h = parseFloat(k5m[i][2]);
+            if (h > highestP) highestP = h;
+            if (highestP >= trailTrigger) {
+                const trailedStop = highestP - (atr * offsetMult);
+                if (trailedStop > dynamicStop) dynamicStop = trailedStop;
             }
-
-            return {
-                symbol,
-                price,
-                atr,
-                initialStop,
-                dynamicStop,
-                trailTrigger,
-                takeProfit,
-                klines5m: k5m.slice(-20),
-                traded: false
-            };
         }
-        return null;
+
+        return { symbol, price, atr, initialStop, dynamicStop, trailTrigger, takeProfit, traded: false };
     }
 
-    // --- 3. Binance API 下單與移動止損掛單 ---
+    async function startScan() {
+        const btn = document.getElementById('scanBtn');
+        btn.disabled = true; btn.innerText = "⚡ 極速全網快照中...";
+        rawResults = [];
+        document.getElementById('symbolList').innerHTML = '';
+
+        // 【極速關鍵 1】一次性下載全市場 24小時 數據進記憶體快照
+        const tickers = await fetch(`${API_BASE}/fapi/v1/ticker/24hr`).then(r => r.json());
+        
+        // 【極速關鍵 2】初篩：只挑選當天上漲且交易量大的 USDT 永續合約標的，直接淘汰 70% 無效標的
+        const candidateSymbols = tickers.filter(t => 
+            t.symbol.endsWith('USDT') && 
+            parseFloat(t.priceChangePercent) > 0 && 
+            parseFloat(t.quoteVolume) > 10000000
+        ).map(t => t.symbol);
+
+        document.getElementById('statTotal').innerText = candidateSymbols.length;
+
+        let completed = 0;
+        const updateProgress = () => {
+            completed++;
+            document.getElementById('progress').style.width = `${(completed / candidateSymbols.length) * 100}%`;
+        };
+
+        // 【極速關鍵 3】提高併發數至 20 進行精確多週期驗證
+        btn.innerText = "🔍 閃電驗證多週期中...";
+        const results = await asyncPool(20, candidateSymbols, sym => evaluateSymbolOptimized(sym, updateProgress));
+
+        rawResults = results.filter(Boolean);
+        document.getElementById('statEntry').innerText = rawResults.length;
+
+        btn.disabled = false; btn.innerText = "啟動極速掃描";
+        renderList();
+    }
+
+    function renderList() {
+        const container = document.getElementById('symbolList');
+        if (rawResults.length === 0) {
+            container.innerHTML = `<div style="text-align:center; padding:40px; color:#5a7094; font-weight:900;">無符合標的</div>`;
+            return;
+        }
+
+        container.innerHTML = rawResults.map(item => `
+            <div class="symbol-card" onclick="openModal('${item.symbol}')">
+                <div style="flex: 1;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="symbol-name">${item.symbol.replace('USDT','')}</span>
+                        <span class="badge">🎯 點擊下單</span>
+                    </div>
+                    <div class="detail-row">
+                        初始止損: <span style="color:var(--manga-red);">${item.initialStop.toFixed(4)}</span> | 
+                        啟動點: <span style="color:var(--manga-cyan);">${item.trailTrigger.toFixed(4)}</span> | 
+                        止盈: <span style="color:var(--manga-green);">${item.takeProfit.toFixed(4)}</span>
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                    <div class="symbol-price">${item.price}</div>
+                    <div style="font-size:0.75rem; color:var(--manga-red); margin-top:2px;">
+                        動態止損: ${item.dynamicStop.toFixed(4)}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function openModal(symbol) {
+        currentItem = rawResults.find(r => r.symbol === symbol);
+        if (!currentItem) return;
+
+        document.getElementById('modalSymbol').innerText = symbol;
+        document.getElementById('valPrice').innerText = currentItem.price.toFixed(4);
+        document.getElementById('valStop').innerText = currentItem.dynamicStop.toFixed(4);
+        document.getElementById('valTrigger').innerText = currentItem.trailTrigger.toFixed(4);
+        document.getElementById('valTake').innerText = currentItem.takeProfit.toFixed(4);
+
+        document.getElementById('tradeModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('tradeModal').style.display = 'none';
+    }
+
     function sendSignedRequest(endpoint, method, params = {}) {
         const key = document.getElementById('apiKey').value;
         const secret = document.getElementById('apiSecret').value;
 
         if (!key || !secret) {
-            alert('請先輸入 API Key 與 API Secret！');
+            alert('請輸入 API Key 與 Secret！');
             return null;
         }
 
@@ -304,192 +362,39 @@
         }).then(r => r.json());
     }
 
-    async function placeBinanceOrder(item) {
+    async function executeTrade() {
+        if (!currentItem) return;
+
         const usdtAmount = parseFloat(document.getElementById('tradeUsdt').value) || 100;
-        const qty = (usdtAmount / item.price).toFixed(3);
+        const qty = (usdtAmount / currentItem.price).toFixed(3);
         const offsetMult = parseFloat(document.getElementById('trailOffset').value) || 1.0;
 
         try {
-            // 1. 市價買進 (LONG)
             const buyOrder = await sendSignedRequest('/fapi/v1/order', 'POST', {
-                symbol: item.symbol,
-                side: 'BUY',
-                type: 'MARKET',
-                quantity: qty
+                symbol: currentItem.symbol, side: 'BUY', type: 'MARKET', quantity: qty
             });
 
             if (buyOrder.code) {
                 alert(`下單失敗: ${buyOrder.msg}`);
-                return false;
+                return;
             }
 
-            // 2. 掛設移動止損單 (TRAILING_STOP_MARKET)
-            const callbackRate = ((item.atr * offsetMult) / item.price * 100).toFixed(1);
+            const callbackRate = ((currentItem.atr * offsetMult) / currentItem.price * 100).toFixed(1);
             await sendSignedRequest('/fapi/v1/order', 'POST', {
-                symbol: item.symbol,
-                side: 'SELL',
-                type: 'TRAILING_STOP_MARKET',
-                callbackRate: Math.max(0.1, Math.min(5.0, callbackRate)), // 幣安限制比例在 0.1% ~ 5%
-                closePosition: 'true'
+                symbol: currentItem.symbol, side: 'SELL', type: 'TRAILING_STOP_MARKET',
+                callbackRate: Math.max(0.1, Math.min(5.0, callbackRate)), closePosition: 'true'
             });
 
-            // 3. 掛設盈虧比止盈單 (TAKE_PROFIT_MARKET)
             await sendSignedRequest('/fapi/v1/order', 'POST', {
-                symbol: item.symbol,
-                side: 'SELL',
-                type: 'TAKE_PROFIT_MARKET',
-                stopPrice: item.takeProfit.toFixed(4),
-                closePosition: 'true'
+                symbol: currentItem.symbol, side: 'SELL', type: 'TAKE_PROFIT_MARKET',
+                stopPrice: currentItem.takeProfit.toFixed(4), closePosition: 'true'
             });
 
-            item.traded = true;
-            renderList();
-            alert(`✅ ${item.symbol} 市價買進成功！已成功設定移動止損與盈虧比止盈。`);
-            return true;
-        } catch (err) {
-            alert(`下單過程發生異常: ${err}`);
-            return false;
-        }
-    }
-
-    // --- 4. 掃描與 UI 控制器 ---
-    async function startScan() {
-        const btn = document.getElementById('scanBtn');
-        btn.disabled = true; btn.innerText = "掃描中...";
-        rawResults = [];
-
-        const exchangeInfo = await fetch(`${API_BASE}/fapi/v1/exchangeInfo`).then(r => r.json());
-        const symbols = exchangeInfo.symbols
-            .filter(s => s.quoteAsset === 'USDT' && s.contractType === 'PERPETUAL' && s.status === 'TRADING')
-            .map(s => s.symbol);
-
-        document.getElementById('statTotal').innerText = symbols.length;
-
-        let completed = 0;
-        const poolLimit = 25;
-        let index = 0;
-
-        async function worker() {
-            while (index < symbols.length) {
-                const sym = symbols[index++];
-                const res = await evaluateSymbol(sym);
-                if (res) {
-                    rawResults.push(res);
-                    if (document.getElementById('autoTradeToggle').checked && !res.traded) {
-                        await placeBinanceOrder(res);
-                    }
-                }
-                completed++;
-                document.getElementById('progress').style.width = `${(completed / symbols.length) * 100}%`;
-                document.getElementById('statEntry').innerText = rawResults.length;
-                if (completed % 10 === 0) renderList();
-            }
-        }
-
-        await Promise.all(Array(poolLimit).fill(0).map(() => worker()));
-
-        btn.disabled = false; btn.innerText = "發動監控";
-        renderList();
-    }
-
-    function renderList() {
-        const container = document.getElementById('symbolList');
-        if (rawResults.length === 0) {
-            container.innerHTML = `<div style="text-align:center; padding:40px; color:#5a7094; font-weight:900;">尚未開啟掃描或無符合標的</div>`;
-            return;
-        }
-
-        container.innerHTML = rawResults.map(item => `
-            <div class="symbol-card" onclick="openModal('${item.symbol}')">
-                <div>
-                    <div class="symbol-name">${item.symbol.replace('USDT','')}</div>
-                    <span class="badge ${item.traded ? 'traded' : ''}">${item.traded ? '已下單成功' : '🎯 多週期觸發 + 移動止損ready'}</span>
-                </div>
-                <div style="text-align:right;">
-                    <div class="symbol-price">${item.price}</div>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    function openModal(symbol) {
-        currentSelectedItem = rawResults.find(r => r.symbol === symbol);
-        if (!currentSelectedItem) return;
-
-        document.getElementById('modalSymbol').innerText = symbol;
-        document.getElementById('valPrice').innerText = currentSelectedItem.price.toFixed(4);
-        document.getElementById('valStop').innerText = currentSelectedItem.dynamicStop.toFixed(4);
-        document.getElementById('valTrigger').innerText = currentSelectedItem.trailTrigger.toFixed(4);
-        document.getElementById('valTake').innerText = currentSelectedItem.takeProfit.toFixed(4);
-
-        document.getElementById('chartModal').style.display = 'flex';
-        requestAnimationFrame(() => drawChart(currentSelectedItem));
-    }
-
-    function executeManualTrade() {
-        if (currentSelectedItem) {
-            placeBinanceOrder(currentSelectedItem);
             closeModal();
+            alert(`✅ ${currentItem.symbol} 下單與風控掛單成功！`);
+        } catch (err) {
+            alert(`下單異常: ${err}`);
         }
-    }
-
-    function drawChart(item) {
-        const canvas = document.getElementById('strategyCanvas');
-        const ctx = canvas.getContext('2d');
-        const rect = canvas.parentElement.getBoundingClientRect();
-        
-        canvas.width = rect.width * 2; canvas.height = rect.height * 2;
-        ctx.scale(2, 2);
-
-        const width = rect.width; const height = rect.height;
-        const padding = { top: 20, bottom: 20, left: 10, right: 10 };
-
-        const klines = item.klines5m.map(k => ({
-            high: parseFloat(k[2]), low: parseFloat(k[3]),
-            open: parseFloat(k[1]), close: parseFloat(k[4])
-        }));
-
-        let maxP = Math.max(...klines.map(k => k.high), item.takeProfit);
-        let minP = Math.min(...klines.map(k => k.low), item.initialStop);
-        const pRange = (maxP - minP) || 1;
-
-        function getY(p) {
-            return height - padding.bottom - ((p - minP) / pRange) * (height - padding.top - padding.bottom);
-        }
-
-        ctx.clearRect(0, 0, width, height);
-
-        // 1. 動態/抬升後的止損線 (紅色虛線)
-        ctx.strokeStyle = '#ff3366'; ctx.setLineDash([4, 4]); ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.moveTo(0, getY(item.dynamicStop)); ctx.lineTo(width, getY(item.dynamicStop)); ctx.stroke();
-
-        // 2. 移動止損啟動點門檻 (青色虛線)
-        ctx.strokeStyle = '#00f0ff'; ctx.setLineDash([2, 2]); ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(0, getY(item.trailTrigger)); ctx.lineTo(width, getY(item.trailTrigger)); ctx.stroke();
-
-        // 3. 盈虧比止盈線 (綠色虛線)
-        ctx.strokeStyle = '#00ff66'; ctx.setLineDash([4, 4]); ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.moveTo(0, getY(item.takeProfit)); ctx.lineTo(width, getY(item.takeProfit)); ctx.stroke();
-        ctx.setLineDash([]);
-
-        // K 線繪製
-        const step = (width - padding.left - padding.right) / klines.length;
-        klines.forEach((k, i) => {
-            const x = padding.left + i * step + step / 2;
-            const isUp = k.close >= k.open;
-            const color = isUp ? '#00f0ff' : '#ff3366';
-
-            ctx.strokeStyle = color; ctx.lineWidth = 1.5;
-            ctx.beginPath(); ctx.moveTo(x, getY(k.high)); ctx.lineTo(x, getY(k.low)); ctx.stroke();
-
-            const yOpen = getY(k.open); const yClose = getY(k.close);
-            ctx.fillStyle = color;
-            ctx.fillRect(x - (step * 0.3), Math.min(yOpen, yClose), step * 0.6, Math.max(Math.abs(yOpen - yClose), 2));
-        });
-    }
-
-    function closeModal() {
-        document.getElementById('chartModal').style.display = 'none';
     }
 </script>
 </body>
