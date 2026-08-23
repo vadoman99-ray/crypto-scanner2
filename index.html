@@ -43,6 +43,29 @@
         }
         .scan-btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
 
+        .action-bar {
+            padding: 10px 16px 0 16px;
+            display: flex;
+            gap: 10px;
+        }
+        .copy-btn {
+            width: 100%;
+            background: #1a2638;
+            color: var(--manga-cyan);
+            border: 2px solid var(--manga-cyan);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: 900;
+            font-size: 0.85rem;
+            cursor: pointer;
+            box-shadow: var(--pop-shadow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .copy-btn:hover { background: var(--manga-cyan); color: #000; }
+
         .progress-container { height: 6px; background: #090d16; width: 100%; margin-top: 0; }
         .progress-fill { height: 100%; width: 0%; background: var(--manga-cyan); transition: width 0.05s ease-out; }
 
@@ -91,10 +114,26 @@
         .chart-title { font-size: 0.75rem; color: #a0aec0; margin-bottom: 4px; display: flex; justify-content: space-between; }
         canvas { width: 100%; height: 200px; display: block; }
 
-        .info-box { background: #070a12; border: 1px solid #2a3a5c; padding: 10px; border-radius: 6px; }
+        .info-box { background: #070a12; border: 1px solid #2a3a5c; padding: 10px; border-radius: 6px; margin-bottom: 12px; }
         .info-row { display: flex; justify-content: space-between; font-size: 0.85rem; font-family: 'JetBrains Mono', monospace; margin-bottom: 6px; }
         .info-row:last-child { margin-bottom: 0; }
         
+        .binance-btn {
+            width: 100%;
+            background: var(--manga-yellow);
+            color: #000;
+            border: 2px solid #fff;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: 900;
+            font-size: 0.95rem;
+            cursor: pointer;
+            box-shadow: var(--pop-shadow);
+            text-align: center;
+            text-decoration: none;
+            display: block;
+        }
+
         .val-up { color: var(--manga-green); }
         .val-down { color: var(--manga-red); }
         .highlight-ma3 { color: var(--manga-green); font-weight: 900; }
@@ -108,6 +147,10 @@
     </div>
 
     <div class="progress-container"><div id="progress" class="progress-fill"></div></div>
+
+    <div class="action-bar">
+        <button class="copy-btn" onclick="copySymbolList()">📋 複製所有符合標的 (方便貼上搜尋)</button>
+    </div>
 
     <div class="dashboard">
         <div class="stat-card">
@@ -149,6 +192,8 @@
                 <div class="info-row"><span>中線:</span><b id="valMA2" style="color:var(--manga-purple);">0</b></div>
                 <div class="info-row"><span>慢線:</span><b id="valMA3" style="color:var(--manga-green);">0</b></div>
             </div>
+
+            <a id="binanceLink" href="#" target="_blank" class="binance-btn">🚀 前往幣安交易此標的</a>
         </div>
     </div>
 
@@ -334,6 +379,19 @@
         container.appendChild(fragment);
     }
 
+    function copySymbolList() {
+        if (rawResults.length === 0) {
+            alert("目前尚無符合條件的標的！");
+            return;
+        }
+        const symbolsText = rawResults.map(r => r.symbol).join(', ');
+        navigator.clipboard.writeText(symbolsText).then(() => {
+            alert(`已複製 ${rawResults.length} 個標的名稱至剪貼簿！\n\n範例：${symbolsText.slice(0, 40)}...`);
+        }).catch(err => {
+            alert("複製失敗，請手動複製。");
+        });
+    }
+
     function drawChart(item) {
         const canvas = document.getElementById('klineCanvas');
         const ctx = canvas.getContext('2d');
@@ -441,6 +499,10 @@
         document.getElementById('valMA1').innerText = currentItem.ma1.toFixed(4);
         document.getElementById('valMA2').innerText = currentItem.ma2.toFixed(4);
         document.getElementById('valMA3').innerText = currentItem.ma3.toFixed(4);
+
+        // 綁定前往幣安合約頁面的連結
+        const linkEl = document.getElementById('binanceLink');
+        linkEl.href = `https://www.binance.com/zh-TC/futures/${symbol}`;
 
         document.getElementById('tradeModal').style.display = 'flex';
 
