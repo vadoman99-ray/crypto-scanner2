@@ -1,3 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>⚡ 白銀戰場！多頭+觸上軌 極速戰略雷達</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bangers&family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@800&family=Shippori+Mincho:wght@800&display=swap');
+
+        :root {
+            --manga-dark: #0a0e1a;
+            --manga-navy: #121b2d;
+            --manga-pink: #ff007f;
+            --manga-pink-glow: #ff007faa;
+            --manga-cyan: #00f0ff;
+            --manga-cyan-glow: #00f0ffaa;
+            --manga-yellow: #ffe600;
+            --manga-white: #ffffff;
+            --card-border: 2px solid #000;
+            --pop-shadow: 4px 4px 0px #000;
+            --pop-shadow-lg: 6px 6px 0px #000;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        
+        body { 
+            font-family: 'Noto Sans TC', sans-serif; 
+            background-color: var(--manga-dark); 
+            /* 雜誌感暗色網點與電光背景 */
+            background-image: 
+                radial-gradient(rgba(0, 240, 255, 0.15) 15%, transparent 16%),
+                linear-gradient(135deg, #050811 0%, #10192c 50%, #080d1a 100%);
+            background-size: 16px 16px, 100% 100%;
+            background-attachment: fixed;
+            color: #fff; 
+            margin: 0; 
+            padding-bottom: 40px; 
+            overflow-x: hidden;
+        }
+
+        /* Header - 日系雜誌封面標題風格 */
+        .app-header { 
+            position: sticky; top: 0; z-index: 100; 
+            background: linear-gradient(90deg, #101424 0%, #1a233a 100%); 
+            border-bottom: 3px solid var(--manga-cyan); 
+            padding: 12px 16px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            box-shadow: 0 4px 15px rgba(0, 240, 255, 0.3), 0 4px 0 #000;
+        }
+        .header-title { 
+            font-family: 'Shippori Mincho', 'Noto Sans TC', serif;
+            font-size: 1.3rem; 
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: var(--manga-white);
+            text-shadow: 
+                0 0 8px var(--manga-cyan),
+                2px 2px 0px var(--manga-pink),
+                -1px -1px 0px #000, 1px -1px 0px #000, -1px 1px 0px #000, 1px 1px 0px #000;
+            display: flex; align-items: center; gap: 6px;
+        }
+        
+        /* 戰術發動按鈕 */
+        .scan-btn { 
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #ff007f 0%, #ff5500 100%); 
+            color: var(--manga-white); 
+            border: 2px solid #fff; 
+            padding: 8px 18px; border-radius: 6px; 
+            font-weight: 900; font-size: 0.95rem; cursor: pointer; 
+            box-shadow: 0 0 10px var(--manga-pink-glow), var(--pop-shadow);
+            transition: all 0.15s ease;
+            text-shadow: 1.5px 1.5px 0px #000;
+            clip-path: polygon(8% 0, 100% 0, 92% 100%, 0% 100%);
+        }
+        .scan-btn:hover { 
+            transform: scale(1.05); 
+            box-shadow: 0 0 20px var(--manga-pink), var(--pop-shadow-lg); 
+        }
+        .scan-btn:active { transform: translate(2px, 2px); }
+        .scan-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; filter: grayscale(1); }
+
+        /* Progress Bar */
+        .progress-container { 
+            height: 8px; background: #090d16; width: 100%; 
+            border-bottom: 2px solid #000; position: relative; overflow: hidden;
+        }
+        .progress-fill { 
+            height: 100%; width: 0%; 
+            background: linear-gradient(90deg, var(--manga-cyan) 0%, var(--manga-pink) 100%); 
+            box-shadow: 0 0 10px var(--manga-cyan);
+            transition: width 0.1s linear; 
+        }
+
+        /* Dashboard */
+        .dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 14px 16px 4px 16px; }
+        .stat-card {
+            background: rgba(18, 27, 45, 0.85); 
+            border: 2px solid var(--manga-cyan);
+            border-radius: 8px; padding: 10px 4px; text-align: center;
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.2), var(--pop-shadow);
+            backdrop-filter: blur(4px);
+            position: relative; overflow: hidden;
+        }
+        .stat-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px;
+            background: var(--manga-cyan);
+        }
+        .stat-card .val { font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-weight: 900; color: #fff; text-shadow: 0 0 6px var(--manga-cyan); }
+        .stat-card .lbl { font-size: 0.75rem; font-weight: 900; margin-top: 2px; color: #a0aec0; }
+        .stat-card.entry { border-color: var(--manga-pink); box-shadow: 0 0 10px rgba(255, 0, 127, 0.2), var(--pop-shadow); }
+        .stat-card.entry::before { background: var(--manga-pink); }
+        .stat-card.entry .val { color: var(--manga-pink); text-shadow: 0 0 6px var(--manga-pink); }
+
+        /* Toolbar */
+        .toolbar { padding: 10px 16px; display: flex; gap: 10px; align-items: center; }
+        .search-wrapper { position: relative; flex: 1; display: flex; align-items: center; }
+        .search-input { 
+            width: 100%; background: rgba(10, 14, 26, 0.9); border: 2px solid var(--manga-cyan); 
+            color: #fff; padding: 9px 30px 9px 12px; border-radius: 6px; 
+            font-size: 0.85rem; font-weight: 700; box-shadow: 0 0 8px rgba(0, 240, 255, 0.2);
+        }
+        .search-input::placeholder { color: #5a7094; }
+        .clear-btn { position: absolute; right: 10px; background: none; border: none; font-weight: 900; cursor: pointer; font-size: 1rem; color: var(--manga-pink); display: none; }
+        
+        .tool-btn { 
+            background: var(--manga-navy); border: 2px solid var(--manga-cyan); 
+            color: var(--manga-cyan); padding: 9px 14px; border-radius: 6px; 
+            font-size: 0.8rem; cursor: pointer; font-weight: 900; white-space: nowrap;
+            box-shadow: var(--pop-shadow); transition: all 0.15s;
+        }
+        .tool-btn:hover { background: var(--manga-cyan); color: #000; box-shadow: 0 0 10px var(--manga-cyan); }
+
+        .status-bar { padding: 0 16px 8px 16px; font-size: 0.75rem; font-weight: 900; color: #8a9bbd; display: flex; justify-content: space-between; }
+        .container { padding: 0 16px; }
+        
+        /* Card Style - 雜誌條圖風格 */
+        .symbol-card { 
+            background: linear-gradient(135deg, rgba(20, 30, 50, 0.9) 0%, rgba(10, 15, 28, 0.95) 100%); 
+            border: 2px solid #2a3a5c; 
+            border-left: 6px solid var(--manga-pink);
+            border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            color: inherit; box-shadow: 0 4px 10px rgba(0,0,0,0.5), var(--pop-shadow);
+            transition: all 0.2s ease;
+            cursor: pointer; position: relative; overflow: hidden;
+        }
+        .symbol-card::after {
+            content: '開鬥！'; position: absolute; right: -20px; top: -10px;
+            font-family: 'Shippori Mincho', serif; font-size: 2.5rem; font-weight: 900;
+            color: rgba(255, 255, 255, 0.03); pointer-events: none; transform: rotate(-15deg);
+        }
+        .symbol-card:hover { 
+            transform: translate(-2px, -2px) scale(1.01); 
+            border-color: var(--manga-cyan);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4), var(--pop-shadow-lg); 
+        }
+
+        .symbol-info .name-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+        .symbol-info .name { font-family: 'JetBrains Mono', monospace; font-size: 1.25rem; font-weight: 900; color: #fff; letter-spacing: 1px; }
+        
+        .symbol-metrics { text-align: right; }
+        .symbol-metrics .price { font-size: 1.2rem; font-weight: 900; font-family: 'JetBrains Mono', monospace; color: var(--manga-yellow); text-shadow: 0 0 5px rgba(255, 230, 0, 0.3); }
+        
+        .badge-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+        .badge { 
+            font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; font-weight: 900; 
+            border: 1px solid #000; box-shadow: 1px 1px 0px #000;
+        }
+        .badge-entry { 
+            background: linear-gradient(90deg, var(--manga-pink) 0%, #ff5500 100%); 
+            color: #fff; text-shadow: 1px 1px 0 #000; 
+            box-shadow: 0 0 8px var(--manga-pink-glow);
+        }
+
+        .change-badge { font-size: 0.75rem; font-weight: 900; padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; border: 1px solid #000; }
+        .change-up { color: #000; background-color: var(--manga-cyan); box-shadow: 0 0 6px var(--manga-cyan-glow); }
+        .change-down { color: #fff; background-color: #ff3366; }
+
+        .empty-tip { text-align: center; padding: 50px 0; font-weight: 900; font-size: 1rem; color: #5a7094; }
+
+        /* Modal - 戰鬥指令彈窗 */
+        .modal-backdrop {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(5, 8, 17, 0.85); backdrop-filter: blur(8px);
+            z-index: 999; display: none; justify-content: center; align-items: center;
+            padding: 16px;
+        }
+        .modal-card {
+            background: var(--manga-navy); 
+            border: 2px solid var(--manga-cyan);
+            border-radius: 12px; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto;
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.3), 8px 8px 0px #000;
+            padding: 18px; position: relative;
+            animation: modalPop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes modalPop { 
+            from { transform: scale(0.85); opacity: 0; } 
+            to { transform: scale(1); opacity: 1; } 
+        }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 2px solid var(--manga-pink); padding-bottom: 10px; margin-bottom: 12px;
+        }
+        .modal-title {
+            font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 900;
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: #fff;
+        }
+        .modal-close {
+            background: var(--manga-pink); color: #fff; border: 1.5px solid #fff;
+            border-radius: 6px; width: 30px; height: 30px; font-weight: 900;
+            cursor: pointer; box-shadow: 2px 2px 0 #000; display: flex; justify-content: center; align-items: center;
+            flex-shrink: 0;
+        }
+        .chart-info {
+            display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 900;
+            margin-bottom: 8px; font-family: 'JetBrains Mono', monospace; color: #a0aec0; flex-wrap: wrap; gap: 4px;
+        }
+        .chart-container {
+            width: 100%; height: 260px; background: #070a12;
+            border: 2px solid #2a3a5c; border-radius: 8px;
+            position: relative; overflow: hidden;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
+        }
+        canvas { width: 100%; height: 100%; display: block; }
+        .chart-legend {
+            display: flex; justify-content: center; gap: 12px; margin-top: 10px;
+            font-size: 0.7rem; font-weight: 900; flex-wrap: wrap; color: #a0aec0;
+        }
+        .legend-item { display: flex; align-items: center; gap: 4px; }
+        .legend-color { width: 10px; height: 10px; border-radius: 2px; }
+
+        .binance-link-btn {
+            display: block; width: 100%; text-align: center; margin-top: 14px;
+            background: linear-gradient(135deg, var(--manga-yellow) 0%, #ff9900 100%); 
+            border: 2px solid #fff;
+            padding: 11px; border-radius: 8px; font-weight: 900; color: #000;
+            text-decoration: none; box-shadow: 0 0 10px rgba(255, 230, 0, 0.3), var(--pop-shadow); 
+            transition: all 0.15s;
+            clip-path: polygon(3% 0, 100% 0, 97% 100%, 0% 100%);
+        }
+        .binance-link-btn:hover { transform: scale(1.02); box-shadow: 0 0 20px rgba(255, 230, 0, 0.6); }
+    </style>
+</head>
+<body>
+
+    <div class="app-header">
+        <div class="header-title">⚡ 幼女戰術・極速雷達</div>
+        <button id="scanBtn" class="scan-btn" onclick="startScan()">極速發動</button>
+    </div>
+
+    <div class="progress-container"><div id="progress" class="progress-fill"></div></div>
+
+    <div class="dashboard">
+        <div class="stat-card">
+            <div class="val" id="statTotal">0</div>
+            <div class="lbl">掃描目標總數</div>
+        </div>
+        <div class="stat-card entry">
+            <div class="val" id="statEntry">0</div>
+            <div class="lbl">符合戰術標的</div>
+        </div>
+    </div>
+
+    <div class="toolbar">
+        <div class="search-wrapper">
+            <input type="text" id="searchInput" class="search-input" placeholder="搜尋幣種 (例: BTC)..." oninput="onSearchInput()">
+            <button id="clearBtn" class="clear-btn" onclick="clearSearch()">✕</button>
+        </div>
+        <button class="tool-btn" id="sortBtn" onclick="toggleSort()">漲幅 ⬇</button>
+    </div>
+
+    <div class="status-bar">
+        <span id="statusText">戰場準備就緒，點擊「極速發動」！</span>
+        <span id="countText">顯示 0 筆</span>
+    </div>
+
+    <div class="container" id="symbolList"></div>
+
+    <!-- Modal -->
+    <div class="modal-backdrop" id="chartModal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span id="modalSymbol">BTCUSDT</span>
+                    <span class="badge badge-entry">🎯 觸布林上軌</span>
+                </div>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="chart-info">
+                <span>1H K線 (近20根)</span>
+                <span>當前價: <span id="modalPrice" style="color:#ffe600;">0.00</span> | 上軌: <span id="modalUpper" style="color:#ff007f;">0.00</span></span>
+            </div>
+            <div class="chart-container">
+                <canvas id="bollingerCanvas"></canvas>
+            </div>
+            <div class="chart-legend">
+                <div class="legend-item"><div class="legend-color" style="background:#00f0ff;"></div>陽線</div>
+                <div class="legend-item"><div class="legend-color" style="background:#ff3366;"></div>陰線</div>
+                <div class="legend-item"><div class="legend-color" style="background:#ffe600;"></div>5MA</div>
+                <div class="legend-item"><div class="legend-color" style="background:#ff007f;"></div>上軌(UP)</div>
+                <div class="legend-item"><div class="legend-color" style="background:#5a7094;"></div>中軌(MB)</div>
+            </div>
+            <a id="binanceLink" class="binance-link-btn" href="#" target="_blank">前往幣安永續合約交易 ↗</a>
+        </div>
+    </div>
+
+<script>
+    const API_ENDPOINTS = [
+        'https://fapi.binance.com',
+        'https://fapi1.binance.com',
+        'https://fapi2.binance.com',
+        'https://fapi3.binance.com'
+    ];
+    let bestEndpoint = API_ENDPOINTS[0];
+
+    let rawResults = [];
+    let ticker24hMap = {};
+    let sortDesc = true;
+    let isScanning = false;
+    let totalSymbolCount = 0;
+
+    async function selectFastestEndpoint() {
+        const tests = API_ENDPOINTS.map(async (ep) => {
+            const start = Date.now();
+            try {
+                const res = await fetch(`${ep}/fapi/v1/ping`, { cache: 'no-store' });
+                if (res.ok) return { ep, time: Date.now() - start };
+            } catch (e) {}
+            return { ep, time: 9999 };
+        });
+        const results = await Promise.all(tests);
+        results.sort((a, b) => a.time - b.time);
+        bestEndpoint = results[0].ep;
+    }
+
+    async function fetchWithFallback(path, timeoutMs = 1200) {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+            const response = await fetch(`${bestEndpoint}${path}`, { 
+                signal: controller.signal,
+                cache: 'force-cache',
+                keepalive: true,
+                headers: { 'Accept': 'application/json' }
+            });
+            clearTimeout(id);
+            if (response.ok) return await response.json();
+        } catch (e) {
+            clearTimeout(id);
+        }
+        return null;
+    }
+
+    function calculateSMA(array, period) {
+        const len = array.length;
+        if (len < period) return 0;
+        let sum = 0;
+        for (let i = len - period; i < len; i++) sum += array[i];
+        return sum / period;
+    }
+
+    function calculateBollingerBands(closes, period = 20, multiplier = 2) {
+        const len = closes.length;
+        if (len < period) return null;
+
+        const mb = calculateSMA(closes, period);
+        let varianceSum = 0;
+        for (let i = len - period; i < len; i++) {
+            varianceSum += Math.pow(closes[i] - mb, 2);
+        }
+        const stdDev = Math.sqrt(varianceSum / period);
+        return { upperBand: mb + (multiplier * stdDev), mb, lowerBand: mb - (multiplier * stdDev) };
+    }
+
+    async function fetch24hTickers() { 
+        const data = await fetchWithFallback('/fapi/v1/ticker/24hr', 2000); 
+        if (!data || !Array.isArray(data)) return {};
+        const map = {}; 
+        for (let i = 0; i < data.length; i++) {
+            map[data[i].symbol] = parseFloat(data[i].priceChangePercent);
+        }
+        return map; 
+    }
+
+    async function getUSDTFuturesSymbols() { 
+        const data = await fetchWithFallback('/fapi/v1/exchangeInfo', 2000); 
+        if (!data || !data.symbols) return [];
+        return data.symbols
+            .filter(s => s.quoteAsset === 'USDT' && s.contractType === 'PERPETUAL' && s.status === 'TRADING')
+            .map(s => s.symbol); 
+    }
+
+    async function processSymbol(symbol) {
+        try {
+            const res1h = await fetchWithFallback(`/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=65`, 1000);
+            if (!res1h || res1h.length < 60) return null;
+
+            const len = res1h.length;
+            const closes = new Float64Array(len);
+            const highs = new Float64Array(len);
+            const volumes = new Float64Array(len);
+
+            for (let i = 0; i < len; i++) {
+                highs[i] = parseFloat(res1h[i][2]);
+                closes[i] = parseFloat(res1h[i][4]);
+                volumes[i] = parseFloat(res1h[i][5]);
+            }
+
+            const currentPrice = closes[len - 1];
+            const currentHigh = highs[len - 1];
+
+            const ma30 = calculateSMA(closes, 30);
+            const ma45 = calculateSMA(closes, 45);
+            if (ma30 <= ma45) return null;
+
+            const ma60 = calculateSMA(closes, 60);
+            if (ma45 <= ma60) return null;
+
+            const volMa5 = calculateSMA(volumes, 5);
+            const volMa15 = calculateSMA(volumes, 15);
+
+            const boll = calculateBollingerBands(closes, 20, 2);
+            if (!boll) return null;
+
+            const isTouchingUpperBand = currentHigh >= boll.upperBand || currentPrice >= boll.upperBand;
+            const isEntrySignal = (volMa5 > volMa15) && isTouchingUpperBand;
+
+            if (isEntrySignal) {
+                return { 
+                    symbol, 
+                    price: currentPrice, 
+                    priceChange24h: ticker24hMap[symbol] || 0,
+                    klinesRaw: res1h.slice(-40)
+                };
+            }
+            return null;
+        } catch (e) { return null; }
+    }
+
+    async function runFastScanner(symbols, poolLimit = 25, onProgress) {
+        let completed = 0;
+        const results = [];
+        let index = 0;
+
+        async function worker() {
+            while (index < symbols.length) {
+                const currentIndex = index++;
+                const symbol = symbols[currentIndex];
+                const res = await processSymbol(symbol);
+                if (res) results.push(res);
+                completed++;
+                if (completed % 10 === 0 || completed === symbols.length) {
+                    onProgress(completed, symbols.length);
+                }
+            }
+        }
+
+        const workers = Array(poolLimit).fill(0).map(() => worker());
+        await Promise.all(workers);
+        return results;
+    }
+
+    function updateDashboard() {
+        document.getElementById('statTotal').innerText = totalSymbolCount;
+        document.getElementById('statEntry').innerText = rawResults.length;
+    }
+
+    async function startScan() {
+        if (isScanning) return;
+        isScanning = true;
+
+        const btn = document.getElementById('scanBtn');
+        const statusText = document.getElementById('statusText');
+        btn.disabled = true; btn.innerText = "開鬥中..."; 
+        statusText.innerText = "測速優化中...";
+        rawResults = [];
+
+        await selectFastestEndpoint();
+        statusText.innerText = "極速抓取全網戰術數據中...";
+
+        const [tickers, symbols] = await Promise.all([fetch24hTickers(), getUSDTFuturesSymbols()]);
+        ticker24hMap = tickers;
+        totalSymbolCount = symbols.length;
+        
+        if (symbols.length === 0) {
+            statusText.innerText = "連線失敗，請重試！";
+            btn.disabled = false; btn.innerText = "極速發動";
+            isScanning = false;
+            return;
+        }
+
+        let lastRenderTime = Date.now();
+
+        rawResults = await runFastScanner(symbols, 25, (completed, total) => {
+            const pct = Math.floor((completed / total) * 100);
+            document.getElementById('progress').style.width = `${pct}%`;
+            statusText.innerText = `超速掃描中 (${completed}/${total})...`;
+
+            const now = Date.now();
+            if (now - lastRenderTime > 200) {
+                lastRenderTime = now;
+                requestAnimationFrame(() => {
+                    updateDashboard();
+                    renderList();
+                });
+            }
+        });
+
+        updateDashboard();
+        statusText.innerText = "掃描完成！準備開戰！";
+        btn.disabled = false; btn.innerText = "極速發動";
+        isScanning = false;
+        renderList();
+    }
+
+    function toggleSort() { 
+        sortDesc = !sortDesc; 
+        document.getElementById('sortBtn').innerText = sortDesc ? "漲幅 ⬇" : "漲幅 ⬆";
+        renderList(); 
+    }
+
+    function onSearchInput() {
+        const input = document.getElementById('searchInput');
+        document.getElementById('clearBtn').style.display = input.value ? 'block' : 'none';
+        renderList();
+    }
+
+    function clearSearch() {
+        const input = document.getElementById('searchInput');
+        input.value = '';
+        document.getElementById('clearBtn').style.display = 'none';
+        renderList();
+    }
+
+    function getFilteredData() {
+        const query = document.getElementById('searchInput').value.toUpperCase().trim();
+        return rawResults.filter(item => item.symbol.includes(query));
+    }
+
+    function renderList() {
+        const container = document.getElementById('symbolList');
+        let data = getFilteredData();
+        data.sort((a, b) => sortDesc ? b.priceChange24h - a.priceChange24h : a.priceChange24h - b.priceChange24h);
+        
+        document.getElementById('countText').innerText = `顯示 ${data.length} / 符合 ${rawResults.length} 筆`;
+
+        if (data.length === 0) {
+            container.innerHTML = `<div class="empty-tip">${rawResults.length === 0 && !isScanning ? '點擊右上角「極速發動」開啟戰略掃描' : '尚無符合條件標的'}</div>`;
+            return;
+        }
+
         container.innerHTML = data.map((item) => `
             <div class="symbol-card" onclick="openChartModal('${item.symbol}')">
                 <div class="symbol-info">
@@ -16,3 +568,154 @@
                 </div>
             </div>
         `).join('');
+    }
+
+    function openChartModal(symbol) {
+        const item = rawResults.find(r => r.symbol === symbol);
+        if (!item || !item.klinesRaw) return;
+
+        document.getElementById('modalSymbol').innerText = symbol;
+        document.getElementById('modalPrice').innerText = item.price;
+        document.getElementById('binanceLink').href = `https://www.binance.com/zh-TC/futures/${symbol}`;
+
+        const modal = document.getElementById('chartModal');
+        modal.style.display = 'flex';
+
+        const raw = item.klinesRaw;
+        const total = raw.length;
+        const displayCount = 20;
+        
+        const klines = [];
+        const ma5s = [];
+        const uppers = [];
+        const mbs = [];
+        const lowers = [];
+
+        for (let i = total - displayCount; i < total; i++) {
+            const open = parseFloat(raw[i][1]);
+            const high = parseFloat(raw[i][2]);
+            const low = parseFloat(raw[i][3]);
+            const close = parseFloat(raw[i][4]);
+            klines.push({ open, high, low, close });
+
+            const ma5Slice = raw.slice(i - 4, i + 1).map(k => parseFloat(k[4]));
+            ma5s.push(calculateSMA(ma5Slice, 5));
+
+            const closesSlice = raw.slice(i - 19, i + 1).map(k => parseFloat(k[4]));
+            const boll = calculateBollingerBands(closesSlice, 20, 2);
+            uppers.push(boll.upperBand);
+            mbs.push(boll.mb);
+            lowers.push(boll.lowerBand);
+        }
+
+        document.getElementById('modalUpper').innerText = uppers[uppers.length - 1].toFixed(4);
+
+        requestAnimationFrame(() => drawCanvasChart(klines, ma5s, uppers, mbs, lowers));
+    }
+
+    function drawCanvasChart(klines, ma5s, uppers, mbs, lowers) {
+        const canvas = document.getElementById('bollingerCanvas');
+        const ctx = canvas.getContext('2d');
+        const rect = canvas.parentElement.getBoundingClientRect();
+        
+        canvas.width = rect.width * 2;
+        canvas.height = rect.height * 2;
+        ctx.scale(2, 2);
+
+        const width = rect.width;
+        const height = rect.height;
+        const padding = { top: 20, bottom: 20, left: 15, right: 15 };
+
+        ctx.clearRect(0, 0, width, height);
+
+        let maxP = -Infinity;
+        let minP = Infinity;
+        for (let i = 0; i < klines.length; i++) {
+            maxP = Math.max(maxP, klines[i].high, uppers[i], ma5s[i]);
+            minP = Math.min(minP, klines[i].low, lowers[i], ma5s[i]);
+        }
+        const pRange = (maxP - minP) || 1;
+
+        function getY(p) {
+            return height - padding.bottom - ((p - minP) / pRange) * (height - padding.top - padding.bottom);
+        }
+
+        const step = (width - padding.left - padding.right) / klines.length;
+        const barWidth = step * 0.55;
+
+        // 布林通道背景陰影發光效果
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(255, 0, 127, 0.12)';
+        for (let i = 0; i < klines.length; i++) {
+            const x = padding.left + i * step + step / 2;
+            const yUp = getY(uppers[i]);
+            if (i === 0) ctx.moveTo(x, yUp);
+            else ctx.lineTo(x, yUp);
+        }
+        for (let i = klines.length - 1; i >= 0; i--) {
+            const x = padding.left + i * step + step / 2;
+            const yLow = getY(lowers[i]);
+            ctx.lineTo(x, yLow);
+        }
+        ctx.closePath();
+        ctx.fill();
+
+        function drawLine(data, color, lineWidth = 2, isDashed = false) {
+            ctx.beginPath();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth;
+            if (isDashed) ctx.setLineDash([4, 4]); else ctx.setLineDash([]);
+            for (let i = 0; i < data.length; i++) {
+                const x = padding.left + i * step + step / 2;
+                const y = getY(data[i]);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        // 上軌（螢光粉）
+        drawLine(uppers, '#ff007f', 2);
+        // 中軌
+        drawLine(mbs, '#5a7094', 1.5);
+        // 下軌
+        drawLine(lowers, '#ff007f', 1.5, true);
+
+        // 5MA（螢光黃）
+        drawLine(ma5s, '#ffe600', 2.5);
+
+        // K線繪製（深冷背景下的高對比度電光）
+        for (let i = 0; i < klines.length; i++) {
+            const k = klines[i];
+            const x = padding.left + i * step + step / 2;
+            const isUp = k.close >= k.open;
+            const color = isUp ? '#00f0ff' : '#ff3366';
+
+            ctx.beginPath();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1.8;
+            ctx.moveTo(x, getY(k.high));
+            ctx.lineTo(x, getY(k.low));
+            ctx.stroke();
+
+            const yOpen = getY(k.open);
+            const yClose = getY(k.close);
+            const bodyY = Math.min(yOpen, yClose);
+            const bodyHeight = Math.max(Math.abs(yOpen - yClose), 2);
+
+            ctx.fillStyle = color;
+            ctx.fillRect(x - barWidth / 2, bodyY, barWidth, bodyHeight);
+        }
+    }
+
+    function closeModal() {
+        document.getElementById('chartModal').style.display = 'none';
+    }
+
+    function closeModalOnBackdrop(e) {
+        if (e.target.id === 'chartModal') closeModal();
+    }
+</script>
+</body>
+</html>
