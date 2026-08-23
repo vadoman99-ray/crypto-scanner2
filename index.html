@@ -3,199 +3,231 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MA多頭排列掃描 (1H) - Terminal Pro Ultra</title>
+    <title>1H 趨勢指標掃描儀 Pro Max</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
 
         :root {
-            --bg-color: #06080a;
-            --card-bg: rgba(18, 22, 28, 0.7);
-            --card-hover: rgba(26, 32, 41, 0.9);
-            --card-border: rgba(255, 255, 255, 0.08);
-            --text-main: #f0f4f8;
-            --text-sub: #828f9e;
+            --bg-dark: #07090e;
+            --card-bg: rgba(15, 20, 28, 0.65);
+            --card-hover: rgba(25, 33, 46, 0.85);
+            --card-border: rgba(255, 255, 255, 0.07);
+            --text-main: #f8fafc;
+            --text-sub: #64748b;
             --yellow: #f0b90b;
-            --yellow-glow: rgba(240, 185, 11, 0.35);
-            --green: #0ecb81;
-            --green-bg: rgba(14, 203, 129, 0.15);
-            --red: #f6465d;
-            --red-bg: rgba(246, 70, 93, 0.15);
+            --yellow-glow: rgba(240, 185, 11, 0.25);
+            --green: #10b981;
+            --green-bg: rgba(16, 185, 129, 0.12);
+            --purple: #a855f7;
+            --purple-bg: rgba(168, 85, 247, 0.12);
+            --red: #f43f5e;
+            --red-bg: rgba(244, 63, 94, 0.12);
         }
         
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body { 
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            background-color: var(--bg-color); 
+            font-family: 'Plus Jakarta Sans', -apple-system, sans-serif; 
+            background-color: var(--bg-dark); 
             color: var(--text-main); 
             margin: 0; 
             padding-bottom: 30px; 
-            -webkit-font-smoothing: antialiased;
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* 頂部導覽列模糊玻璃質感 */
+        /* 脈衝動態背景 */
+        .ambient-bg {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none; z-index: -1; overflow: hidden;
+        }
+        .glow-sphere {
+            position: absolute; width: 300px; height: 300px; border-radius: 50%;
+            filter: blur(90px); opacity: 0.15; animation: floatGlow 12s infinite alternate ease-in-out;
+        }
+        .glow-1 { top: -50px; left: -50px; background: var(--yellow); }
+        .glow-2 { bottom: -50px; right: -50px; background: var(--purple); animation-delay: -6s; }
+
+        @keyframes floatGlow {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(60px, 40px) scale(1.2); }
+        }
+
+        /* App Header */
         .app-header { 
             position: sticky; top: 0; z-index: 100; 
-            background-color: rgba(10, 12, 16, 0.8); 
-            backdrop-filter: blur(20px); 
-            -webkit-backdrop-filter: blur(20px);
-            padding: 12px 16px; 
+            background: rgba(7, 9, 14, 0.75); 
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            padding: 14px 18px; 
             border-bottom: 1px solid var(--card-border); 
             display: flex; justify-content: space-between; align-items: center; 
         }
         .header-title { 
-            font-weight: 800; font-size: 1.05rem; letter-spacing: -0.3px;
+            font-weight: 800; font-size: 1.1rem; letter-spacing: -0.4px;
             display: flex; align-items: center; gap: 8px; 
-            background: linear-gradient(135deg, #ffffff 30%, var(--yellow) 100%);
+            background: linear-gradient(135deg, #ffffff 40%, var(--yellow) 100%);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
         .scan-btn { 
-            background: linear-gradient(135deg, var(--yellow), #f39c12); 
-            color: #000; border: none; 
-            padding: 8px 18px; border-radius: 20px; font-weight: 700; 
+            position: relative; overflow: hidden;
+            background: linear-gradient(135deg, var(--yellow), #e0a800); 
+            color: #0d0f14; border: none; 
+            padding: 9px 20px; border-radius: 20px; font-weight: 800; 
             font-size: 0.85rem; cursor: pointer; 
-            box-shadow: 0 4px 15px var(--yellow-glow);
-            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); 
+            box-shadow: 0 4px 18px var(--yellow-glow);
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1); 
         }
-        .scan-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px var(--yellow-glow); }
-        .scan-btn:active { transform: scale(0.92); }
-        .scan-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+        .scan-btn::after {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(60deg, transparent, rgba(255,255,255,0.4), transparent);
+            transform: rotate(30deg); animation: buttonShimmer 3s infinite;
+        }
+        @keyframes buttonShimmer { 0% { transform: translateX(-100%) rotate(30deg); } 100% { transform: translateX(100%) rotate(30deg); } }
+        .scan-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 22px var(--yellow-glow); }
+        .scan-btn:active { transform: scale(0.95); }
+        .scan-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
 
-        /* 進度條動態粒子光芒 */
-        .progress-bar { height: 3px; background: rgba(255,255,255,0.03); width: 100%; overflow: hidden; position: relative; }
+        /* 進度條 */
+        .progress-container { height: 3px; background: rgba(255,255,255,0.03); width: 100%; position: relative; }
         .progress-fill { 
             height: 100%; width: 0%; 
             background: linear-gradient(90deg, var(--yellow), var(--green)); 
-            transition: width 0.2s cubic-bezier(0.1, 0.9, 0.2, 1); 
-            box-shadow: 0 0 10px var(--green);
+            transition: width 0.25s cubic-bezier(0.1, 0.9, 0.2, 1); 
+            box-shadow: 0 0 12px var(--green);
         }
-        
-        /* Dashboard 數據統計卡片 */
-        .dashboard {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
-            padding: 14px 16px 4px 16px;
+
+        /* 策略選擇 Tab */
+        .strategy-selector { display: flex; gap: 8px; padding: 14px 16px 0 16px; }
+        .tab-btn {
+            flex: 1; padding: 9px; border-radius: 12px; font-size: 0.75rem; font-weight: 700;
+            background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-sub);
+            cursor: pointer; text-align: center; transition: all 0.25s ease;
+            backdrop-filter: blur(10px);
         }
+        .tab-btn.active {
+            background: rgba(240, 185, 11, 0.12); border-color: var(--yellow); color: var(--yellow);
+            box-shadow: 0 0 14px rgba(240, 185, 11, 0.15);
+        }
+
+        /* 數據卡片 Dashboard */
+        .dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 12px 16px 4px 16px; }
         .stat-card {
             background: var(--card-bg); border: 1px solid var(--card-border);
-            border-radius: 12px; padding: 12px; text-align: center;
-            backdrop-filter: blur(10px);
-            transition: transform 0.3s ease, border-color 0.3s ease;
+            border-radius: 14px; padding: 12px; text-align: center;
+            backdrop-filter: blur(12px); transition: all 0.3s ease;
         }
-        .stat-card:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-1px); }
         .stat-card .val { 
-            font-family: 'JetBrains Mono', monospace; font-size: 1.25rem; font-weight: 700; color: #fff;
-            transition: transform 0.2s ease;
+            font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 700; color: #fff;
         }
-        .stat-card .lbl { font-size: 0.7rem; color: var(--text-sub); margin-top: 2px; font-weight: 500; }
-        .stat-card.perfect .val { color: var(--green); text-shadow: 0 0 10px rgba(14, 203, 129, 0.3); }
+        .stat-card .lbl { font-size: 0.7rem; color: var(--text-sub); margin-top: 3px; font-weight: 600; }
+        .stat-card.perfect .val { color: var(--green); text-shadow: 0 0 12px rgba(16, 185, 129, 0.3); }
 
         /* 工具列 */
         .toolbar { padding: 10px 16px 12px 16px; display: flex; gap: 8px; align-items: center; }
         .search-wrapper { position: relative; flex: 1; display: flex; align-items: center; }
         .search-input { 
             width: 100%; background: var(--card-bg); border: 1px solid var(--card-border); 
-            color: var(--text-main); padding: 8px 30px 8px 12px; border-radius: 10px; 
-            font-size: 0.85rem; transition: all 0.25s ease;
-            backdrop-filter: blur(10px);
+            color: var(--text-main); padding: 9px 30px 9px 12px; border-radius: 12px; 
+            font-size: 0.85rem; transition: all 0.25s ease; backdrop-filter: blur(10px);
         }
         .search-input:focus { border-color: var(--yellow); box-shadow: 0 0 0 3px var(--yellow-glow); }
         .clear-btn { position: absolute; right: 10px; background: none; border: none; color: var(--text-sub); cursor: pointer; font-size: 0.9rem; display: none; }
         
         .tool-btn { 
             background: var(--card-bg); border: 1px solid var(--card-border); 
-            color: var(--text-sub); padding: 8px 12px; border-radius: 10px; 
-            font-size: 0.75rem; cursor: pointer; font-weight: 600; white-space: nowrap; 
-            transition: all 0.2s ease;
-            backdrop-filter: blur(10px);
+            color: var(--text-sub); padding: 9px 14px; border-radius: 12px; 
+            font-size: 0.75rem; cursor: pointer; font-weight: 700; white-space: nowrap; 
+            transition: all 0.2s ease; backdrop-filter: blur(10px);
         }
         .tool-btn:hover { color: var(--text-main); border-color: rgba(255,255,255,0.2); }
-        .tool-btn:active { transform: scale(0.95); }
 
         .status-bar { padding: 0 16px 8px 16px; font-size: 0.75rem; color: var(--text-sub); display: flex; justify-content: space-between; align-items: center; }
         .container { padding: 0 16px; }
         
-        /* 幣種卡片動畫 */
+        /* 幣種資訊卡片 */
         .symbol-card { 
             background: var(--card-bg); border: 1px solid var(--card-border); 
-            border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; 
+            border-radius: 16px; padding: 14px 16px; margin-bottom: 10px; 
             display: flex; justify-content: space-between; align-items: center; 
-            text-decoration: none; color: inherit; 
-            backdrop-filter: blur(12px);
-            transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
-            animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            opacity: 0;
-            transform: translateY(12px);
+            text-decoration: none; color: inherit; backdrop-filter: blur(12px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            animation: cardSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0; transform: translateY(16px);
         }
         .symbol-card:hover { 
-            transform: translateY(-2px) scale(1.005); 
+            transform: translateY(-3px) scale(1.008); 
             border-color: rgba(240, 185, 11, 0.4); 
             background: var(--card-hover);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
-        .symbol-card:active { transform: scale(0.98); }
 
-        @keyframes slideUp {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        @keyframes cardSlideUp {
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .symbol-info .name-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-        .symbol-info .name { font-size: 1.1rem; font-weight: 800; letter-spacing: 0.3px; }
+        .symbol-info .name { font-size: 1.15rem; font-weight: 800; letter-spacing: 0.2px; }
         
         .symbol-metrics { text-align: right; }
-        .symbol-metrics .price { font-size: 1.05rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+        .symbol-metrics .price { font-size: 1.1rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
         
-        /* 呼吸燈動畫 Badge */
-        .badge-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
-        .badge { font-size: 0.65rem; padding: 3px 8px; border-radius: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; }
-        .badge-ma { 
-            background-color: var(--green-bg); 
-            color: var(--green); 
-            border: 1px solid rgba(14, 203, 129, 0.3);
-        }
+        .badge-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+        .badge { font-size: 0.68rem; padding: 4px 9px; border-radius: 8px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
+        .badge-ma { background-color: var(--green-bg); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.25); }
+        .badge-boll { background-color: var(--purple-bg); color: var(--purple); border: 1px solid rgba(168, 85, 247, 0.25); }
+        
         .pulse-dot {
-            width: 6px; height: 6px; border-radius: 50%; background-color: var(--green);
-            box-shadow: 0 0 6px var(--green);
-            animation: pulsate 1.5s infinite ease-in-out;
+            width: 6px; height: 6px; border-radius: 50%; background-color: currentColor;
+            box-shadow: 0 0 8px currentColor; animation: pulseGlow 1.6s infinite ease-in-out;
         }
-
-        @keyframes pulsate {
-            0% { transform: scale(0.8); opacity: 0.5; }
-            50% { transform: scale(1.3); opacity: 1; }
-            100% { transform: scale(0.8); opacity: 0.5; }
-        }
+        @keyframes pulseGlow { 0%, 100% { opacity: 0.4; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.3); } }
 
         .change-badge { font-size: 0.75rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; }
         .change-up { color: var(--green); background-color: var(--green-bg); }
         .change-down { color: var(--red); background-color: var(--red-bg); }
+
+        /* 骨架屏 Skeleton */
+        .skeleton-card {
+            height: 72px; border-radius: 16px; margin-bottom: 10px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 37%, rgba(255,255,255,0.03) 63%);
+            background-size: 400% 100%; animation: skeletonLoading 1.4s ease infinite;
+        }
+        @keyframes skeletonLoading { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
         
         .empty-tip { text-align: center; padding: 60px 0; color: var(--text-sub); font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
+    <div class="ambient-bg">
+        <div class="glow-sphere glow-1"></div>
+        <div class="glow-sphere glow-2"></div>
+    </div>
+
     <div class="app-header">
-        <div class="header-title">📈 1H MA 多頭排列掃描</div>
+        <div class="header-title">⚡ 1H 趨勢指標掃描儀</div>
         <button id="scanBtn" class="scan-btn" onclick="startScan()">極速掃描</button>
     </div>
 
-    <div class="progress-bar"><div id="progress" class="progress-fill"></div></div>
+    <div class="progress-container"><div id="progress" class="progress-fill"></div></div>
 
-    <!-- 數據概覽 Dashboard -->
-    <div class="dashboard" id="dashboard">
+    <div class="strategy-selector">
+        <div id="tabAll" class="tab-btn active" onclick="switchTab('ALL')">全部顯示</div>
+        <div id="tabMA" class="tab-btn" onclick="switchTab('MA')">1H MA 多頭</div>
+        <div id="tabBoll" class="tab-btn" onclick="switchTab('BOLL')">1H BOLL 多頭</div>
+    </div>
+
+    <div class="dashboard">
         <div class="stat-card">
             <div class="val" id="statTotal">0</div>
             <div class="lbl">掃描總數</div>
         </div>
         <div class="stat-card perfect">
-            <div class="val" id="statMaBull">0</div>
-            <div class="lbl">1H MA 多頭排列</div>
+            <div class="val" id="statMatched">0</div>
+            <div class="lbl">符合策略筆數</div>
         </div>
     </div>
 
-    <div class="toolbar" id="toolbar">
+    <div class="toolbar">
         <div class="search-wrapper">
             <input type="text" id="searchInput" class="search-input" placeholder="搜尋幣種 (例: BTC)..." oninput="onSearchInput()">
             <button id="clearBtn" class="clear-btn" onclick="clearSearch()">✕</button>
@@ -203,29 +235,46 @@
         <button class="tool-btn" id="sortBtn" onclick="toggleSort()">漲幅 ⬇</button>
     </div>
 
-    <div class="status-bar" id="statusBar">
-        <span id="statusText">點擊「極速掃描」啟動高效算力引擎</span>
-        <span id="countText">符合 0 筆</span>
+    <div class="status-bar">
+        <span id="statusText">準備就緒，點擊「極速掃描」</span>
+        <span id="countText">顯示 0 筆</span>
     </div>
 
     <div class="container" id="symbolList"></div>
 
 <script>
+    const API_ENDPOINTS = [
+        'https://fapi.binance.com',
+        'https://fapi1.binance.com',
+        'https://fapi2.binance.com'
+    ];
+    let currentEndpointIdx = 0;
+
     let rawResults = [];
     let ticker24hMap = {};
     let sortDesc = true;
     let isScanning = false;
     let totalSymbolCount = 0;
+    let currentFilter = 'ALL';
 
-    // 優化超時控制至 1800ms
-    async function fetchWithTimeout(url, timeoutMs = 1800) {
-        const controller = new AbortController();
-        const id = setTimeout(() => controller.abort(), timeoutMs);
-        try {
-            const response = await fetch(url, { signal: controller.signal });
-            clearTimeout(id);
-            if (response.ok) return await response.json();
-        } catch (e) { clearTimeout(id); }
+    function getApiUrl(path) {
+        return `${API_ENDPOINTS[currentEndpointIdx]}${path}`;
+    }
+
+    async function fetchWithFallback(path, timeoutMs = 2000) {
+        for (let i = 0; i < API_ENDPOINTS.length; i++) {
+            const endpoint = API_ENDPOINTS[(currentEndpointIdx + i) % API_ENDPOINTS.length];
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), timeoutMs);
+            try {
+                const response = await fetch(`${endpoint}${path}`, { signal: controller.signal });
+                clearTimeout(id);
+                if (response.ok) {
+                    currentEndpointIdx = (currentEndpointIdx + i) % API_ENDPOINTS.length;
+                    return await response.json();
+                }
+            } catch (e) { clearTimeout(id); }
+        }
         return null;
     }
 
@@ -233,14 +282,24 @@
         const len = closes.length;
         if (len < period) return 0;
         let sum = 0;
-        for (let i = len - period; i < len; i++) {
-            sum += closes[i];
-        }
+        for (let i = len - period; i < len; i++) sum += closes[i];
         return sum / period;
     }
 
+    function calculateBoll(closes, period = 20, multiplier = 2) {
+        const len = closes.length;
+        if (len < period) return null;
+        const mb = calculateSMA(closes, period);
+        let varianceSum = 0;
+        for (let i = len - period; i < len; i++) {
+            varianceSum += Math.pow(closes[i] - mb, 2);
+        }
+        const stdDev = Math.sqrt(varianceSum / period);
+        return { up: mb + (multiplier * stdDev), mb: mb, dn: mb - (multiplier * stdDev) };
+    }
+
     async function fetch24hTickers() { 
-        const data = await fetchWithTimeout('https://fapi.binance.com/fapi/v1/ticker/24hr', 2500); 
+        const data = await fetchWithFallback('/fapi/v1/ticker/24hr', 2500); 
         if (!data || !Array.isArray(data)) return {};
         const map = {}; 
         for (let i = 0; i < data.length; i++) {
@@ -250,7 +309,7 @@
     }
 
     async function getUSDTFuturesSymbols() { 
-        const data = await fetchWithTimeout('https://fapi.binance.com/fapi/v1/exchangeInfo', 2500); 
+        const data = await fetchWithFallback('/fapi/v1/exchangeInfo', 2500); 
         if (!data || !data.symbols) return [];
         return data.symbols
             .filter(s => s.quoteAsset === 'USDT' && s.contractType === 'PERPETUAL' && s.status === 'TRADING')
@@ -259,42 +318,40 @@
 
     async function processSymbol(symbol) {
         try {
-            const res1h = await fetchWithTimeout(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=70`);
+            const res1h = await fetchWithFallback(`/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=70`, 1800);
             if (!res1h || res1h.length < 60) return null;
 
             const len = res1h.length;
             const closes = new Float64Array(len);
             for (let i = 0; i < len; i++) closes[i] = parseFloat(res1h[i][4]);
 
+            const currentPrice = closes[len - 1];
+
             const ma30 = calculateSMA(closes, 30);
             const ma45 = calculateSMA(closes, 45);
             const ma60 = calculateSMA(closes, 60);
+            const isMaBull = (ma30 > ma45 && ma45 > ma60);
 
-            if (ma30 > ma45 && ma45 > ma60) {
-                return { 
-                    symbol, 
-                    price: closes[len - 1], 
-                    priceChange24h: ticker24hMap[symbol] || 0 
-                };
+            const boll = calculateBoll(closes, 20, 2);
+            const isBollBull = boll ? (currentPrice >= boll.mb) : false;
+
+            if (isMaBull || isBollBull) {
+                return { symbol, price: currentPrice, priceChange24h: ticker24hMap[symbol] || 0, isMaBull, isBollBull };
             }
             return null;
         } catch (e) { return null; }
     }
 
-    // 將併發數調升至 30 提升總掃描速度
-    async function runFastScanner(symbols, chunkSize = 30, onProgress) {
+    async function runFastScanner(symbols, chunkSize = 35, onProgress) {
         let completed = 0;
         const results = [];
-
         for (let i = 0; i < symbols.length; i += chunkSize) {
             const chunk = symbols.slice(i, i + chunkSize);
             const chunkPromises = chunk.map(s => processSymbol(s));
             const settled = await Promise.allSettled(chunkPromises);
             
             for (let res of settled) {
-                if (res.status === 'fulfilled' && res.value) {
-                    results.push(res.value);
-                }
+                if (res.status === 'fulfilled' && res.value) results.push(res.value);
             }
             completed += chunk.length;
             onProgress(completed, symbols.length);
@@ -302,9 +359,14 @@
         return results;
     }
 
+    function renderSkeleton() {
+        const container = document.getElementById('symbolList');
+        container.innerHTML = Array(6).fill(0).map(() => `<div class="skeleton-card"></div>`).join('');
+    }
+
     function updateDashboard() {
         document.getElementById('statTotal').innerText = totalSymbolCount;
-        document.getElementById('statMaBull').innerText = rawResults.length;
+        document.getElementById('statMatched').innerText = rawResults.length;
     }
 
     async function startScan() {
@@ -313,17 +375,17 @@
 
         const btn = document.getElementById('scanBtn');
         const statusText = document.getElementById('statusText');
-        btn.disabled = true; btn.innerText = "極速計算中"; 
-        statusText.innerText = "建立全量行情通道...";
+        btn.disabled = true; btn.innerText = "掃描中..."; 
+        statusText.innerText = "連接加密市場數據網絡...";
         rawResults = [];
-        
-        // 並行化獲取基礎行情
+        renderSkeleton();
+
         const [tickers, symbols] = await Promise.all([fetch24hTickers(), getUSDTFuturesSymbols()]);
         ticker24hMap = tickers;
         totalSymbolCount = symbols.length;
         
         if (symbols.length === 0) {
-            statusText.innerText = "網路異常，未能載入合約資料";
+            statusText.innerText = "網路連線異常";
             btn.disabled = false; btn.innerText = "極速掃描";
             isScanning = false;
             return;
@@ -331,13 +393,13 @@
 
         let lastRenderTime = 0;
 
-        rawResults = await runFastScanner(symbols, 30, (completed, total) => {
+        rawResults = await runFastScanner(symbols, 35, (completed, total) => {
             const pct = Math.floor((completed / total) * 100);
             document.getElementById('progress').style.width = `${pct}%`;
-            statusText.innerText = `多核心運算中 (${completed}/${total})...`;
+            statusText.innerText = `計算指標中 (${completed}/${total})...`;
 
             const now = Date.now();
-            if (now - lastRenderTime > 200) {
+            if (now - lastRenderTime > 180) {
                 lastRenderTime = now;
                 updateDashboard();
                 renderList();
@@ -345,9 +407,18 @@
         });
 
         updateDashboard();
-        statusText.innerText = "掃描完畢，即時數據已同步";
+        statusText.innerText = "掃描完成";
         btn.disabled = false; btn.innerText = "極速掃描";
         isScanning = false;
+        renderList();
+    }
+
+    function switchTab(type) {
+        currentFilter = type;
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        if (type === 'ALL') document.getElementById('tabAll').classList.add('active');
+        if (type === 'MA') document.getElementById('tabMA').classList.add('active');
+        if (type === 'BOLL') document.getElementById('tabBoll').classList.add('active');
         renderList();
     }
 
@@ -372,7 +443,12 @@
 
     function getFilteredData() {
         const query = document.getElementById('searchInput').value.toUpperCase().trim();
-        return rawResults.filter(item => item.symbol.includes(query));
+        return rawResults.filter(item => {
+            const matchesQuery = item.symbol.includes(query);
+            if (currentFilter === 'MA') return matchesQuery && item.isMaBull;
+            if (currentFilter === 'BOLL') return matchesQuery && item.isBollBull;
+            return matchesQuery;
+        });
     }
 
     function renderList() {
@@ -383,13 +459,12 @@
         document.getElementById('countText').innerText = `顯示 ${data.length} / 符合 ${rawResults.length} 筆`;
 
         if (data.length === 0) {
-            container.innerHTML = `<div class="empty-tip">${rawResults.length === 0 ? '點擊右上角「極速掃描」開啟運算' : '無符合條件的標的'}</div>`;
+            container.innerHTML = `<div class="empty-tip">${rawResults.length === 0 && !isScanning ? '點擊右上角「極速掃描」開始算力運算' : '尚無符合條件的標的'}</div>`;
             return;
         }
 
         container.innerHTML = data.map((item, index) => {
-            // 加入 stagger 動畫延遲，限制前 15 筆動態入場避免卡頓
-            const animDelay = index < 15 ? (index * 0.03).toFixed(2) : 0;
+            const animDelay = index < 15 ? (index * 0.025).toFixed(3) : 0;
             return `
             <a class="symbol-card" href="https://www.binance.com/zh-TC/futures/${item.symbol}" target="_blank" style="animation-delay: ${animDelay}s;">
                 <div class="symbol-info">
@@ -400,10 +475,16 @@
                         </span>
                     </div>
                     <div class="badge-list">
-                        <span class="badge badge-ma">
-                            <span class="pulse-dot"></span>
-                            1H 多頭排列 (MA30 > MA45 > MA60)
-                        </span>
+                        ${item.isMaBull ? `
+                            <span class="badge badge-ma">
+                                <span class="pulse-dot"></span>
+                                1H MA 多頭
+                            </span>` : ''}
+                        ${item.isBollBull ? `
+                            <span class="badge badge-boll">
+                                <span class="pulse-dot"></span>
+                                1H BOLL 多頭
+                            </span>` : ''}
                     </div>
                 </div>
                 <div class="symbol-metrics">
