@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>⚡ 多週期策略 (帶移動止損) + 幣安自動交易網頁版</title>
+    <title>⚡ 多週期策略 (帶移動止損) + 防限流版</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@800&family=Shippori+Mincho:wght@800&display=swap');
 
@@ -57,7 +57,7 @@
             background: #070a12; border: 1px solid var(--manga-cyan); color: #fff;
             padding: 8px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;
         }
-        .param-row { display: flex; gap: 8px; font-size: 0.8rem; margin-bottom: 8px; }
+        .param-row { display: flex; gap: 8px; font-size: 0.8rem; margin-bottom: 8px; flex-wrap: wrap; }
         .param-row input { background: #070a12; border: 1px solid #2a3a5c; color: var(--manga-yellow); padding: 4px 6px; border-radius: 4px; width: 60px; text-align: center; font-family: 'JetBrains Mono'; }
 
         .toggle-container { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 900; }
@@ -88,7 +88,6 @@
         .badge { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 900; background: var(--manga-pink); color: #fff; }
         .badge.traded { background: var(--manga-green); color: #000; }
 
-        /* Modal */
         .modal-backdrop {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: rgba(5, 8, 17, 0.85); backdrop-filter: blur(8px);
@@ -108,17 +107,15 @@
             border: none; border-radius: 6px; font-weight: 900; font-size: 1rem; cursor: pointer; box-shadow: var(--pop-shadow);
         }
     </style>
-    <!-- CryptoJS 用於簽署 Binance API HMAC SHA256 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 </head>
 <body>
 
     <div class="app-header">
-        <div class="header-title">⚡ 多週期策略 (移動止損版)</div>
+        <div class="header-title">⚡ 多週期策略 (防限流優化版)</div>
         <button id="scanBtn" class="scan-btn" onclick="startScan()">發動監控</button>
     </div>
 
-    <!-- API 設定與風控參數區塊 -->
     <div class="api-panel">
         <h3>🔑 幣安 API 實盤自動下單設定 <span>(U本位合約)</span></h3>
         <div class="input-group">
@@ -155,7 +152,6 @@
 
     <div class="container" id="symbolList"></div>
 
-    <!-- Modal 圖表與手動下單 -->
     <div class="modal-backdrop" id="chartModal" onclick="if(event.target.id==='chartModal') closeModal()">
         <div class="modal-card">
             <div class="modal-header">
@@ -179,6 +175,9 @@
     const API_BASE = 'https://fapi.binance.com';
     let rawResults = [];
     let currentSelectedItem = null;
+
+    // 延遲函式：防禦 IP 被封鎖
+    const delay = ms => new Promise(res => setTimeout(res, ms));
 
     // --- 1. 技術指標計算 ---
     async function fetchKlines(symbol, interval, limit = 30) {
@@ -216,35 +215,34 @@
         return trSum / period;
     }
 
-    // --- 2. 多週期與移動止損邏輯掃描 ---
+    // --- 2. 階段過濾策略邏輯 (降低 60%+ API 請求) ---
     async function evaluateSymbol(symbol) {
-        const [k5m, k15m, k1h] = await Promise.all([
-            fetchKlines(symbol, '5m', 25),
-            fetchKlines(symbol, '15m', 25),
-            fetchKlines(symbol, '1h', 20)
-        ]);
+        // 第一階段：先抓 1h K 線評估趨勢，不符合就直接跳過，減少不必要的 API 請求
+        const k1h = await fetchKlines(symbol, '1h', 20);
+        if (!k1h) return null;
 
-        if (!k5m || !k15m || !k1h) return null;
-
-        // 5m 觸上軌
-        const c5m = k5m.map(k => parseFloat(k[4]));
-        const h5m = parseFloat(k5m[k5m.length - 1][2]);
-        const upper5m = calcBollingerUpper(c5m);
-        const cond5m = h5m >= upper5m;
-
-        // 15m 觸上軌
-        const c15m = k15m.map(k => parseFloat(k[4]));
-        const h15m = parseFloat(k15m[k15m.length - 1][2]);
-        const upper15m = calcBollingerUpper(c15m);
-        const cond15m = h15m >= upper15m;
-
-        // 1h 收盤 > 5MA
         const c1h = k1h.map(k => parseFloat(k[4]));
         const close1h = c1h[c1h.length - 1];
         const ma5_1h = calcSMA(c1h, 5);
-        const cond1h = close1h > ma5_1h;
+        if (close1h <= ma5_1h) return null; // 1h 不符合，直接放棄
 
-        if (cond5m && cond15m && cond1h) {
+        // 第二階段：1h 通過後，才發送短週期 5m 與 15m 的請求
+        const [k5m, k15m] = await Promise.all([
+            fetchKlines(symbol, '5m', 25),
+            fetchKlines(symbol, '15m', 25)
+        ]);
+
+        if (!k5m || !k15m) return null;
+
+        const c5m = k5m.map(k => parseFloat(k[4]));
+        const h5m = parseFloat(k5m[k5m.length - 1][2]);
+        const upper5m = calcBollingerUpper(c5m);
+
+        const c15m = k15m.map(k => parseFloat(k[4]));
+        const h15m = parseFloat(k15m[k15m.length - 1][2]);
+        const upper15m = calcBollingerUpper(c15m);
+
+        if (h5m >= upper5m && h15m >= upper15m) {
             const price = c5m[c5m.length - 1];
             const atr = calcATR(k5m, 14);
             
@@ -256,7 +254,6 @@
             const trailTrigger = price + (atr * triggerMult);
             const takeProfit = price + (stopDist * 2.5);
 
-            // 類比移動止損：計算近期 K 線中移動止損抬升後的動態止損點
             let dynamicStop = initialStop;
             let highestP = price;
 
@@ -284,7 +281,7 @@
         return null;
     }
 
-    // --- 3. Binance API 下單與移動止損掛單 ---
+    // --- 3. 下單邏輯 ---
     function sendSignedRequest(endpoint, method, params = {}) {
         const key = document.getElementById('apiKey').value;
         const secret = document.getElementById('apiSecret').value;
@@ -310,7 +307,6 @@
         const offsetMult = parseFloat(document.getElementById('trailOffset').value) || 1.0;
 
         try {
-            // 1. 市價買進 (LONG)
             const buyOrder = await sendSignedRequest('/fapi/v1/order', 'POST', {
                 symbol: item.symbol,
                 side: 'BUY',
@@ -323,17 +319,15 @@
                 return false;
             }
 
-            // 2. 掛設移動止損單 (TRAILING_STOP_MARKET)
             const callbackRate = ((item.atr * offsetMult) / item.price * 100).toFixed(1);
             await sendSignedRequest('/fapi/v1/order', 'POST', {
                 symbol: item.symbol,
                 side: 'SELL',
                 type: 'TRAILING_STOP_MARKET',
-                callbackRate: Math.max(0.1, Math.min(5.0, callbackRate)), // 幣安限制比例在 0.1% ~ 5%
+                callbackRate: Math.max(0.1, Math.min(5.0, callbackRate)),
                 closePosition: 'true'
             });
 
-            // 3. 掛設盈虧比止盈單 (TAKE_PROFIT_MARKET)
             await sendSignedRequest('/fapi/v1/order', 'POST', {
                 symbol: item.symbol,
                 side: 'SELL',
@@ -352,41 +346,49 @@
         }
     }
 
-    // --- 4. 掃描與 UI 控制器 ---
+    // --- 4. 防限流併發控制 (Pool Control & Delay) ---
     async function startScan() {
         const btn = document.getElementById('scanBtn');
         btn.disabled = true; btn.innerText = "掃描中...";
         rawResults = [];
 
-        const exchangeInfo = await fetch(`${API_BASE}/fapi/v1/exchangeInfo`).then(r => r.json());
-        const symbols = exchangeInfo.symbols
-            .filter(s => s.quoteAsset === 'USDT' && s.contractType === 'PERPETUAL' && s.status === 'TRADING')
-            .map(s => s.symbol);
+        try {
+            const exchangeInfo = await fetch(`${API_BASE}/fapi/v1/exchangeInfo`).then(r => r.json());
+            const symbols = exchangeInfo.symbols
+                .filter(s => s.quoteAsset === 'USDT' && s.contractType === 'PERPETUAL' && s.status === 'TRADING')
+                .map(s => s.symbol);
 
-        document.getElementById('statTotal').innerText = symbols.length;
+            document.getElementById('statTotal').innerText = symbols.length;
 
-        let completed = 0;
-        const poolLimit = 25;
-        let index = 0;
+            let completed = 0;
+            const poolLimit = 6; // 降低併發數到 6，避免觸發 429 Rate Limit
+            let index = 0;
 
-        async function worker() {
-            while (index < symbols.length) {
-                const sym = symbols[index++];
-                const res = await evaluateSymbol(sym);
-                if (res) {
-                    rawResults.push(res);
-                    if (document.getElementById('autoTradeToggle').checked && !res.traded) {
-                        await placeBinanceOrder(res);
+            async function worker() {
+                while (index < symbols.length) {
+                    const sym = symbols[index++];
+                    const res = await evaluateSymbol(sym);
+                    
+                    if (res) {
+                        rawResults.push(res);
+                        if (document.getElementById('autoTradeToggle').checked && !res.traded) {
+                            await placeBinanceOrder(res);
+                        }
                     }
-                }
-                completed++;
-                document.getElementById('progress').style.width = `${(completed / symbols.length) * 100}%`;
-                document.getElementById('statEntry').innerText = rawResults.length;
-                if (completed % 10 === 0) renderList();
-            }
-        }
+                    completed++;
+                    document.getElementById('progress').style.width = `${(completed / symbols.length) * 100}%`;
+                    document.getElementById('statEntry').innerText = rawResults.length;
+                    if (completed % 5 === 0) renderList();
 
-        await Promise.all(Array(poolLimit).fill(0).map(() => worker()));
+                    // 每次請求完成後，強制交出線程並微幅延遲 30ms，保持 UI 流暢與防限流
+                    await delay(30);
+                }
+            }
+
+            await Promise.all(Array(poolLimit).fill(0).map(() => worker()));
+        } catch (e) {
+            alert("掃描過程發生錯誤，請檢查網路連線或 API 狀態。");
+        }
 
         btn.disabled = false; btn.innerText = "發動監控";
         renderList();
@@ -459,20 +461,16 @@
 
         ctx.clearRect(0, 0, width, height);
 
-        // 1. 動態/抬升後的止損線 (紅色虛線)
         ctx.strokeStyle = '#ff3366'; ctx.setLineDash([4, 4]); ctx.lineWidth = 1.5;
         ctx.beginPath(); ctx.moveTo(0, getY(item.dynamicStop)); ctx.lineTo(width, getY(item.dynamicStop)); ctx.stroke();
 
-        // 2. 移動止損啟動點門檻 (青色虛線)
         ctx.strokeStyle = '#00f0ff'; ctx.setLineDash([2, 2]); ctx.lineWidth = 1;
         ctx.beginPath(); ctx.moveTo(0, getY(item.trailTrigger)); ctx.lineTo(width, getY(item.trailTrigger)); ctx.stroke();
 
-        // 3. 盈虧比止盈線 (綠色虛線)
         ctx.strokeStyle = '#00ff66'; ctx.setLineDash([4, 4]); ctx.lineWidth = 1.5;
         ctx.beginPath(); ctx.moveTo(0, getY(item.takeProfit)); ctx.lineTo(width, getY(item.takeProfit)); ctx.stroke();
         ctx.setLineDash([]);
 
-        // K 線繪製
         const step = (width - padding.left - padding.right) / klines.length;
         klines.forEach((k, i) => {
             const x = padding.left + i * step + step / 2;
