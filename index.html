@@ -3,7 +3,7 @@
 <head> 
 <meta charset="UTF-8"> 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
-<title>⚡ 1H MA 多頭 + 5MA 突破狀態全排行 (>1億USDT)</title> 
+<title>⚡ 1H MA 多頭排列全排行 (>1億USDT)</title> 
 <style> 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@700;800;900&display=swap'); 
 :root { 
@@ -70,61 +70,59 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
 .symbol-price { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; color: var(--manga-yellow); font-weight: 700; } 
 .detail-row { font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; color: #94a3b8; margin-top: 4px; } 
 
-.badge-bar-1 { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 0, 127, 0.25); color: var(--manga-pink); border: 1px solid var(--manga-pink); box-shadow: 0 0 8px rgba(255, 0, 127, 0.4); } 
-.badge-bar-2 { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 234, 0, 0.2); color: var(--manga-yellow); border: 1px solid var(--manga-yellow); } 
-.badge-bar-3 { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(0, 240, 255, 0.15); color: var(--manga-cyan); border: 1px solid var(--manga-cyan); } 
 .badge-rank { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 255, 255, 0.1); color: #fff; } 
+.badge-bull { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(0, 255, 102, 0.15); color: var(--manga-green); border: 1px solid var(--manga-green); }
 .val-up { color: var(--manga-green); } 
 .val-down { color: var(--manga-red); } 
 
-/* Modal 區塊 */
+/* Modal 區塊 - 優化適應單一視窗 */
 .chart-modal {
-  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(4, 6, 14, 0.92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh;
+  background: rgba(4, 6, 14, 0.95); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   z-index: 1000; display: none; justify-content: center; align-items: center; padding: 12px;
   overflow: hidden; touch-action: none;
 }
 .chart-modal.active { display: flex; }
 .chart-box {
-  width: 100%; max-width: 1050px; height: 85vh; background: #0b0f19;
+  width: 100%; max-width: 1050px; height: 100%; max-height: 90vh; max-height: 90dvh; background: #0b0f19;
   border: 1px solid rgba(0, 240, 255, 0.35); border-radius: 16px; overflow: hidden;
   display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0, 240, 255, 0.2);
 }
 
 .chart-header {
-  padding: 10px 16px; background: #111726; display: flex; justify-content: space-between; align-items: center;
-  border-bottom: 1px solid rgba(255,255,255,0.08); gap: 8px; flex-wrap: wrap;
+  padding: 8px 12px; background: #111726; display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.08); gap: 6px; flex-shrink: 0;
 }
 
 .header-title-group {
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center; gap: 6px;
 }
 
 .symbol-title {
-  font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 800; color: #fff;
+  font-family: 'JetBrains Mono', monospace; font-size: 1rem; font-weight: 800; color: #fff;
 }
 
 .ma5-status-badge {
   font-family: 'JetBrains Mono', 'Noto Sans TC', sans-serif;
-  font-size: 0.75rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; display: inline-flex; align-items: center;
+  font-size: 0.7rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center;
 }
 .ma5-status-badge.above {
-  background: rgba(0, 255, 102, 0.15); color: var(--manga-green); border: 1px solid var(--manga-green); box-shadow: 0 0 8px rgba(0, 255, 102, 0.3);
+  background: rgba(0, 255, 102, 0.15); color: var(--manga-green); border: 1px solid var(--manga-green);
 }
 .ma5-status-badge.below {
-  background: rgba(255, 42, 109, 0.15); color: var(--manga-red); border: 1px solid var(--manga-red); box-shadow: 0 0 8px rgba(255, 42, 109, 0.3);
+  background: rgba(255, 42, 109, 0.15); color: var(--manga-red); border: 1px solid var(--manga-red);
 }
 
 .legend-bar {
-  display: flex; gap: 10px; font-size: 0.72rem; font-family: 'JetBrains Mono', monospace; flex-wrap: wrap;
+  display: flex; gap: 6px; font-size: 0.65rem; font-family: 'JetBrains Mono', monospace; flex-wrap: wrap;
 }
-.legend-item { display: flex; align-items: center; gap: 4px; }
-.legend-color { width: 8px; height: 8px; border-radius: 2px; }
+.legend-item { display: flex; align-items: center; gap: 3px; }
+.legend-color { width: 6px; height: 6px; border-radius: 2px; }
 
 .close-btn {
   background: rgba(255,255,255,0.08); color: #a0aec0; border: 1px solid rgba(255,255,255,0.1); border-radius: 50%;
-  width: 32px; height: 32px; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: background-color 0.15s ease;
+  width: 28px; height: 28px; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background-color 0.15s ease; flex-shrink: 0;
 }
 .close-btn:hover { background: var(--manga-red); color: #fff; border-color: var(--manga-red); }
 
@@ -133,11 +131,10 @@ canvas { display: block; width: 100%; height: 100%; }
 
 @media (max-width: 600px) {
   .chart-modal { padding: 0; }
-  .chart-box { height: 100vh; border-radius: 0; border: none; }
-  .chart-header { padding: 8px 12px; }
-  .symbol-title { font-size: 0.95rem; }
-  .ma5-status-badge { font-size: 0.65rem; padding: 1px 6px; }
-  .legend-bar { font-size: 0.65rem; }
+  .chart-box { max-height: 100vh; max-height: 100dvh; border-radius: 0; border: none; }
+  .chart-header { padding: 6px 10px; }
+  .symbol-title { font-size: 0.9rem; }
+  .legend-bar { font-size: 0.6rem; gap: 4px; }
 }
 </style> 
 </head> 
@@ -145,7 +142,7 @@ canvas { display: block; width: 100%; height: 100%; }
 
 <div class="app-header"> 
   <div class="header-top"> 
-    <div class="header-title">⚡ 5MA 突破狀態全排行 (>1億USDT)</div> 
+    <div class="header-title">⚡ 1H MA 多頭排列全排行 (>1億USDT)</div> 
     <button id="scanBtn" class="scan-btn">啟動極速掃描</button> 
   </div> 
 </div> 
@@ -158,7 +155,7 @@ canvas { display: block; width: 100%; height: 100%; }
   </div> 
   <div class="stat-card entry"> 
     <div class="val" id="statEntry">0</div> 
-    <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">符合 5MA 站上標的</div> 
+    <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">符合 1H 多頭排列標的</div> 
   </div> 
 </div> 
 
@@ -240,36 +237,17 @@ canvas { display: block; width: 100%; height: 100%; }
       const closes = klinesRaw.map(k => parseFloat(k[4])); 
       const price = closes[totalLen - 1]; 
 
-      const ma5Series = calculateSMA(closes, P0); 
       const ma1 = calculateSMA(closes, P1)[totalLen - 1]; 
       const ma2 = calculateSMA(closes, P2)[totalLen - 1]; 
       const ma3 = calculateSMA(closes, P3)[totalLen - 1]; 
 
       if (!(ma1 > ma2 && ma2 > ma3 && price >= ma3)) return null; 
 
-      const currentMA5 = ma5Series[totalLen - 1]; 
-      if (price <= currentMA5) return null; 
-
-      let aboveBarsCount = 0; 
-      for (let i = totalLen - 1; i >= 0; i--) { 
-        if (closes[i] > ma5Series[i]) aboveBarsCount++; 
-        else break; 
-      } 
-
-      let categoryLevel = 3, crossedText = '', badgeClass = ''; 
-      if (aboveBarsCount === 1) { 
-        categoryLevel = 1; crossedText = '🔥 剛過 5MA (1根)'; badgeClass = 'badge-bar-1'; 
-      } else if (aboveBarsCount === 2) { 
-        categoryLevel = 2; crossedText = '⚡ 剛過 5MA (2根)'; badgeClass = 'badge-bar-2'; 
-      } else { 
-        categoryLevel = 3; crossedText = `🚀 5MA 之上 (${aboveBarsCount}根)`; badgeClass = 'badge-bar-3'; 
-      } 
-
       const ma3DistPercent = ((price - ma3) / ma3) * 100; 
       const ticker = tickerMap.get(symbol);
       const priceChange24h = ticker ? parseFloat(ticker.priceChangePercent) : 0; 
 
-      return { symbol, price, ma3DistPercent, priceChange24h, aboveBarsCount, categoryLevel, crossedText, badgeClass }; 
+      return { symbol, price, ma3DistPercent, priceChange24h }; 
     } catch {
       return null;
     }
@@ -320,11 +298,7 @@ canvas { display: block; width: 100%; height: 100%; }
       dom.progress.style.width = `${(completed / candidateSymbols.length) * 100}%`; 
     });
 
-    rawResults.sort((a, b) => { 
-      if (a.categoryLevel !== b.categoryLevel) return a.categoryLevel - b.categoryLevel; 
-      if (a.aboveBarsCount !== b.aboveBarsCount) return a.aboveBarsCount - b.aboveBarsCount; 
-      return b.ma3DistPercent - a.ma3DistPercent; 
-    }); 
+    rawResults.sort((a, b) => b.ma3DistPercent - a.ma3DistPercent); 
 
     dom.statEntry.innerText = rawResults.length; 
     dom.scanBtn.disabled = false; 
@@ -351,7 +325,7 @@ canvas { display: block; width: 100%; height: 100%; }
           <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;"> 
             <span class="badge-rank">#${index + 1}</span> 
             <span class="symbol-name">${item.symbol.replace('USDT','')}</span> 
-            <span class="${item.badgeClass}">${item.crossedText}</span> 
+            <span class="badge-bull">🚀 1H 多頭排列</span> 
           </div> 
           <div class="detail-row"> 
             距慢線 (60MA): <span class="val-up">+${item.ma3DistPercent.toFixed(2)}%</span> 
@@ -424,12 +398,13 @@ canvas { display: block; width: 100%; height: 100%; }
       const width = rect.width;
       const height = rect.height;
 
-      const padding = { top: 35, bottom: 20, left: 10, right: 65 };
+      // 適應高寬的內邊距與圖表佔比
+      const padding = { top: 20, bottom: 15, left: 10, right: 60 };
       const totalH = height - padding.top - padding.bottom;
       
-      const priceH = totalH * 0.68;
+      const priceH = totalH * 0.65;
       const volH = totalH * 0.25;
-      const volTop = padding.top + priceH + totalH * 0.07;
+      const volTop = padding.top + priceH + totalH * 0.08;
 
       const chartW = width - padding.left - padding.right;
 
@@ -467,7 +442,7 @@ canvas { display: block; width: 100%; height: 100%; }
         ctx.moveTo(padding.left, y);
         ctx.lineTo(width - padding.right, y);
         ctx.stroke();
-        ctx.fillText(pVal.toFixed(2), width - padding.right + 8, y + 3);
+        ctx.fillText(pVal.toFixed(2), width - padding.right + 6, y + 3);
       }
 
       ctx.beginPath();
@@ -476,7 +451,7 @@ canvas { display: block; width: 100%; height: 100%; }
       ctx.stroke();
       
       const formatVol = (v) => v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : (v / 1e3).toFixed(0) + 'K';
-      ctx.fillText(formatVol(maxVol), width - padding.right + 8, volTop + 10);
+      ctx.fillText(formatVol(maxVol), width - padding.right + 6, volTop + 10);
 
       showK.forEach((k, i) => {
         const open = parseFloat(k[1]), high = parseFloat(k[2]), low = parseFloat(k[3]), close = parseFloat(k[4]), vol = parseFloat(k[5]);
@@ -527,49 +502,6 @@ canvas { display: block; width: 100%; height: 100%; }
 
       drawLine(showVM5, '#00f0ff', getYVol, 1.2);
       drawLine(showVM20, '#9d4edd', getYVol, 1.2);
-
-      // ✅ 在最新一根 K 棒上方繪製「5MA 之上 / 之下」標籤與指標線
-      const lastIndex = showK.length - 1;
-      if (lastIndex >= 0) {
-        const lastK = showK[lastIndex];
-        const lastHigh = parseFloat(lastK[2]);
-        const x = padding.left + lastIndex * barWidth + barWidth / 2;
-        const yHigh = getYPrice(lastHigh);
-
-        const badgeText = isAboveMA5 ? '▲ 5MA 之上' : '▼ 5MA 之下';
-        const bgColor = isAboveMA5 ? '#00ff66' : '#ff2a6d';
-        const textColor = '#000000';
-
-        ctx.font = 'bold 11px JetBrains Mono, sans-serif';
-        const textWidth = ctx.measureText(badgeText).width;
-        const rectW = textWidth + 12;
-        const rectH = 20;
-        
-        let rectX = x - rectW / 2;
-        if (rectX + rectW > width - padding.right) rectX = width - padding.right - rectW;
-        if (rectX < padding.left) rectX = padding.left;
-
-        const rectY = Math.max(yHigh - 28, 5);
-
-        ctx.strokeStyle = bgColor;
-        ctx.lineWidth = 1;
-        ctx.setLineDash([2, 2]);
-        ctx.beginPath();
-        ctx.moveTo(x, yHigh);
-        ctx.lineTo(x, rectY + rectH);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        ctx.fillStyle = bgColor;
-        ctx.beginPath();
-        ctx.roundRect(rectX, rectY, rectW, rectH, 4);
-        ctx.fill();
-
-        ctx.fillStyle = textColor;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(badgeText, rectX + rectW / 2, rectY + rectH / 2);
-      }
 
     } catch (err) {
       if (err.name !== 'AbortError') console.error(err);
