@@ -77,7 +77,6 @@ body.modal-open { overflow: hidden; }
 .val-up { color: var(--manga-green); } 
 .val-down { color: var(--manga-red); } 
 
-/* 🚀 極速 Canvas Modal */
 .chart-modal {
   position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
   background: rgba(4, 6, 14, 0.92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
@@ -170,7 +169,7 @@ canvas { display: block; width: 100%; height: 100%; }
   const API_BASE = 'https://fapi.binance.com'; 
   const P0 = 5, P1 = 30, P2 = 45, P3 = 60, DISPLAY_COUNT = 80; 
   const MIN_VOLUME = 100000000;
-  const KLINE_SHOW_COUNT = 100; // 展示最新 100 根 K 棒
+  const KLINE_SHOW_COUNT = 100;
 
   let rawResults = []; 
   let tickerMap = new Map(); 
@@ -204,10 +203,10 @@ canvas { display: block; width: 100%; height: 100%; }
     return ma; 
   } 
 
-  async function fetchSymbolDetailsData(symbol) { 
+  async function fetchSymbolDetailsData(symbol, signal) { 
     try {
       const fetchLimit = DISPLAY_COUNT + P3; 
-      const res = await fetch(`${API_BASE}/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=${fetchLimit}`); 
+      const res = await fetch(`${API_BASE}/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=${fetchLimit}`, { signal }); 
       if (!res.ok) return null; 
       const klinesRaw = await res.json(); 
       const totalLen = klinesRaw.length; 
@@ -251,15 +250,18 @@ canvas { display: block; width: 100%; height: 100%; }
     }
   } 
 
-  async function processBatch(symbols, batchSize = 10, onProgress) {
+  // 🚀 優化點 1：網路併發限制器 (Limit Concurrency to Avoid 429)
+  async function batchProcess(items, limit, fn, onProgress) {
     const results = [];
     let completed = 0;
-    for (let i = 0; i < symbols.length; i += batchSize) {
-      const batch = symbols.slice(i, i + batchSize);
-      const batchResults = await Promise.all(batch.map(sym => fetchSymbolDetailsData(sym)));
-      results.push(...batchResults.filter(Boolean));
-      completed += batch.length;
-      onProgress(completed);
+    
+    // 將陣列分為指定批次，防止高併發拉垮網路頻寬
+    for (let i = 0; i < items.length; i += limit) {
+      const chunk = items.slice(i, i + limit);
+      const chunkResults = await Promise.all(chunk.map(item => fn(item)));
+      results.push(...chunkResults.filter(Boolean));
+      completed += chunk.length;
+      if (onProgress) onProgress(completed);
     }
     return results;
   }
@@ -278,7 +280,7 @@ canvas { display: block; width: 100%; height: 100%; }
         data.forEach(d => tickerMap.set(d.symbol, d)); 
       } 
     } catch {
-      alert("無法取得行情數據，請稍後重試。");
+      alert("無法取得行情數據，請檢查網路連線。");
       dom.scanBtn.disabled = false;
       dom.scanBtn.innerText = "啟動極速掃描";
       return;
@@ -291,7 +293,8 @@ canvas { display: block; width: 100%; height: 100%; }
 
     dom.statTotal.innerText = candidateSymbols.length; 
 
-    rawResults = await processBatch(candidateSymbols, 10, (completed) => {
+    // 🚀 控制最大併發為 5 個請求，避免封包阻塞與 429 Error
+    rawResults = await batchProcess(candidateSymbols, 5, (sym) => fetchSymbolDetailsData(sym), (completed) => {
       dom.progress.style.width = `${(completed / candidateSymbols.length) * 100}%`; 
     });
 
@@ -345,161 +348,154 @@ canvas { display: block; width: 100%; height: 100%; }
     dom.symbolList.replaceChildren(fragment); 
   } 
 
-  // 🚀 Canvas 極速繪製 100 根 K 棒 + 5/20 Volume MA
+  let activeChartController = null;
+
   async function drawKlineChart(symbol) {
     dom.modalTitle.innerText = `📈 ${symbol} (最新 100 根 1H K線)`;
     
-    // 抓取 100 + 60 根以計算完整的 MA 與 Volume MA
-    const res = await fetch(`${API_BASE}/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=${KLINE_SHOW_COUNT + P3}`);
-    if (!res.ok) return;
-    const klines = await res.json();
+    // 🚀 優化點 2：關閉或重開啟 Modal 時中斷舊的 API 請求
+    if (activeChartController) activeChartController.abort();
+    activeChartController = new AbortController();
 
-    const closes = klines.map(k => parseFloat(k[4]));
-    const volumes = klines.map(k => parseFloat(k[5])); // 成交量
+    try {
+      const res = await fetch(`${API_BASE}/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=${KLINE_SHOW_COUNT + P3}`, { signal: activeChartController.signal });
+      if (!res.ok) return;
+      const klines = await res.json();
 
-    // 價格均線
-    const ma5 = calculateSMA(closes, P0);
-    const ma30 = calculateSMA(closes, P1);
-    const ma45 = calculateSMA(closes, P2);
-    const ma60 = calculateSMA(closes, P3);
+      const closes = klines.map(k => parseFloat(k[4]));
+      const volumes = klines.map(k => parseFloat(k[5]));
 
-    // 成交量均線 (5VM, 20VM)
-    const vm5 = calculateSMA(volumes, 5);
-    const vm20 = calculateSMA(volumes, 20);
+      const ma5 = calculateSMA(closes, P0);
+      const ma30 = calculateSMA(closes, P1);
+      const ma45 = calculateSMA(closes, P2);
+      const ma60 = calculateSMA(closes, P3);
 
-    // 切割最後 100 根
-    const showK = klines.slice(-KLINE_SHOW_COUNT);
-    const showMA5 = ma5.slice(-KLINE_SHOW_COUNT);
-    const showMA30 = ma30.slice(-KLINE_SHOW_COUNT);
-    const showMA45 = ma45.slice(-KLINE_SHOW_COUNT);
-    const showMA60 = ma60.slice(-KLINE_SHOW_COUNT);
-    const showVM5 = vm5.slice(-KLINE_SHOW_COUNT);
-    const showVM20 = vm20.slice(-KLINE_SHOW_COUNT);
+      const vm5 = calculateSMA(volumes, 5);
+      const vm20 = calculateSMA(volumes, 20);
 
-    // 適應 High DPI 螢幕
-    const rect = dom.canvasWrapper.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
-    dom.canvas.width = rect.width * dpr;
-    dom.canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
+      const showK = klines.slice(-KLINE_SHOW_COUNT);
+      const showMA5 = ma5.slice(-KLINE_SHOW_COUNT);
+      const showMA30 = ma30.slice(-KLINE_SHOW_COUNT);
+      const showMA45 = ma45.slice(-KLINE_SHOW_COUNT);
+      const showMA60 = ma60.slice(-KLINE_SHOW_COUNT);
+      const showVM5 = vm5.slice(-KLINE_SHOW_COUNT);
+      const showVM20 = vm20.slice(-KLINE_SHOW_COUNT);
 
-    const width = rect.width;
-    const height = rect.height;
+      const rect = dom.canvasWrapper.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      dom.canvas.width = rect.width * dpr;
+      dom.canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
 
-    // 版面配置：上方 70% 價格 K 線，下方 25% 成交量副圖
-    const padding = { top: 15, bottom: 20, left: 10, right: 65 };
-    const totalH = height - padding.top - padding.bottom;
-    
-    const priceH = totalH * 0.68;
-    const volH = totalH * 0.25;
-    const volTop = padding.top + priceH + totalH * 0.07; // 間隔
+      const width = rect.width;
+      const height = rect.height;
 
-    const chartW = width - padding.left - padding.right;
+      const padding = { top: 15, bottom: 20, left: 10, right: 65 };
+      const totalH = height - padding.top - padding.bottom;
+      
+      const priceH = totalH * 0.68;
+      const volH = totalH * 0.25;
+      const volTop = padding.top + priceH + totalH * 0.07;
 
-    // 計算價格極值
-    let minP = Infinity, maxP = -Infinity;
-    showK.forEach(k => {
-      const l = parseFloat(k[3]), h = parseFloat(k[2]);
-      if (l < minP) minP = l;
-      if (h > maxP) maxP = h;
-    });
+      const chartW = width - padding.left - padding.right;
 
-    // 計算成交量極值
-    let maxVol = -Infinity;
-    showK.forEach(k => {
-      const v = parseFloat(k[5]);
-      if (v > maxVol) maxVol = v;
-    });
-
-    const priceRange = maxP - minP || 1;
-    const getYPrice = (p) => padding.top + priceH - ((p - minP) / priceRange) * priceH;
-    const getYVol = (v) => volTop + volH - (v / (maxVol || 1)) * volH;
-    const barWidth = chartW / KLINE_SHOW_COUNT;
-
-    ctx.clearRect(0, 0, width, height);
-
-    // --- 繪製價格主圖背景與網格 ---
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-    ctx.fillStyle = '#64748b';
-    ctx.font = '10px JetBrains Mono';
-    ctx.textAlign = 'left';
-    ctx.lineWidth = 1;
-
-    const gridLines = 4;
-    for (let i = 0; i <= gridLines; i++) {
-      const y = padding.top + (priceH / gridLines) * i;
-      const pVal = maxP - (priceRange / gridLines) * i;
-      ctx.beginPath();
-      ctx.moveTo(padding.left, y);
-      ctx.lineTo(width - padding.right, y);
-      ctx.stroke();
-      ctx.fillText(pVal.toFixed(2), width - padding.right + 8, y + 3);
-    }
-
-    // --- 繪製成交量副圖網格 ---
-    ctx.beginPath();
-    ctx.moveTo(padding.left, volTop);
-    ctx.lineTo(width - padding.right, volTop);
-    ctx.stroke();
-    
-    const formatVol = (v) => v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : (v / 1e3).toFixed(0) + 'K';
-    ctx.fillText(formatVol(maxVol), width - padding.right + 8, volTop + 10);
-
-    // --- 繪製 K 棒與成交量柱狀圖 ---
-    showK.forEach((k, i) => {
-      const open = parseFloat(k[1]), high = parseFloat(k[2]), low = parseFloat(k[3]), close = parseFloat(k[4]), vol = parseFloat(k[5]);
-      const x = padding.left + i * barWidth + barWidth / 2;
-      const isUp = close >= open;
-      const color = isUp ? '#00ff66' : '#ff2a6d';
-
-      // 1. K 棒
-      ctx.strokeStyle = color;
-      ctx.fillStyle = color;
-
-      ctx.beginPath();
-      ctx.moveTo(x, getYPrice(high));
-      ctx.lineTo(x, getYPrice(low));
-      ctx.stroke();
-
-      const yOpen = getYPrice(open);
-      const yClose = getYPrice(close);
-      const bodyTop = Math.min(yOpen, yClose);
-      const bodyH = Math.max(Math.abs(yOpen - yClose), 1.5);
-      const bw = Math.max(barWidth * 0.7, 1);
-
-      ctx.fillRect(x - bw / 2, bodyTop, bw, bodyH);
-
-      // 2. 成交量柱狀圖
-      ctx.fillStyle = isUp ? 'rgba(0, 255, 102, 0.4)' : 'rgba(255, 42, 109, 0.4)';
-      const vY = getYVol(vol);
-      ctx.fillRect(x - bw / 2, vY, bw, volTop + volH - vY);
-    });
-
-    // --- 繪製均線輔助函式 ---
-    const drawLine = (dataArray, color, getYFunc, width = 1.5) => {
-      ctx.strokeStyle = color;
-      ctx.lineWidth = width;
-      ctx.beginPath();
-      let started = false;
-      dataArray.forEach((val, i) => {
-        if (val === null) return;
-        const x = padding.left + i * barWidth + barWidth / 2;
-        const y = getYFunc(val);
-        if (!started) { ctx.moveTo(x, y); started = true; } 
-        else { ctx.lineTo(x, y); }
+      let minP = Infinity, maxP = -Infinity;
+      showK.forEach(k => {
+        const l = parseFloat(k[3]), h = parseFloat(k[2]);
+        if (l < minP) minP = l;
+        if (h > maxP) maxP = h;
       });
+
+      let maxVol = -Infinity;
+      showK.forEach(k => {
+        const v = parseFloat(k[5]);
+        if (v > maxVol) maxVol = v;
+      });
+
+      const priceRange = maxP - minP || 1;
+      const getYPrice = (p) => padding.top + priceH - ((p - minP) / priceRange) * priceH;
+      const getYVol = (v) => volTop + volH - (v / (maxVol || 1)) * volH;
+      const barWidth = chartW / KLINE_SHOW_COUNT;
+
+      ctx.clearRect(0, 0, width, height);
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.fillStyle = '#64748b';
+      ctx.font = '10px JetBrains Mono';
+      ctx.textAlign = 'left';
+      ctx.lineWidth = 1;
+
+      const gridLines = 4;
+      for (let i = 0; i <= gridLines; i++) {
+        const y = padding.top + (priceH / gridLines) * i;
+        const pVal = maxP - (priceRange / gridLines) * i;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(width - padding.right, y);
+        ctx.stroke();
+        ctx.fillText(pVal.toFixed(2), width - padding.right + 8, y + 3);
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(padding.left, volTop);
+      ctx.lineTo(width - padding.right, volTop);
       ctx.stroke();
-    };
+      
+      const formatVol = (v) => v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : (v / 1e3).toFixed(0) + 'K';
+      ctx.fillText(formatVol(maxVol), width - padding.right + 8, volTop + 10);
 
-    // 價格均線 (5, 30, 45, 60)
-    drawLine(showMA5, '#00ff66', getYPrice);
-    drawLine(showMA30, '#ffea00', getYPrice);
-    drawLine(showMA45, '#ff9100', getYPrice);
-    drawLine(showMA60, '#ff007f', getYPrice);
+      showK.forEach((k, i) => {
+        const open = parseFloat(k[1]), high = parseFloat(k[2]), low = parseFloat(k[3]), close = parseFloat(k[4]), vol = parseFloat(k[5]);
+        const x = padding.left + i * barWidth + barWidth / 2;
+        const isUp = close >= open;
+        const color = isUp ? '#00ff66' : '#ff2a6d';
 
-    // 成交量均線 (5VM: 藍色, 20VM: 紫色)
-    drawLine(showVM5, '#00f0ff', getYVol, 1.2);
-    drawLine(showVM20, '#9d4edd', getYVol, 1.2);
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+
+        ctx.beginPath();
+        ctx.moveTo(x, getYPrice(high));
+        ctx.lineTo(x, getYPrice(low));
+        ctx.stroke();
+
+        const yOpen = getYPrice(open);
+        const yClose = getYPrice(close);
+        const bodyTop = Math.min(yOpen, yClose);
+        const bodyH = Math.max(Math.abs(yOpen - yClose), 1.5);
+        const bw = Math.max(barWidth * 0.7, 1);
+
+        ctx.fillRect(x - bw / 2, bodyTop, bw, bodyH);
+
+        ctx.fillStyle = isUp ? 'rgba(0, 255, 102, 0.4)' : 'rgba(255, 42, 109, 0.4)';
+        const vY = getYVol(vol);
+        ctx.fillRect(x - bw / 2, vY, bw, volTop + volH - vY);
+      });
+
+      const drawLine = (dataArray, color, getYFunc, width = 1.5) => {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = width;
+        ctx.beginPath();
+        let started = false;
+        dataArray.forEach((val, i) => {
+          if (val === null) return;
+          const x = padding.left + i * barWidth + barWidth / 2;
+          const y = getYFunc(val);
+          if (!started) { ctx.moveTo(x, y); started = true; } 
+          else { ctx.lineTo(x, y); }
+        });
+        ctx.stroke();
+      };
+
+      drawLine(showMA5, '#00ff66', getYPrice);
+      drawLine(showMA30, '#ffea00', getYPrice);
+      drawLine(showMA45, '#ff9100', getYPrice);
+      drawLine(showMA60, '#ff007f', getYPrice);
+
+      drawLine(showVM5, '#00f0ff', getYVol, 1.2);
+      drawLine(showVM20, '#9d4edd', getYVol, 1.2);
+    } catch (err) {
+      if (err.name !== 'AbortError') console.error(err);
+    }
   }
 
   function openChartModal(symbol) {
@@ -511,6 +507,7 @@ canvas { display: block; width: 100%; height: 100%; }
   }
 
   function closeChartModal() {
+    if (activeChartController) activeChartController.abort();
     dom.chartModal.classList.remove('active');
     dom.chartModal.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('modal-open');
