@@ -77,7 +77,7 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
 .val-up { color: var(--manga-green); } 
 .val-down { color: var(--manga-red); } 
 
-/* ❌ 移除動畫與滾動能力，設定為靜態直接顯現 */
+/* Modal 區塊 */
 .chart-modal {
   position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
   background: rgba(4, 6, 14, 0.92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
@@ -91,10 +91,28 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
   display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0, 240, 255, 0.2);
 }
 
-/* ❌ 移除文字標題，僅保留頂點控件 */
 .chart-header {
   padding: 10px 16px; background: #111726; display: flex; justify-content: space-between; align-items: center;
-  border-bottom: 1px solid rgba(255,255,255,0.08); gap: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.08); gap: 8px; flex-wrap: wrap;
+}
+
+.header-title-group {
+  display: flex; align-items: center; gap: 8px;
+}
+
+.symbol-title {
+  font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 800; color: #fff;
+}
+
+.ma5-status-badge {
+  font-family: 'JetBrains Mono', 'Noto Sans TC', sans-serif;
+  font-size: 0.75rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; display: inline-flex; align-items: center;
+}
+.ma5-status-badge.above {
+  background: rgba(0, 255, 102, 0.15); color: var(--manga-green); border: 1px solid var(--manga-green); box-shadow: 0 0 8px rgba(0, 255, 102, 0.3);
+}
+.ma5-status-badge.below {
+  background: rgba(255, 42, 109, 0.15); color: var(--manga-red); border: 1px solid var(--manga-red); box-shadow: 0 0 8px rgba(255, 42, 109, 0.3);
 }
 
 .legend-bar {
@@ -117,6 +135,8 @@ canvas { display: block; width: 100%; height: 100%; }
   .chart-modal { padding: 0; }
   .chart-box { height: 100vh; border-radius: 0; border: none; }
   .chart-header { padding: 8px 12px; }
+  .symbol-title { font-size: 0.95rem; }
+  .ma5-status-badge { font-size: 0.65rem; padding: 1px 6px; }
   .legend-bar { font-size: 0.65rem; }
 }
 </style> 
@@ -147,6 +167,10 @@ canvas { display: block; width: 100%; height: 100%; }
 <div id="chartModal" class="chart-modal" aria-hidden="true">
   <div id="chartBox" class="chart-box" role="dialog" aria-modal="true">
     <div class="chart-header">
+      <div class="header-title-group">
+        <div id="symbolTitle" class="symbol-title">BTCUSDT</div>
+        <span id="ma5Badge" class="ma5-status-badge above">5MA 之上</span>
+      </div>
       <div class="legend-bar">
         <div class="legend-item"><div class="legend-color" style="background:#00ff66"></div>5MA</div>
         <div class="legend-item"><div class="legend-color" style="background:#ffea00"></div>30MA</div>
@@ -181,6 +205,8 @@ canvas { display: block; width: 100%; height: 100%; }
     statEntry: document.getElementById('statEntry'),
     symbolList: document.getElementById('symbolList'),
     chartModal: document.getElementById('chartModal'),
+    symbolTitle: document.getElementById('symbolTitle'),
+    ma5Badge: document.getElementById('ma5Badge'),
     closeModalBtn: document.getElementById('closeModalBtn'),
     canvasWrapper: document.getElementById('canvasWrapper'),
     canvas: document.getElementById('klineCanvas')
@@ -367,6 +393,20 @@ canvas { display: block; width: 100%; height: 100%; }
       const vm5 = calculateSMA(volumes, 5);
       const vm20 = calculateSMA(volumes, 20);
 
+      const lastPrice = closes[closes.length - 1];
+      const lastMA5 = ma5[ma5.length - 1];
+      const isAboveMA5 = lastPrice >= lastMA5;
+
+      if (lastPrice !== undefined && lastMA5 !== null) {
+        if (isAboveMA5) {
+          dom.ma5Badge.className = 'ma5-status-badge above';
+          dom.ma5Badge.innerText = '🟢 5MA 之上';
+        } else {
+          dom.ma5Badge.className = 'ma5-status-badge below';
+          dom.ma5Badge.innerText = '🔴 5MA 之下';
+        }
+      }
+
       const showK = klines.slice(-KLINE_SHOW_COUNT);
       const showMA5 = ma5.slice(-KLINE_SHOW_COUNT);
       const showMA30 = ma30.slice(-KLINE_SHOW_COUNT);
@@ -384,7 +424,7 @@ canvas { display: block; width: 100%; height: 100%; }
       const width = rect.width;
       const height = rect.height;
 
-      const padding = { top: 15, bottom: 20, left: 10, right: 65 };
+      const padding = { top: 35, bottom: 20, left: 10, right: 65 };
       const totalH = height - padding.top - padding.bottom;
       
       const priceH = totalH * 0.68;
@@ -487,6 +527,50 @@ canvas { display: block; width: 100%; height: 100%; }
 
       drawLine(showVM5, '#00f0ff', getYVol, 1.2);
       drawLine(showVM20, '#9d4edd', getYVol, 1.2);
+
+      // ✅ 在最新一根 K 棒上方繪製「5MA 之上 / 之下」標籤與指標線
+      const lastIndex = showK.length - 1;
+      if (lastIndex >= 0) {
+        const lastK = showK[lastIndex];
+        const lastHigh = parseFloat(lastK[2]);
+        const x = padding.left + lastIndex * barWidth + barWidth / 2;
+        const yHigh = getYPrice(lastHigh);
+
+        const badgeText = isAboveMA5 ? '▲ 5MA 之上' : '▼ 5MA 之下';
+        const bgColor = isAboveMA5 ? '#00ff66' : '#ff2a6d';
+        const textColor = '#000000';
+
+        ctx.font = 'bold 11px JetBrains Mono, sans-serif';
+        const textWidth = ctx.measureText(badgeText).width;
+        const rectW = textWidth + 12;
+        const rectH = 20;
+        
+        let rectX = x - rectW / 2;
+        if (rectX + rectW > width - padding.right) rectX = width - padding.right - rectW;
+        if (rectX < padding.left) rectX = padding.left;
+
+        const rectY = Math.max(yHigh - 28, 5);
+
+        ctx.strokeStyle = bgColor;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([2, 2]);
+        ctx.beginPath();
+        ctx.moveTo(x, yHigh);
+        ctx.lineTo(x, rectY + rectH);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = bgColor;
+        ctx.beginPath();
+        ctx.roundRect(rectX, rectY, rectW, rectH, 4);
+        ctx.fill();
+
+        ctx.fillStyle = textColor;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(badgeText, rectX + rectW / 2, rectY + rectH / 2);
+      }
+
     } catch (err) {
       if (err.name !== 'AbortError') console.error(err);
     }
@@ -494,6 +578,7 @@ canvas { display: block; width: 100%; height: 100%; }
 
   function openChartModal(symbol) {
     currentSymbol = symbol;
+    dom.symbolTitle.innerText = symbol;
     dom.chartModal.classList.add('active');
     dom.chartModal.setAttribute('aria-hidden', 'false');
     document.body.classList.add('modal-open');
