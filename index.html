@@ -4,7 +4,6 @@
 <meta charset="UTF-8"> 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
 <title>⚡ 1H MA 多頭 + 5MA 突破狀態全排行 (>1億USDT)</title> 
-<!-- 引入 TradingView 圖表庫 -->
 <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
 <style> 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@700;800;900&display=swap'); 
@@ -24,13 +23,14 @@
 body { 
   font-family: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif; 
   background-color: var(--bg-dark); 
-  background-image: radial-gradient(at 0% 0%, rgba(255, 0, 127, 0.12) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(0, 240, 255, 0.12) 0px, transparent 50%), radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px); 
+  background-image: radial-gradient(at 0% 0%, rgba(255, 0, 127, 0.12) 0px, transparent 50%), 
+                    radial-gradient(at 100% 100%, rgba(0, 240, 255, 0.12) 0px, transparent 50%), 
+                    radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px); 
   background-size: 100% 100%, 100% 100%, 20px 20px; 
-  color: #fff; 
-  margin: 0; 
-  padding-bottom: 50px; 
-  min-height: 100vh; 
+  color: #fff; margin: 0; padding-bottom: 50px; min-height: 100vh; 
 } 
+body.modal-open { overflow: hidden; } /* 防穿透滾動 */
+
 .app-header { 
   position: sticky; top: 0; z-index: 100; background: rgba(8, 12, 22, 0.88); 
   backdrop-filter: blur(14px); border-bottom: 1px solid var(--border-color); 
@@ -45,12 +45,13 @@ body {
 .scan-btn { 
   background: linear-gradient(135deg, var(--manga-pink) 0%, #ff5500 100%); 
   color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 900; font-size: 0.85rem; cursor: pointer; 
-  box-shadow: 0 0 15px rgba(255, 0, 127, 0.4); transition: all 0.2s; 
+  box-shadow: 0 0 15px rgba(255, 0, 127, 0.4); transition: transform 0.15s ease, filter 0.2s ease; 
+  will-change: transform;
 } 
 .scan-btn:active { transform: scale(0.95); } 
-.scan-btn:disabled { opacity: 0.5; filter: grayscale(1); } 
+.scan-btn:disabled { opacity: 0.5; filter: grayscale(1); cursor: not-allowed; } 
 .progress-container { height: 3px; background: rgba(255, 255, 255, 0.05); width: 100%; } 
-.progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--manga-pink), var(--manga-cyan)); transition: width 0.15s; } 
+.progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--manga-pink), var(--manga-cyan)); transition: width 0.1s linear; } 
 .dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 16px; } 
 .stat-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; padding: 12px; text-align: center; backdrop-filter: blur(10px); } 
 .stat-card .val { font-family: 'JetBrains Mono', monospace; font-size: 1.6rem; font-weight: 800; } 
@@ -58,11 +59,11 @@ body {
 .stat-card.entry .val { color: var(--manga-pink); text-shadow: 0 0 10px rgba(255, 0, 127, 0.3); } 
 .container { padding: 0 16px; } 
 
-/* 卡片點擊樣式 */
 .symbol-card { 
   background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.08); border-left: 4px solid var(--manga-green); border-radius: 12px; 
   padding: 14px 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(10px); 
-  cursor: pointer; transition: all 0.2s ease;
+  cursor: pointer; transition: border-color 0.2s, transform 0.2s, background-color 0.2s; 
+  will-change: transform;
 } 
 .symbol-card:hover { border-color: var(--manga-cyan); background: rgba(0, 240, 255, 0.08); transform: translateY(-2px); } 
 .symbol-card:active { transform: scale(0.98); }
@@ -70,7 +71,6 @@ body {
 .symbol-price { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; color: var(--manga-yellow); font-weight: 700; } 
 .detail-row { font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; color: #94a3b8; margin-top: 4px; } 
 
-/* 標籤分類樣式 */ 
 .badge-bar-1 { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 0, 127, 0.25); color: var(--manga-pink); border: 1px solid var(--manga-pink); box-shadow: 0 0 8px rgba(255, 0, 127, 0.4); } 
 .badge-bar-2 { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 234, 0, 0.2); color: var(--manga-yellow); border: 1px solid var(--manga-yellow); } 
 .badge-bar-3 { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(0, 240, 255, 0.15); color: var(--manga-cyan); border: 1px solid var(--manga-cyan); } 
@@ -78,29 +78,59 @@ body {
 .val-up { color: var(--manga-green); } 
 .val-down { color: var(--manga-red); } 
 
-/* K棒圖表 Modal 彈窗樣式 */
+/* 🚀 優化後的跳出視窗 (Modal) 樣式 */
 .chart-modal {
-  display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(4, 6, 14, 0.85); backdrop-filter: blur(12px); z-index: 1000;
-  justify-content: center; align-items: center; padding: 12px;
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(4, 6, 14, 0.88); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  z-index: 1000; display: flex; justify-content: center; align-items: center; padding: 16px;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.chart-modal.active { display: flex; }
+.chart-modal.active {
+  opacity: 1; visibility: visible; pointer-events: auto;
+}
 .chart-box {
-  width: 100%; max-width: 900px; height: 85vh; background: #0b0f19;
-  border: 1px solid var(--manga-cyan); border-radius: 16px; overflow: hidden;
-  display: flex; flex-direction: column; box-shadow: 0 0 30px rgba(0, 240, 255, 0.3);
+  width: 100%; max-width: 950px; height: 88vh; background: #0b0f19;
+  border: 1px solid rgba(0, 240, 255, 0.4); border-radius: 16px; overflow: hidden;
+  display: flex; flex-direction: column; box-shadow: 0 0 40px rgba(0, 240, 255, 0.25), 0 20px 50px rgba(0,0,0,0.8);
+  transform: scale(0.95); transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.chart-modal.active .chart-box {
+  transform: scale(1);
 }
 .chart-header {
-  padding: 12px 16px; background: #131927; display: flex; justify-content: space-between; align-items: center;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding: 12px 18px; background: #131927; display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
 }
-.chart-title { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 800; color: var(--manga-cyan); }
+.chart-title { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 800; color: var(--manga-cyan); display: flex; align-items: center; gap: 8px; }
 .close-btn {
-  background: rgba(255,255,255,0.1); color: #fff; border: none; border-radius: 50%;
-  width: 32px; height: 32px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.08); color: #a0aec0; border: 1px solid rgba(255,255,255,0.1); border-radius: 50%;
+  width: 34px; height: 34px; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s ease;
 }
-.close-btn:hover { background: var(--manga-red); }
-.chart-container { flex: 1; width: 100%; height: 100%; }
+.close-btn:hover { background: var(--manga-red); color: #fff; border-color: var(--manga-red); transform: rotate(90deg); }
+.chart-container { flex: 1; width: 100%; height: 100%; position: relative; }
+
+/* 🌀 載入動畫 (Loading Spinner) */
+.chart-loading {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  background: #0b0f19; display: flex; flex-direction: column; justify-content: center; align-items: center;
+  z-index: 10; gap: 12px; color: var(--manga-cyan); font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;
+}
+.spinner {
+  width: 36px; height: 36px; border: 3px solid rgba(0, 240, 255, 0.15);
+  border-top-color: var(--manga-cyan); border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* 📱 行動端適應優化 */
+@media (max-width: 600px) {
+  .chart-modal { padding: 6px; }
+  .chart-box { height: 94vh; border-radius: 12px; }
+  .chart-header { padding: 10px 12px; }
+  .chart-title { font-size: 0.95rem; }
+}
 </style> 
 </head> 
 <body> 
@@ -108,7 +138,7 @@ body {
 <div class="app-header"> 
   <div class="header-top"> 
     <div class="header-title">⚡ 5MA 突破狀態全排行 (>1億USDT)</div> 
-    <button id="scanBtn" class="scan-btn" onclick="startScan()">啟動極速掃描</button> 
+    <button id="scanBtn" class="scan-btn">啟動極速掃描</button> 
   </div> 
 </div> 
 <div class="progress-container"><div id="progress" class="progress-fill"></div></div> 
@@ -126,272 +156,270 @@ body {
 
 <div class="container" id="symbolList"></div> 
 
-<!-- K棒圖表 Modal -->
-<div id="chartModal" class="chart-modal" onclick="closeChartModal(event)">
-  <div class="chart-box" onclick="event.stopPropagation()">
+<!-- 🚀 優化 Modal 結構 -->
+<div id="chartModal" class="chart-modal" aria-hidden="true">
+  <div class="chart-box" role="dialog" aria-modal="true">
     <div class="chart-header">
-      <div id="modalSymbolTitle" class="chart-title">BINANCE:BTCUSDT.P</div>
-      <button class="close-btn" onclick="closeChartModal()">✕</button>
+      <div id="modalSymbolTitle" class="chart-title">📈 BINANCE:BTCUSDT.P</div>
+      <button id="closeModalBtn" class="close-btn" aria-label="關閉">✕</button>
     </div>
-    <div id="tvChartContainer" class="chart-container"></div>
+    <div class="chart-container">
+      <div id="chartLoading" class="chart-loading">
+        <div class="spinner"></div>
+        <span>載入TradingView圖表中...</span>
+      </div>
+      <div id="tvChartContainer" style="width:100%; height:100%;"></div>
+    </div>
   </div>
 </div>
 
 <script> 
-const API_BASE = 'https://fapi.binance.com'; 
-let rawResults = []; 
-let tickerMap = {}; 
-const P0 = 5, P1 = 30, P2 = 45, P3 = 60, DISPLAY_COUNT = 80; 
+(() => {
+  const API_BASE = 'https://fapi.binance.com'; 
+  const P0 = 5, P1 = 30, P2 = 45, P3 = 60, DISPLAY_COUNT = 80; 
+  const MIN_VOLUME = 100000000;
 
-function calculateSMA(dataArray, period) { 
-  const len = dataArray.length; 
-  if (len < period) return new Array(len).fill(null); 
-  const ma = new Array(len).fill(null); 
-  let sum = 0; 
-  for (let i = 0; i < period; i++) sum += dataArray[i]; 
-  ma[period - 1] = sum / period; 
-  for (let i = period; i < len; i++) { 
-    sum += dataArray[i] - dataArray[i - period]; 
-    ma[i] = sum / period; 
-  } 
-  return ma; 
-} 
+  let rawResults = []; 
+  let tickerMap = new Map(); 
+  let tvWidget = null;
 
-async function fetchSymbolDetailsData(symbol) { 
-  const fetchLimit = DISPLAY_COUNT + P3; 
-  const res = await fetch(`${API_BASE}/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=${fetchLimit}`); 
-  if (!res.ok) return null; 
-  const klinesRaw = await res.json(); 
-  const totalLen = klinesRaw.length; 
-  if (totalLen < P3) return null; 
+  const dom = {
+    scanBtn: document.getElementById('scanBtn'),
+    progress: document.getElementById('progress'),
+    statTotal: document.getElementById('statTotal'),
+    statEntry: document.getElementById('statEntry'),
+    symbolList: document.getElementById('symbolList'),
+    chartModal: document.getElementById('chartModal'),
+    modalTitle: document.getElementById('modalSymbolTitle'),
+    closeModalBtn: document.getElementById('closeModalBtn'),
+    tvContainer: document.getElementById('tvChartContainer'),
+    chartLoading: document.getElementById('chartLoading')
+  };
 
-  const closes = klinesRaw.map(k => parseFloat(k[4])); 
-  const price = closes[totalLen - 1]; 
-
-  const ma5Series = calculateSMA(closes, P0); 
-  const ma1 = calculateSMA(closes, P1)[totalLen - 1]; 
-  const ma2 = calculateSMA(closes, P2)[totalLen - 1]; 
-  const ma3 = calculateSMA(closes, P3)[totalLen - 1]; 
-
-  const isBullishMA = (ma1 > ma2 && ma2 > ma3 && price >= ma3); 
-  if (!isBullishMA) return null; 
-
-  const currentPrice = closes[totalLen - 1]; 
-  const currentMA5 = ma5Series[totalLen - 1]; 
-
-  if (currentPrice <= currentMA5) return null; 
-
-  let aboveBarsCount = 0; 
-  for (let i = totalLen - 1; i >= 0; i--) { 
-    if (closes[i] > ma5Series[i]) { 
-      aboveBarsCount++; 
-    } else { 
-      break; 
+  function calculateSMA(data, period) { 
+    const len = data.length; 
+    if (len < period) return new Array(len).fill(null); 
+    const ma = new Array(len).fill(null); 
+    let sum = 0; 
+    for (let i = 0; i < period; i++) sum += data[i]; 
+    ma[period - 1] = sum / period; 
+    for (let i = period; i < len; i++) { 
+      sum += data[i] - data[i - period]; 
+      ma[i] = sum / period; 
     } 
+    return ma; 
   } 
 
-  let categoryLevel = 3; 
-  let crossedText = ''; 
-  let badgeClass = ''; 
+  async function fetchSymbolDetailsData(symbol) { 
+    try {
+      const fetchLimit = DISPLAY_COUNT + P3; 
+      const res = await fetch(`${API_BASE}/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=${fetchLimit}`); 
+      if (!res.ok) return null; 
+      const klinesRaw = await res.json(); 
+      const totalLen = klinesRaw.length; 
+      if (totalLen < P3) return null; 
 
-  if (aboveBarsCount === 1) { 
-    categoryLevel = 1; 
-    crossedText = '🔥 剛過 5MA (1根)'; 
-    badgeClass = 'badge-bar-1'; 
-  } else if (aboveBarsCount === 2) { 
-    categoryLevel = 2; 
-    crossedText = '⚡ 剛過 5MA (2根)'; 
-    badgeClass = 'badge-bar-2'; 
-  } else { 
-    categoryLevel = 3; 
-    crossedText = `🚀 5MA 之上 (${aboveBarsCount}根)`; 
-    badgeClass = 'badge-bar-3'; 
+      const closes = klinesRaw.map(k => parseFloat(k[4])); 
+      const price = closes[totalLen - 1]; 
+
+      const ma5Series = calculateSMA(closes, P0); 
+      const ma1 = calculateSMA(closes, P1)[totalLen - 1]; 
+      const ma2 = calculateSMA(closes, P2)[totalLen - 1]; 
+      const ma3 = calculateSMA(closes, P3)[totalLen - 1]; 
+
+      if (!(ma1 > ma2 && ma2 > ma3 && price >= ma3)) return null; 
+
+      const currentMA5 = ma5Series[totalLen - 1]; 
+      if (price <= currentMA5) return null; 
+
+      let aboveBarsCount = 0; 
+      for (let i = totalLen - 1; i >= 0; i--) { 
+        if (closes[i] > ma5Series[i]) aboveBarsCount++; 
+        else break; 
+      } 
+
+      let categoryLevel = 3, crossedText = '', badgeClass = ''; 
+      if (aboveBarsCount === 1) { 
+        categoryLevel = 1; crossedText = '🔥 剛過 5MA (1根)'; badgeClass = 'badge-bar-1'; 
+      } else if (aboveBarsCount === 2) { 
+        categoryLevel = 2; crossedText = '⚡ 剛過 5MA (2根)'; badgeClass = 'badge-bar-2'; 
+      } else { 
+        categoryLevel = 3; crossedText = `🚀 5MA 之上 (${aboveBarsCount}根)`; badgeClass = 'badge-bar-3'; 
+      } 
+
+      const ma3DistPercent = ((price - ma3) / ma3) * 100; 
+      const ticker = tickerMap.get(symbol);
+      const priceChange24h = ticker ? parseFloat(ticker.priceChangePercent) : 0; 
+
+      return { symbol, price, ma3DistPercent, priceChange24h, aboveBarsCount, categoryLevel, crossedText, badgeClass }; 
+    } catch {
+      return null;
+    }
   } 
 
-  const ma3DistPercent = ((price - ma3) / ma3) * 100; 
-  const priceChange24h = tickerMap[symbol] ? parseFloat(tickerMap[symbol].priceChangePercent) : 0; 
+  async function processBatch(symbols, batchSize = 10, onProgress) {
+    const results = [];
+    let completed = 0;
+    for (let i = 0; i < symbols.length; i += batchSize) {
+      const batch = symbols.slice(i, i + batchSize);
+      const batchResults = await Promise.all(batch.map(sym => fetchSymbolDetailsData(sym)));
+      results.push(...batchResults.filter(Boolean));
+      completed += batch.length;
+      onProgress(completed);
+    }
+    return results;
+  }
 
-  return { 
-    symbol, price, ma3DistPercent, priceChange24h, 
-    aboveBarsCount, categoryLevel, crossedText, badgeClass 
-  }; 
-} 
+  async function startScan() { 
+    dom.scanBtn.disabled = true; 
+    dom.scanBtn.innerText = "⚡ 掃描中..."; 
+    dom.symbolList.replaceChildren(); 
+    dom.progress.style.width = '0%';
 
-async function asyncPool(poolLimit, array, iteratorFn) { 
-  const ret = []; 
-  const executing = new Set(); 
-  for (const item of array) { 
-    const p = Promise.resolve().then(() => iteratorFn(item)); 
-    ret.push(p); 
-    executing.add(p); 
-    const clean = () => executing.delete(p); 
-    p.then(clean, clean); 
-    if (executing.size >= poolLimit) { 
-      await Promise.race(executing); 
+    try {
+      const res = await fetch(`${API_BASE}/fapi/v1/ticker/24hr`); 
+      if (res.ok) { 
+        const data = await res.json(); 
+        tickerMap.clear(); 
+        data.forEach(d => tickerMap.set(d.symbol, d)); 
+      } 
+    } catch {
+      alert("無法取得行情數據，請稍後重試。");
+      dom.scanBtn.disabled = false;
+      dom.scanBtn.innerText = "啟動極速掃描";
+      return;
+    }
+
+    const candidateSymbols = Array.from(tickerMap.keys()).filter(sym => { 
+      if (!sym.endsWith('USDT')) return false; 
+      return parseFloat(tickerMap.get(sym).quoteVolume) > MIN_VOLUME; 
+    }); 
+
+    dom.statTotal.innerText = candidateSymbols.length; 
+
+    rawResults = await processBatch(candidateSymbols, 10, (completed) => {
+      dom.progress.style.width = `${(completed / candidateSymbols.length) * 100}%`; 
+    });
+
+    rawResults.sort((a, b) => { 
+      if (a.categoryLevel !== b.categoryLevel) return a.categoryLevel - b.categoryLevel; 
+      if (a.aboveBarsCount !== b.aboveBarsCount) return a.aboveBarsCount - b.aboveBarsCount; 
+      return b.ma3DistPercent - a.ma3DistPercent; 
+    }); 
+
+    dom.statEntry.innerText = rawResults.length; 
+    dom.scanBtn.disabled = false; 
+    dom.scanBtn.innerText = "啟動極速掃描"; 
+    renderList(); 
+  } 
+
+  function renderList() { 
+    if (rawResults.length === 0) { 
+      dom.symbolList.innerHTML = `<div style="text-align:center; padding:40px; color:#64748b; font-weight:800;">目前無符合條件之標的</div>`; 
+      return; 
     } 
-  } 
-  return Promise.all(ret); 
-} 
+    const fragment = document.createDocumentFragment(); 
+    rawResults.forEach((item, index) => { 
+      const card = document.createElement('div'); 
+      card.className = 'symbol-card'; 
+      card.addEventListener('click', () => openChartModal(item.symbol)); 
 
-async function startScan() { 
-  const btn = document.getElementById('scanBtn'); 
-  btn.disabled = true; 
-  btn.innerText = "⚡ 掃描中..."; 
-  document.getElementById('symbolList').innerHTML = ''; 
+      const chg24Class = item.priceChange24h >= 0 ? 'val-up' : 'val-down'; 
+      const chg24Sign = item.priceChange24h >= 0 ? '+' : ''; 
 
-  const res = await fetch(`${API_BASE}/fapi/v1/ticker/24hr`); 
-  if (res.ok) { 
-    const data = await res.json(); 
-    tickerMap = {}; 
-    data.forEach(d => tickerMap[d.symbol] = d); 
-  } 
-
-  const candidateSymbols = Object.keys(tickerMap).filter(sym => { 
-    if (!sym.endsWith('USDT')) return false; 
-    return parseFloat(tickerMap[sym].quoteVolume) > 100000000; 
-  }); 
-
-  document.getElementById('statTotal').innerText = candidateSymbols.length; 
-  let completed = 0; 
-  const progressBar = document.getElementById('progress'); 
-  const updateProgress = () => { 
-    completed++; 
-    progressBar.style.width = `${(completed / candidateSymbols.length) * 100}%`; 
-  }; 
-
-  const results = await asyncPool(15, candidateSymbols, async (sym) => { 
-    const res = await fetchSymbolDetailsData(sym); 
-    updateProgress(); 
-    return res; 
-  }); 
-
-  rawResults = results.filter(Boolean).sort((a, b) => { 
-    if (a.categoryLevel !== b.categoryLevel) { 
-      return a.categoryLevel - b.categoryLevel; 
-    } 
-    if (a.aboveBarsCount !== b.aboveBarsCount) { 
-      return a.aboveBarsCount - b.aboveBarsCount; 
-    } 
-    return b.ma3DistPercent - a.ma3DistPercent; 
-  }); 
-
-  document.getElementById('statEntry').innerText = rawResults.length; 
-  btn.disabled = false; 
-  btn.innerText = "啟動極速掃描"; 
-  renderList(); 
-} 
-
-function renderList() { 
-  const container = document.getElementById('symbolList'); 
-  if (rawResults.length === 0) { 
-    container.innerHTML = `<div style="text-align:center; padding:40px; color:#64748b; font-weight:800;">目前無符合條件之標的</div>`; 
-    return; 
-  } 
-  const fragment = document.createDocumentFragment(); 
-  rawResults.forEach((item, index) => { 
-    const card = document.createElement('div'); 
-    card.className = 'symbol-card'; 
-    card.onclick = () => openChartModal(item.symbol); 
-
-    const chg24Class = item.priceChange24h >= 0 ? 'val-up' : 'val-down'; 
-    const chg24Sign = item.priceChange24h >= 0 ? '+' : ''; 
-
-    card.innerHTML = ` 
-      <div style="flex: 1;"> 
-        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;"> 
-          <span class="badge-rank">#${index + 1}</span> 
-          <span class="symbol-name">${item.symbol.replace('USDT','')}</span> 
-          <span class="${item.badgeClass}">${item.crossedText}</span> 
+      card.innerHTML = ` 
+        <div style="flex: 1;"> 
+          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;"> 
+            <span class="badge-rank">#${index + 1}</span> 
+            <span class="symbol-name">${item.symbol.replace('USDT','')}</span> 
+            <span class="${item.badgeClass}">${item.crossedText}</span> 
+          </div> 
+          <div class="detail-row"> 
+            距慢線 (60MA): <span class="val-up">+${item.ma3DistPercent.toFixed(2)}%</span> 
+          </div> 
+          <div class="detail-row"> 
+            24H 漲跌幅: <span class="${chg24Class}">${chg24Sign}${item.priceChange24h.toFixed(2)}%</span> 
+          </div> 
         </div> 
-        <div class="detail-row"> 
-          距慢線 (60MA): <span class="val-up">+${item.ma3DistPercent.toFixed(2)}%</span> 
+        <div style="text-align:right;"> 
+          <div class="symbol-price">${item.price}</div> 
+          <div style="font-size:0.7rem; color:var(--manga-cyan); margin-top:4px;">點擊看 K 線 📈</div>
         </div> 
-        <div class="detail-row"> 
-          24H 漲跌幅: <span class="${chg24Class}">${chg24Sign}${item.priceChange24h.toFixed(2)}%</span> 
-        </div> 
-      </div> 
-      <div style="text-align:right;"> 
-        <div class="symbol-price">${item.price}</div> 
-        <div style="font-size:0.7rem; color:var(--manga-cyan); margin-top:4px;">點擊看 K 線 📈</div>
-      </div> 
-    `; 
-    fragment.appendChild(card); 
-  }); 
-  container.replaceChildren(fragment); 
-} 
+      `; 
+      fragment.appendChild(card); 
+    }); 
+    dom.symbolList.replaceChildren(fragment); 
+  } 
 
-function openChartModal(symbol) {
-  const modal = document.getElementById('chartModal');
-  const title = document.getElementById('modalSymbolTitle');
-  
-  const formattedSymbol = `BINANCE:${symbol}.P`; 
-  title.innerText = `📈 ${symbol} (1H K線圖)`;
-  
-  modal.classList.add('active');
-  document.getElementById('tvChartContainer').innerHTML = ''; 
+  // 🚀 優化 Modal 開啟邏輯
+  function openChartModal(symbol) {
+    closeChartModal(); 
 
-  new TradingView.widget({
-    "autosize": true,
-    "symbol": formattedSymbol,
-    "interval": "60", 
-    "timezone": "Asia/Taipei",
-    "theme": "dark",
-    "style": "1", 
-    "locale": "zh_TW",
-    "toolbar_bg": "#f1f3f6",
-    "enable_publishing": false,
-    "hide_top_toolbar": false,
-    "allow_symbol_change": false,
-    "container_id": "tvChartContainer",
-    "studies": [
-      // --- 價格均線 ---
-      { 
-        "id": "MASimple@tv-basicstudies", 
-        "inputs": { "length": 5 }, 
-        "styles": { "plot": { "color": "#00ff66", "linewidth": 2 } } // 5MA: 螢光綠
-      },  
-      { 
-        "id": "MASimple@tv-basicstudies", 
-        "inputs": { "length": 30 }, 
-        "styles": { "plot": { "color": "#ffea00", "linewidth": 2 } } // 30MA: 黃色
-      }, 
-      { 
-        "id": "MASimple@tv-basicstudies", 
-        "inputs": { "length": 45 }, 
-        "styles": { "plot": { "color": "#ff9100", "linewidth": 2 } } // 45MA: 橘色
-      }, 
-      { 
-        "id": "MASimple@tv-basicstudies", 
-        "inputs": { "length": 60 }, 
-        "styles": { "plot": { "color": "#ff007f", "linewidth": 2 } } // 60MA: 桃紅/紅色
-      },
-      // --- 純均量線 (隱藏成交量柱體) ---
-      { 
-        "id": "Volume@tv-basicstudies", 
-        "inputs": { "showMA": true, "maLength": 5 },
-        "styles": { 
-          "vol": { "visible": false }, // 隱藏柱體
-          "volume ma": { "color": "#00f0ff", "linewidth": 2 } // 5VM: 青藍色
-        } 
-      },
-      { 
-        "id": "Volume@tv-basicstudies", 
-        "inputs": { "showMA": true, "maLength": 20 },
-        "styles": { 
-          "vol": { "visible": false }, // 隱藏柱體
-          "volume ma": { "color": "#9d4edd", "linewidth": 2 } // 20VM: 紫色
-        } 
+    const formattedSymbol = `BINANCE:${symbol}.P`; 
+    dom.modalTitle.innerText = `📈 ${symbol} (1H K線圖)`;
+    
+    // 顯示 Loading & 開啟視窗 & 鎖定背景滾動
+    dom.chartLoading.style.display = 'flex';
+    dom.chartModal.classList.add('active');
+    dom.chartModal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('modal-open');
+
+    tvWidget = new TradingView.widget({
+      "autosize": true,
+      "symbol": formattedSymbol,
+      "interval": "60", 
+      "timezone": "Asia/Taipei",
+      "theme": "dark",
+      "style": "1", 
+      "locale": "zh_TW",
+      "toolbar_bg": "#f1f3f6",
+      "enable_publishing": false,
+      "hide_top_toolbar": false,
+      "allow_symbol_change": false,
+      "container_id": "tvChartContainer",
+      "studies": [
+        { "id": "MASimple@tv-basicstudies", "inputs": { "length": 5 }, "styles": { "plot": { "color": "#00ff66", "linewidth": 2 } } },  
+        { "id": "MASimple@tv-basicstudies", "inputs": { "length": 30 }, "styles": { "plot": { "color": "#ffea00", "linewidth": 2 } } }, 
+        { "id": "MASimple@tv-basicstudies", "inputs": { "length": 45 }, "styles": { "plot": { "color": "#ff9100", "linewidth": 2 } } }, 
+        { "id": "MASimple@tv-basicstudies", "inputs": { "length": 60 }, "styles": { "plot": { "color": "#ff007f", "linewidth": 2 } } },
+        { "id": "Volume@tv-basicstudies", "inputs": { "showMA": true, "maLength": 5 }, "styles": { "vol": { "visible": false }, "volume ma": { "color": "#00f0ff", "linewidth": 2 } } },
+        { "id": "Volume@tv-basicstudies", "inputs": { "showMA": true, "maLength": 20 }, "styles": { "vol": { "visible": false }, "volume ma": { "color": "#9d4edd", "linewidth": 2 } } }
+      ],
+      "onChartReady": function() {
+        // 圖表渲染完畢，隱藏 Loading Spinner
+        dom.chartLoading.style.display = 'none';
       }
-    ]
-  });
-}
+    });
+  }
 
-function closeChartModal(event) {
-  if (event && event.target !== event.currentTarget) return;
-  const modal = document.getElementById('chartModal');
-  modal.classList.remove('active');
-  document.getElementById('tvChartContainer').innerHTML = ''; 
-}
+  // 🚀 優化 Modal 關閉邏輯
+  function closeChartModal() {
+    if (tvWidget && typeof tvWidget.remove === 'function') {
+      try { tvWidget.remove(); } catch {}
+      tvWidget = null;
+    }
+    dom.tvContainer.replaceChildren();
+    dom.chartModal.classList.remove('active');
+    dom.chartModal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('modal-open'); // 恢復背景滾動
+  }
+
+  // 事件監聽綁定
+  dom.scanBtn.addEventListener('click', startScan);
+  dom.closeModalBtn.addEventListener('click', closeChartModal);
+  
+  // 點擊 Modal 背景黑影處自動關閉
+  dom.chartModal.addEventListener('click', (e) => {
+    if (e.target === dom.chartModal) closeChartModal();
+  });
+  
+  // Esc 鍵快捷關閉
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && dom.chartModal.classList.contains('active')) {
+      closeChartModal();
+    }
+  });
+})();
 </script> 
 </body> 
 </html>
