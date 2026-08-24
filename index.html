@@ -344,7 +344,7 @@ function openChartModal(symbol) {
     "allow_symbol_change": false,
     "container_id": "tvChartContainer",
     "studies": [
-      // --- 價格均線 (不同顏色區隔) ---
+      // --- 價格均線 ---
       { 
         "id": "MASimple@tv-basicstudies", 
         "inputs": { "length": 5 }, 
@@ -365,16 +365,22 @@ function openChartModal(symbol) {
         "inputs": { "length": 60 }, 
         "styles": { "plot": { "color": "#ff007f", "linewidth": 2 } } // 60MA: 桃紅/紅色
       },
-      // --- 成交量均線 (5VM / 20VM) ---
+      // --- 純均量線 (隱藏成交量柱體) ---
       { 
         "id": "Volume@tv-basicstudies", 
         "inputs": { "showMA": true, "maLength": 5 },
-        "styles": { "volume ma": { "color": "#00f0ff", "linewidth": 2 } } // 5VM: 青藍色
+        "styles": { 
+          "vol": { "visible": false }, // 隱藏柱體
+          "volume ma": { "color": "#00f0ff", "linewidth": 2 } // 5VM: 青藍色
+        } 
       },
       { 
         "id": "Volume@tv-basicstudies", 
         "inputs": { "showMA": true, "maLength": 20 },
-        "styles": { "volume ma": { "color": "#9d4edd", "linewidth": 2 } } // 20VM: 紫色
+        "styles": { 
+          "vol": { "visible": false }, // 隱藏柱體
+          "volume ma": { "color": "#9d4edd", "linewidth": 2 } // 20VM: 紫色
+        } 
       }
     ]
   });
@@ -383,7 +389,6 @@ function openChartModal(symbol) {
 function closeChartModal(event) {
   if (event && event.target !== event.currentTarget) return;
   const modal = document.getElementById('chartModal');
-  modal.classList.remove('remove');
   modal.classList.remove('active');
   document.getElementById('tvChartContainer').innerHTML = ''; 
 }
