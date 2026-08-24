@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>⚡ 1H MA 多頭篩選</title>
+    <title>⚡ 1H MA 多頭篩選器</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@700;800&display=swap');
 
@@ -14,6 +14,7 @@
             --yellow: #ffe600;
             --pink: #ff007f;
             --purple: #a855f7;
+            --orange: #ff9900;
             --green: #00ff66;
             --red: #ff3366;
             --border: #233048;
@@ -27,7 +28,7 @@
             user-select: none;
         }
 
-        /* 頂部極簡 Header */
+        /* 頂部 Header */
         .app-header { 
             position: sticky; top: 0; z-index: 100; 
             background: #0f1524; border-bottom: 2px solid var(--cyan); 
@@ -43,7 +44,7 @@
         }
         .scan-btn:disabled { opacity: 0.5; filter: grayscale(1); }
 
-        /* BTC & ETH 頂部快速看板 */
+        /* BTC & ETH 頂部看板 */
         .crypto-ticker-bar {
             display: flex; background: #070a12; border: 1px solid var(--border);
             padding: 4px 8px; border-radius: 4px; justify-content: space-around;
@@ -55,7 +56,7 @@
         .progress-container { height: 3px; background: #090d16; width: 100%; }
         .progress-fill { height: 100%; width: 0%; background: var(--cyan); transition: width 0.05s ease-out; }
 
-        /* 極簡計數狀態欄 */
+        /* 計數欄 */
         .stats-bar {
             display: flex; justify-content: space-between; padding: 6px 12px;
             font-size: 0.75rem; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border);
@@ -63,7 +64,7 @@
         }
         .stats-bar b { color: #fff; }
 
-        /* 標的清單（單行化） */
+        /* 清單列表 */
         .container { padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; }
         .symbol-card { 
             background: var(--card-bg); border: 1px solid var(--border); 
@@ -78,7 +79,7 @@
         .symbol-price { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #e0e6ed; }
         .symbol-dist { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 800; }
 
-        /* Mobile Modal 滿版優化 */
+        /* Mobile Modal */
         .modal-backdrop {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px);
@@ -86,22 +87,22 @@
         }
         .modal-card {
             background: var(--card-bg); border: 1px solid var(--cyan);
-            border-radius: 12px 12px 0 0; width: 100%; padding: 14px;
-            max-height: 85vh; overflow-y: auto;
+            border-radius: 12px 12px 0 0; width: 100%; padding: 12px;
+            max-height: 90vh; overflow-y: auto;
         }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
         
         .chart-container {
             background: #070a12; border: 1px solid var(--border); border-radius: 6px;
             padding: 6px; margin-bottom: 8px;
         }
         .chart-title { font-size: 0.65rem; color: #8a9bbd; margin-bottom: 4px; display: flex; justify-content: space-between; }
-        canvas { width: 100%; height: 180px; display: block; }
+        canvas { width: 100%; height: 230px; display: block; }
 
         .info-grid { 
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;
-            background: #070a12; border: 1px solid var(--border); padding: 8px; border-radius: 6px; margin-bottom: 10px;
-            font-size: 0.75rem; font-family: 'JetBrains Mono', monospace;
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 12px;
+            background: #070a12; border: 1px solid var(--border); padding: 8px; border-radius: 6px; margin-bottom: 8px;
+            font-size: 0.72rem; font-family: 'JetBrains Mono', monospace;
         }
         .info-item { display: flex; justify-content: space-between; }
         .info-item span { color: #8a9bbd; }
@@ -120,7 +121,7 @@
 
     <div class="app-header">
         <div class="header-top">
-            <div class="header-title">⚡ 1H 多頭排列篩選</div>
+            <div class="header-title">⚡ 1H MA 多頭篩選</div>
             <button id="scanBtn" class="scan-btn" onclick="startScan()">開始掃描</button>
         </div>
         <div class="crypto-ticker-bar">
@@ -157,10 +158,17 @@
             
             <div class="chart-container">
                 <div class="chart-title">
-                    <span>1H 近 80 根 K 線</span>
-                    <span><span style="color:var(--yellow);">●5</span> <span style="color:var(--pink);">●30</span> <span style="color:var(--purple);">●45</span> <span style="color:var(--green);">●60</span></span>
+                    <span>1H 近 100 根 K 線 & 量均線</span>
+                    <span>
+                        <span style="color:var(--orange);">●5</span> 
+                        <span style="color:var(--pink);">●30</span> 
+                        <span style="color:var(--purple);">●45</span> 
+                        <span style="color:var(--green);">●60</span> | 
+                        <span style="color:var(--yellow);">●5VM</span> 
+                        <span style="color:var(--purple);">●20VM</span>
+                    </span>
                 </div>
-                <canvas id="klineCanvas" width="480" height="180"></canvas>
+                <canvas id="klineCanvas" width="480" height="230"></canvas>
             </div>
 
             <div class="info-grid">
@@ -171,6 +179,8 @@
                 <div class="info-item"><span>快(30)</span><b id="valMA1">0</b></div>
                 <div class="info-item"><span>中(45)</span><b id="valMA2">0</b></div>
                 <div class="info-item"><span>慢(60)</span><b id="valMA3">0</b></div>
+                <div class="info-item"><span>5VM</span><b id="valVM5" style="color:var(--yellow);">0</b></div>
+                <div class="info-item"><span>20VM</span><b id="valVM20" style="color:var(--purple);">0</b></div>
             </div>
 
             <a id="binanceLink" href="#" target="_blank" class="binance-btn">🚀 幣安交易</a>
@@ -182,7 +192,9 @@
     let rawResults = [];
     let tickerMap = {};
 
-    const P0 = 5, P1 = 30, P2 = 45, P3 = 60, DISPLAY_COUNT = 80;
+    const P0 = 5, P1 = 30, P2 = 45, P3 = 60;
+    const VM1 = 5, VM2 = 20;
+    const DISPLAY_COUNT = 100; // 調整為 100 根 K 線
 
     window.addEventListener('DOMContentLoaded', updateHeaderTickers);
 
@@ -222,18 +234,25 @@
         return Promise.all(ret);
     }
 
-    function calculateAllSMA(closes, periods) {
-        const result = {}, len = closes.length;
-        for (const p of periods) {
-            if (len < p) { result[p] = new Array(len).fill(null); continue; }
-            const ma = new Array(len).fill(null);
-            let sum = 0;
-            for (let i = 0; i < p; i++) sum += closes[i];
-            ma[p - 1] = sum / p;
-            for (let i = p; i < len; i++) { sum += closes[i] - closes[i - p]; ma[i] = sum / p; }
-            result[p] = ma;
+    function calculateSMA(dataArray, period) {
+        const len = dataArray.length;
+        if (len < period) return new Array(len).fill(null);
+        const ma = new Array(len).fill(null);
+        let sum = 0;
+        for (let i = 0; i < period; i++) sum += dataArray[i];
+        ma[period - 1] = sum / period;
+        for (let i = period; i < len; i++) {
+            sum += dataArray[i] - dataArray[i - period];
+            ma[i] = sum / period;
         }
-        return result;
+        return ma;
+    }
+
+    function formatVol(val) {
+        if (!val) return '0';
+        if (val >= 1e6) return (val / 1e6).toFixed(2) + 'M';
+        if (val >= 1e3) return (val / 1e3).toFixed(1) + 'K';
+        return val.toFixed(1);
     }
 
     async function fetchSymbolDetailsData(symbol) {
@@ -245,20 +264,42 @@
         if (totalLen < P3) return null;
 
         const closes = klinesRaw.map(k => parseFloat(k[4]));
+        const volumes = klinesRaw.map(k => parseFloat(k[5]));
         const price = closes[totalLen - 1];
 
-        const fullMas = calculateAllSMA(closes, [P0, P1, P2, P3]);
-        const ma5 = fullMas[P0][totalLen - 1], ma1 = fullMas[P1][totalLen - 1], ma2 = fullMas[P2][totalLen - 1], ma3 = fullMas[P3][totalLen - 1];
+        // 計算價格 SMA
+        const ma5Arr = calculateSMA(closes, P0);
+        const ma1Arr = calculateSMA(closes, P1);
+        const ma2Arr = calculateSMA(closes, P2);
+        const ma3Arr = calculateSMA(closes, P3);
+
+        // 計算成交量 SMA
+        const vm5Arr = calculateSMA(volumes, VM1);
+        const vm20Arr = calculateSMA(volumes, VM2);
+
+        const ma5 = ma5Arr[totalLen - 1];
+        const ma1 = ma1Arr[totalLen - 1];
+        const ma2 = ma2Arr[totalLen - 1];
+        const ma3 = ma3Arr[totalLen - 1];
+
+        const vm5 = vm5Arr[totalLen - 1];
+        const vm20 = vm20Arr[totalLen - 1];
 
         const ma3DistPercent = ((price - ma3) / ma3) * 100;
         const priceChange24h = tickerMap[symbol] ? parseFloat(tickerMap[symbol].priceChangePercent) : 0;
 
         return { 
-            symbol, price, ma5, ma1, ma2, ma3, ma3DistPercent, priceChange24h, 
+            symbol, price, ma5, ma1, ma2, ma3, vm5, vm20, ma3DistPercent, priceChange24h, 
             klines: klinesRaw.slice(-DISPLAY_COUNT), 
             maSeries: {
-                [P0]: fullMas[P0].slice(-DISPLAY_COUNT), [P1]: fullMas[P1].slice(-DISPLAY_COUNT),
-                [P2]: fullMas[P2].slice(-DISPLAY_COUNT), [P3]: fullMas[P3].slice(-DISPLAY_COUNT)
+                [P0]: ma5Arr.slice(-DISPLAY_COUNT),
+                [P1]: ma1Arr.slice(-DISPLAY_COUNT),
+                [P2]: ma2Arr.slice(-DISPLAY_COUNT),
+                [P3]: ma3Arr.slice(-DISPLAY_COUNT)
+            },
+            vmSeries: {
+                [VM1]: vm5Arr.slice(-DISPLAY_COUNT),
+                [VM2]: vm20Arr.slice(-DISPLAY_COUNT)
             },
             isBullish: (ma1 > ma2 && ma2 > ma3 && price >= ma3)
         };
@@ -335,49 +376,82 @@
         ctx.clearRect(0, 0, width, height);
 
         const klines = item.klines, displayCount = klines.length;
+        
+        // 區分價格區 (70%) 與 成交量區 (25%)
+        const priceChartHeight = height * 0.68;
+        const volChartHeight = height * 0.25;
+        const volAreaTop = height - volChartHeight;
+
         let minPrice = Infinity, maxPrice = -Infinity;
+        let maxVol = -Infinity;
 
         for (let i = 0; i < displayCount; i++) {
             const high = parseFloat(klines[i][2]), low = parseFloat(klines[i][3]);
+            const vol = parseFloat(klines[i][5]);
             if (high > maxPrice) maxPrice = high;
             if (low < minPrice) minPrice = low;
+            if (vol > maxVol) maxVol = vol;
         }
 
-        const padding = 10, chartHeight = height - padding * 2, priceRange = maxPrice - minPrice || 1;
-        const getY = (price) => height - padding - ((price - minPrice) / priceRange) * chartHeight;
+        const padding = 6;
+        const priceRange = maxPrice - minPrice || 1;
+        const getYPrice = (price) => priceChartHeight - padding - ((price - minPrice) / priceRange) * (priceChartHeight - padding * 2);
+        const getYVol = (vol) => height - ((vol / (maxVol || 1)) * (volChartHeight - 4));
+
         const candleWidth = (width / displayCount) * 0.65, stepX = width / displayCount;
 
+        // 1. 繪製 K 線 & 成交量柱狀圖
         klines.forEach((k, idx) => {
             const open = parseFloat(k[1]), high = parseFloat(k[2]), low = parseFloat(k[3]), close = parseFloat(k[4]);
+            const vol = parseFloat(k[5]);
             const x = idx * stepX + stepX / 2, isUp = close >= open;
 
             ctx.strokeStyle = isUp ? '#00ff66' : '#ff3366';
             ctx.fillStyle = isUp ? '#00ff66' : '#ff3366';
 
+            // K線 影線
             ctx.beginPath();
-            ctx.moveTo(x, getY(high)); ctx.lineTo(x, getY(low));
+            ctx.moveTo(x, getYPrice(high)); ctx.lineTo(x, getYPrice(low));
             ctx.stroke();
 
-            const topY = getY(Math.max(open, close)), bottomY = getY(Math.min(open, close));
+            // K線 實體
+            const topY = getYPrice(Math.max(open, close)), bottomY = getYPrice(Math.min(open, close));
             ctx.fillRect(x - candleWidth / 2, topY, candleWidth, Math.max(1, bottomY - topY));
+
+            // 成交量柱
+            const vY = getYVol(vol);
+            ctx.globalAlpha = 0.4;
+            ctx.fillRect(x - candleWidth / 2, vY, candleWidth, height - vY);
+            ctx.globalAlpha = 1.0;
         });
 
-        const drawMA = (maValues, color) => {
-            ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 1.2;
+        // 分隔虛線
+        ctx.strokeStyle = '#233048';
+        ctx.setLineDash([2, 2]);
+        ctx.beginPath(); ctx.moveTo(0, volAreaTop); ctx.lineTo(width, volAreaTop); ctx.stroke();
+        ctx.setLineDash([]);
+
+        // 2. 繪製價格 MA 均線
+        const drawLine = (series, color, getYFunc, width = 1.2) => {
+            ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = width;
             let started = false;
             for (let i = 0; i < displayCount; i++) {
-                if (maValues[i] !== null) {
-                    const x = i * stepX + stepX / 2, y = getY(maValues[i]);
+                if (series[i] !== null) {
+                    const x = i * stepX + stepX / 2, y = getYFunc(series[i]);
                     if (!started) { ctx.moveTo(x, y); started = true; } else { ctx.lineTo(x, y); }
                 }
             }
             ctx.stroke();
         };
 
-        drawMA(item.maSeries[P0], '#ffe600');
-        drawMA(item.maSeries[P1], '#ff007f');
-        drawMA(item.maSeries[P2], '#a855f7');
-        drawMA(item.maSeries[P3], '#00ff66');
+        drawLine(item.maSeries[P0], '#ff9900', getYPrice, 1.5);
+        drawLine(item.maSeries[P1], '#ff007f', getYPrice);
+        drawLine(item.maSeries[P2], '#a855f7', getYPrice);
+        drawLine(item.maSeries[P3], '#00ff66', getYPrice);
+
+        // 3. 繪製成交量均線 (5VM & 20VM)
+        drawLine(item.vmSeries[VM1], '#ffe600', getYVol, 1.0);
+        drawLine(item.vmSeries[VM2], '#a855f7', getYVol, 1.0);
     }
 
     async function openModalForSymbol(symbol) {
@@ -401,6 +475,10 @@
         document.getElementById('valMA1').innerText = item.ma1.toFixed(4);
         document.getElementById('valMA2').innerText = item.ma2.toFixed(4);
         document.getElementById('valMA3').innerText = item.ma3.toFixed(4);
+
+        // 顯示 5VM & 20VM 數據
+        document.getElementById('valVM5').innerText = formatVol(item.vm5);
+        document.getElementById('valVM20').innerText = formatVol(item.vm20);
 
         document.getElementById('binanceLink').href = `https://www.binance.com/zh-TC/futures/${item.symbol}`;
         document.getElementById('tradeModal').style.display = 'flex';
