@@ -3,7 +3,9 @@
 <head> 
 <meta charset="UTF-8"> 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
-<title>⚡ 1H MA 多頭 + 5MA 突破狀態全排行篩選器</title> 
+<title>⚡ 1H MA 多頭 + 5MA 突破狀態全排行 (含 K 棒圖表)</title> 
+<!-- 引入 TradingView 圖表庫 -->
+<script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
 <style> 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@700;800;900&display=swap'); 
 :root { 
@@ -17,7 +19,6 @@
   --manga-orange: #ff9100; 
   --manga-green: #00ff66; 
   --manga-red: #ff2a6d; 
-  --pop-shadow: 0 10px 30px -10px rgba(0, 240, 255, 0.3); 
 } 
 * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; } 
 body { 
@@ -56,11 +57,15 @@ body {
 .stat-card.entry { border-color: rgba(255, 0, 127, 0.4); } 
 .stat-card.entry .val { color: var(--manga-pink); text-shadow: 0 0 10px rgba(255, 0, 127, 0.3); } 
 .container { padding: 0 16px; } 
+
+/* 卡片點擊樣式 */
 .symbol-card { 
   background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.08); border-left: 4px solid var(--manga-green); border-radius: 12px; 
   padding: 14px 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(10px); 
+  cursor: pointer; transition: all 0.2s ease;
 } 
-.symbol-card:hover { border-color: var(--manga-cyan); background: rgba(255, 255, 255, 0.05); } 
+.symbol-card:hover { border-color: var(--manga-cyan); background: rgba(0, 240, 255, 0.08); transform: translateY(-2px); } 
+.symbol-card:active { transform: scale(0.98); }
 .symbol-name { font-family: 'JetBrains Mono', monospace; font-size: 1.15rem; font-weight: 800; } 
 .symbol-price { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; color: var(--manga-yellow); font-weight: 700; } 
 .detail-row { font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; color: #94a3b8; margin-top: 4px; } 
@@ -69,20 +74,45 @@ body {
 .badge-bar-1 { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 0, 127, 0.25); color: var(--manga-pink); border: 1px solid var(--manga-pink); box-shadow: 0 0 8px rgba(255, 0, 127, 0.4); } 
 .badge-bar-2 { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 234, 0, 0.2); color: var(--manga-yellow); border: 1px solid var(--manga-yellow); } 
 .badge-bar-3 { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(0, 240, 255, 0.15); color: var(--manga-cyan); border: 1px solid var(--manga-cyan); } 
-
 .badge-rank { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 255, 255, 0.1); color: #fff; } 
 .val-up { color: var(--manga-green); } 
 .val-down { color: var(--manga-red); } 
+
+/* K棒圖表 Modal 彈窗樣式 */
+.chart-modal {
+  display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(4, 6, 14, 0.85); backdrop-filter: blur(12px); z-index: 1000;
+  justify-content: center; align-items: center; padding: 12px;
+}
+.chart-modal.active { display: flex; }
+.chart-box {
+  width: 100%; max-width: 900px; height: 85vh; background: #0b0f19;
+  border: 1px solid var(--manga-cyan); border-radius: 16px; overflow: hidden;
+  display: flex; flex-direction: column; box-shadow: 0 0 30px rgba(0, 240, 255, 0.3);
+}
+.chart-header {
+  padding: 12px 16px; background: #131927; display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.chart-title { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 800; color: var(--manga-cyan); }
+.close-btn {
+  background: rgba(255,255,255,0.1); color: #fff; border: none; border-radius: 50%;
+  width: 32px; height: 32px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.close-btn:hover { background: var(--manga-red); }
+.chart-container { flex: 1; width: 100%; height: 100%; }
 </style> 
 </head> 
 <body> 
+
 <div class="app-header"> 
   <div class="header-top"> 
-    <div class="header-title">⚡ 5MA 突破狀態全排行 (1根 / 2根 / 3根+)</div> 
+    <div class="header-title">⚡ 5MA 突破狀態全排行 (點擊查看 K 棒)</div> 
     <button id="scanBtn" class="scan-btn" onclick="startScan()">啟動極速掃描</button> 
   </div> 
 </div> 
 <div class="progress-container"><div id="progress" class="progress-fill"></div></div> 
+
 <div class="dashboard"> 
   <div class="stat-card"> 
     <div class="val" id="statTotal" style="color:var(--manga-cyan)">0</div> 
@@ -93,7 +123,19 @@ body {
     <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">符合 5MA 站上標的</div> 
   </div> 
 </div> 
+
 <div class="container" id="symbolList"></div> 
+
+<!-- K棒圖表 Modal -->
+<div id="chartModal" class="chart-modal" onclick="closeChartModal(event)">
+  <div class="chart-box" onclick="event.stopPropagation()">
+    <div class="chart-header">
+      <div id="modalSymbolTitle" class="chart-title">BINANCE:BTCUSDT.P</div>
+      <button class="close-btn" onclick="closeChartModal()">✕</button>
+    </div>
+    <div id="tvChartContainer" class="chart-container"></div>
+  </div>
+</div>
 
 <script> 
 const API_BASE = 'https://fapi.binance.com'; 
@@ -126,22 +168,19 @@ async function fetchSymbolDetailsData(symbol) {
   const closes = klinesRaw.map(k => parseFloat(k[4])); 
   const price = closes[totalLen - 1]; 
 
-  // 計算價格 MA 均線
   const ma5Series = calculateSMA(closes, P0); 
   const ma1 = calculateSMA(closes, P1)[totalLen - 1]; 
   const ma2 = calculateSMA(closes, P2)[totalLen - 1]; 
   const ma3 = calculateSMA(closes, P3)[totalLen - 1]; 
 
-  // 1. 基礎條件：30 / 45 / 60 MA 多頭排列，且當前價格在 5MA 與 60MA 之上
   const isBullishMA = (ma1 > ma2 && ma2 > ma3 && price >= ma3); 
   if (!isBullishMA) return null; 
 
   const currentPrice = closes[totalLen - 1]; 
   const currentMA5 = ma5Series[totalLen - 1]; 
 
-  if (currentPrice <= currentMA5) return null; // 當前必須站上 5MA 
+  if (currentPrice <= currentMA5) return null; 
 
-  // 2. 計算連續在 5MA 之上的 K 線根數
   let aboveBarsCount = 0; 
   for (let i = totalLen - 1; i >= 0; i--) { 
     if (closes[i] > ma5Series[i]) { 
@@ -151,8 +190,7 @@ async function fetchSymbolDetailsData(symbol) {
     } 
   } 
 
-  // 分類標籤與狀態
-  let categoryLevel = 3; // 1: 剛過1根, 2: 剛過2根, 3: 3根以上
+  let categoryLevel = 3; 
   let crossedText = ''; 
   let badgeClass = ''; 
 
@@ -227,10 +265,6 @@ async function startScan() {
     return res; 
   }); 
 
-  // --- 排序邏輯 --- 
-  // 1. 先比較類別階梯：剛過 1 根 > 剛過 2 根 > 3 根以上
-  // 2. 同為 3 根以上時，優先比較連站根數 (少到多 / 近期剛發動優先) 
-  // 3. 最後比較距慢線 (60MA) 的延伸幅度
   rawResults = results.filter(Boolean).sort((a, b) => { 
     if (a.categoryLevel !== b.categoryLevel) { 
       return a.categoryLevel - b.categoryLevel; 
@@ -257,6 +291,7 @@ function renderList() {
   rawResults.forEach((item, index) => { 
     const card = document.createElement('div'); 
     card.className = 'symbol-card'; 
+    card.onclick = () => openChartModal(item.symbol); // 綁定點擊跳出 K 棒事件
 
     const chg24Class = item.priceChange24h >= 0 ? 'val-up' : 'val-down'; 
     const chg24Sign = item.priceChange24h >= 0 ? '+' : ''; 
@@ -277,12 +312,53 @@ function renderList() {
       </div> 
       <div style="text-align:right;"> 
         <div class="symbol-price">${item.price}</div> 
+        <div style="font-size:0.7rem; color:var(--manga-cyan); margin-top:4px;">點擊看 K 線 📈</div>
       </div> 
     `; 
     fragment.appendChild(card); 
   }); 
   container.replaceChildren(fragment); 
 } 
+
+// --- TradingView K 棒彈窗控制邏輯 ---
+function openChartModal(symbol) {
+  const modal = document.getElementById('chartModal');
+  const title = document.getElementById('modalSymbolTitle');
+  
+  const formattedSymbol = `BINANCE:${symbol}.P`; // 永續合約 TradingView 格式
+  title.innerText = `📈 ${symbol} (1H K線圖)`;
+  
+  modal.classList.add('active');
+  document.getElementById('tvChartContainer').innerHTML = ''; // 清空舊圖表
+
+  new TradingView.widget({
+    "autosize": true,
+    "symbol": formattedSymbol,
+    "interval": "60", // 1H K線
+    "timezone": "Asia/Taipei",
+    "theme": "dark",
+    "style": "1", // 燭台圖
+    "locale": "zh_TW",
+    "toolbar_bg": "#f1f3f6",
+    "enable_publishing": false,
+    "hide_top_toolbar": false,
+    "allow_symbol_change": false,
+    "container_id": "tvChartContainer",
+    "studies": [
+      { "id": "MASimple@tv-basicstudies", "inputs": { "length": 5 } },  // 5MA
+      { "id": "MASimple@tv-basicstudies", "inputs": { "length": 30 } }, // 30MA
+      { "id": "MASimple@tv-basicstudies", "inputs": { "length": 45 } }, // 45MA
+      { "id": "MASimple@tv-basicstudies", "inputs": { "length": 60 } }  // 60MA
+    ]
+  });
+}
+
+function closeChartModal(event) {
+  if (event && event.target !== event.currentTarget) return;
+  const modal = document.getElementById('chartModal');
+  modal.classList.remove('active');
+  document.getElementById('tvChartContainer').innerHTML = ''; // 關閉時銷毀圖表釋放記憶體
+}
 </script> 
 </body> 
 </html>
