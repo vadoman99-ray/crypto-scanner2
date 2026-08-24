@@ -447,9 +447,10 @@
 
         await updateHeaderTickers();
 
+        // 篩選條件改為：漲跌幅 >= 10%
         const candidateSymbols = Object.keys(tickerMap).filter(sym => 
             sym.endsWith('USDT') && 
-            parseFloat(tickerMap[sym].priceChangePercent) > 0 && 
+            parseFloat(tickerMap[sym].priceChangePercent) >= 10 && 
             parseFloat(tickerMap[sym].quoteVolume) > 10000000
         );
 
