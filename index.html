@@ -3,7 +3,7 @@
 <head> 
 <meta charset="UTF-8"> 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
-<title>⚡ 1H MA 多頭排列極速篩選器 (振幅版)</title> 
+<title>⚡ 1H MA 多頭排列極速篩選器</title> 
 <style> 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@700;800;900&display=swap'); 
 :root { 
@@ -153,7 +153,6 @@ canvas { width: 100%; height: 260px; display: block; }
 .val-up { color: var(--manga-green); } 
 .val-down { color: var(--manga-red); } 
 .highlight-ma3 { color: var(--manga-green); font-weight: 800; } 
-.highlight-amp { color: var(--manga-cyan); font-weight: 800; }
 </style> 
 </head> 
 <body> 
@@ -184,7 +183,7 @@ canvas { width: 100%; height: 260px; display: block; }
 <div class="dashboard"> 
   <div class="stat-card"> 
     <div class="val" id="statTotal" style="color:var(--manga-cyan)">0</div> 
-    <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">掃描目標數 (振幅≥10%)</div> 
+    <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">掃描目標數 (成交量>1,000萬)</div> 
   </div> 
   <div class="stat-card entry"> 
     <div class="val" id="statEntry">0</div> 
@@ -215,7 +214,6 @@ canvas { width: 100%; height: 260px; display: block; }
     <div class="info-box"> 
       <div class="info-row"><span>當前現價</span><b id="valPrice" style="color:var(--manga-yellow);">0</b></div> 
       <div class="info-row"><span>20根1H K線新高</span><b id="val20kHigh">--</b></div> 
-      <div class="info-row"><span>24H 振幅</span><b id="val24hAmp" class="highlight-amp">0%</b></div> 
       <div class="info-row"><span>距慢線幅度</span><b id="valMa3Dist" class="highlight-ma3">0%</b></div> 
       <div class="info-row"><span>24H 漲跌幅</span><b id="val24hChange">0%</b></div> 
       <div class="info-row"><span>5 Vol MA (5均量)</span><b id="valVolMA5" style="color:var(--manga-yellow);">0</b></div> 
@@ -316,17 +314,7 @@ async function fetchSymbolDetailsData(symbol) {
   const past20MaxHigh = Math.max(...past20Klines.map(k => parseFloat(k[2]))); 
   const is20kHigh = price >= past20MaxHigh; 
 
-  // --- 計算 24 小時振幅與漲跌幅 --- //
-  let amplitude24h = 0;
-  let priceChange24h = 0;
-  if (tickerMap[symbol]) {
-    const high24 = parseFloat(tickerMap[symbol].highPrice);
-    const low24 = parseFloat(tickerMap[symbol].lowPrice);
-    if (low24 > 0) {
-      amplitude24h = ((high24 - low24) / low24) * 100;
-    }
-    priceChange24h = parseFloat(tickerMap[symbol].priceChangePercent);
-  }
+  const priceChange24h = tickerMap[symbol] ? parseFloat(tickerMap[symbol].priceChangePercent) : 0; 
 
   const ma5 = calculateSMA(closes, P0)[totalLen - 1]; 
   const ma1 = calculateSMA(closes, P1)[totalLen - 1]; 
@@ -354,7 +342,7 @@ async function fetchSymbolDetailsData(symbol) {
 
   const resultData = { 
     symbol, price, ma5, ma1, ma2, ma3, volMa5, volMa20, 
-    ma3DistPercent, priceChange24h, amplitude24h, is20kHigh,
+    ma3DistPercent, priceChange24h, is20kHigh, 
     klines: displayKlines, maSeries: displayMas, volMaSeries: displayVolMas, 
     isBullish: (ma1 > ma2 && ma2 > ma3 && price >= ma3) 
   }; 
@@ -381,19 +369,13 @@ async function startScan() {
   document.getElementById('symbolList').innerHTML = ''; 
   await updateHeaderTickers(); 
 
-  // ⚡ 篩選條件調整：從 24H 漲跌幅 >= 10% 改為 24H 振幅 >= 10% ⚡
-  const candidateSymbols = Object.keys(tickerMap).filter(sym => {
-    if (!sym.endsWith('USDT')) return false;
-    const ticker = tickerMap[sym];
-    const high = parseFloat(ticker.highPrice);
-    const low = parseFloat(ticker.lowPrice);
-    const quoteVol = parseFloat(ticker.quoteVolume);
-    
-    // 計算振幅: (High - Low) / Low
-    const amplitude = low > 0 ? ((high - low) / low) * 100 : 0;
-    
-    return amplitude >= 10 && quoteVol > 10000000;
-  });
+  // ⚡ 已取消 24H 漲跌幅限制，僅保留 交易量 > 1,000萬 USDT ⚡
+  const candidateSymbols = Object.keys(tickerMap).filter(sym => { 
+    if (!sym.endsWith('USDT')) return false; 
+    const ticker = tickerMap[sym]; 
+    const quoteVol = parseFloat(ticker.quoteVolume); 
+    return quoteVol > 10000000; 
+  }); 
 
   document.getElementById('statTotal').innerText = candidateSymbols.length; 
   let completed = 0; 
@@ -448,7 +430,7 @@ function renderList() {
           <b class="highlight-ma3">距慢線: <span class="${dist3Class}">${dist3Sign}${item.ma3DistPercent.toFixed(2)}%</span></b> 
         </div> 
         <div class="detail-row" style="opacity: 0.85;"> 
-          24H 振幅: <span class="highlight-amp">${item.amplitude24h.toFixed(2)}%</span> | 漲跌: <span class="${chg24Class}">${chg24Sign}${item.priceChange24h.toFixed(2)}%</span>
+          24H 漲跌幅: <span class="${chg24Class}">${chg24Sign}${item.priceChange24h.toFixed(2)}%</span> 
         </div> 
       </div> 
       <div style="text-align:right;"> 
@@ -606,8 +588,6 @@ function openModal(item) {
     highEl.style.color = '#94a3b8'; 
   } 
 
-  document.getElementById('val24hAmp').innerText = `${item.amplitude24h.toFixed(2)}%`;
-
   const dist3El = document.getElementById('valMa3Dist'); 
   const dist3Sign = item.ma3DistPercent >= 0 ? '+' : ''; 
   dist3El.innerText = `${dist3Sign}${item.ma3DistPercent.toFixed(2)}%`; 
@@ -619,7 +599,7 @@ function openModal(item) {
 
   const formatVol = (val) => val >= 1e6 ? `${(val/1e6).toFixed(2)}M` : `${(val/1e3).toFixed(2)}K`; 
   document.getElementById('valVolMA5').innerText = item.volMa5 ? formatVol(item.volMa5) : '--'; 
-  document.getElementById('valVolMA20').innerText = item.volMa20 ? formatVol(item.volMa20) : '--'; 
+  document.getElementById('valVolMA20').innerText = item.volMa20 ? formatVol(item.volVolMA20) : '--'; 
   document.getElementById('valMAs').innerText = `${item.ma1.toFixed(2)} / ${item.ma2.toFixed(2)} / ${item.ma3.toFixed(2)}`; 
 
   document.getElementById('binanceLink').href = `https://www.binance.com/zh-TC/futures/${item.symbol}`; 
