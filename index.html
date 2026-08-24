@@ -79,37 +79,48 @@
         .symbol-price { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #e0e6ed; }
         .symbol-dist { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 800; }
 
-        /* Mobile Modal */
+        /* 100% 滿版 App 視窗 Modal */
         .modal-backdrop {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px);
-            z-index: 999; display: none; justify-content: center; align-items: flex-end;
+            background: var(--bg-dark); z-index: 999; display: none;
+            flex-direction: column; justify-content: space-between;
         }
         .modal-card {
-            background: var(--card-bg); border: 1px solid var(--cyan);
-            border-radius: 12px 12px 0 0; width: 100%; padding: 12px;
-            max-height: 90vh; overflow-y: auto;
+            background: var(--bg-dark); width: 100%; height: 100%;
+            display: flex; flex-direction: column; padding: 12px;
+            box-sizing: border-box; overflow: hidden;
         }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .modal-header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding-bottom: 8px; border-bottom: 1px solid var(--border);
+        }
+
+        .modal-body {
+            flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-top: 8px;
+        }
         
         .chart-container {
             background: #070a12; border: 1px solid var(--border); border-radius: 6px;
-            padding: 6px; margin-bottom: 8px;
+            padding: 6px; flex-shrink: 0;
         }
         .chart-title { font-size: 0.65rem; color: #8a9bbd; margin-bottom: 4px; display: flex; justify-content: space-between; }
-        canvas { width: 100%; height: 230px; display: block; }
+        canvas { width: 100%; height: 320px; display: block; }
 
         .info-grid { 
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 12px;
-            background: #070a12; border: 1px solid var(--border); padding: 8px; border-radius: 6px; margin-bottom: 8px;
-            font-size: 0.72rem; font-family: 'JetBrains Mono', monospace;
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 12px;
+            background: #070a12; border: 1px solid var(--border); padding: 10px; border-radius: 6px;
+            font-size: 0.75rem; font-family: 'JetBrains Mono', monospace; flex-shrink: 0;
         }
         .info-item { display: flex; justify-content: space-between; }
         .info-item span { color: #8a9bbd; }
 
+        .modal-footer {
+            padding-top: 8px; flex-shrink: 0;
+        }
+
         .binance-btn {
             width: 100%; background: var(--yellow); color: #000; border: none;
-            padding: 8px; border-radius: 6px; font-weight: 900; font-size: 0.85rem;
+            padding: 12px; border-radius: 6px; font-weight: 900; font-size: 0.9rem;
             text-align: center; text-decoration: none; display: block;
         }
 
@@ -148,42 +159,46 @@
 
     <div class="container" id="symbolList"></div>
 
-    <!-- Modal 彈窗 -->
-    <div class="modal-backdrop" id="tradeModal" onclick="if(event.target.id==='tradeModal') closeModal()">
+    <!-- 100% 滿版 Modal 彈窗 -->
+    <div class="modal-backdrop" id="tradeModal">
         <div class="modal-card">
             <div class="modal-header">
-                <span id="modalSymbol" style="font-family:'JetBrains Mono'; font-weight:900; font-size:1.1rem;">BTCUSDT</span>
-                <button onclick="closeModal()" style="background:var(--pink); color:#fff; border:none; border-radius:4px; font-weight:900; padding:2px 8px; cursor:pointer;">✕</button>
+                <span id="modalSymbol" style="font-family:'JetBrains Mono'; font-weight:900; font-size:1.2rem; color: var(--cyan);">BTCUSDT</span>
+                <button onclick="closeModal()" style="background:var(--pink); color:#fff; border:none; border-radius:6px; font-weight:900; padding:6px 12px; font-size:0.9rem; cursor:pointer;">關閉 ✕</button>
             </div>
             
-            <div class="chart-container">
-                <div class="chart-title">
-                    <span>1H 近 100 根 K 線 & 量均線</span>
-                    <span>
-                        <span style="color:var(--orange);">●5</span> 
-                        <span style="color:var(--pink);">●30</span> 
-                        <span style="color:var(--purple);">●45</span> 
-                        <span style="color:var(--green);">●60</span> | 
-                        <span style="color:var(--yellow);">●5VM</span> 
-                        <span style="color:var(--purple);">●20VM</span>
-                    </span>
+            <div class="modal-body">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <span>1H 近 100 根 K 線 & 量均線</span>
+                        <span>
+                            <span style="color:var(--orange);">●5</span> 
+                            <span style="color:var(--pink);">●30</span> 
+                            <span style="color:var(--purple);">●45</span> 
+                            <span style="color:var(--green);">●60</span> | 
+                            <span style="color:var(--yellow);">●5VM</span> 
+                            <span style="color:var(--purple);">●20VM</span>
+                        </span>
+                    </div>
+                    <canvas id="klineCanvas" width="480" height="320"></canvas>
                 </div>
-                <canvas id="klineCanvas" width="480" height="230"></canvas>
+
+                <div class="info-grid">
+                    <div class="info-item"><span>現價</span><b id="valPrice" style="color:var(--yellow);">0</b></div>
+                    <div class="info-item"><span>距慢線</span><b id="valMa3Dist" class="val-up">0%</b></div>
+                    <div class="info-item"><span>5MA</span><b id="valMA5">0</b></div>
+                    <div class="info-item"><span>24H漲跌</span><b id="val24hChange">0%</b></div>
+                    <div class="info-item"><span>快(30)</span><b id="valMA1">0</b></div>
+                    <div class="info-item"><span>中(45)</span><b id="valMA2">0</b></div>
+                    <div class="info-item"><span>慢(60)</span><b id="valMA3">0</b></div>
+                    <div class="info-item"><span>5VM</span><b id="valVM5" style="color:var(--yellow);">0</b></div>
+                    <div class="info-item"><span>20VM</span><b id="valVM20" style="color:var(--purple);">0</b></div>
+                </div>
             </div>
 
-            <div class="info-grid">
-                <div class="info-item"><span>現價</span><b id="valPrice" style="color:var(--yellow);">0</b></div>
-                <div class="info-item"><span>距慢線</span><b id="valMa3Dist" class="val-up">0%</b></div>
-                <div class="info-item"><span>5MA</span><b id="valMA5">0</b></div>
-                <div class="info-item"><span>24H漲跌</span><b id="val24hChange">0%</b></div>
-                <div class="info-item"><span>快(30)</span><b id="valMA1">0</b></div>
-                <div class="info-item"><span>中(45)</span><b id="valMA2">0</b></div>
-                <div class="info-item"><span>慢(60)</span><b id="valMA3">0</b></div>
-                <div class="info-item"><span>5VM</span><b id="valVM5" style="color:var(--yellow);">0</b></div>
-                <div class="info-item"><span>20VM</span><b id="valVM20" style="color:var(--purple);">0</b></div>
+            <div class="modal-footer">
+                <a id="binanceLink" href="#" target="_blank" class="binance-btn">🚀 前往幣安合約交易</a>
             </div>
-
-            <a id="binanceLink" href="#" target="_blank" class="binance-btn">🚀 幣安交易</a>
         </div>
     </div>
 
@@ -194,7 +209,7 @@
 
     const P0 = 5, P1 = 30, P2 = 45, P3 = 60;
     const VM1 = 5, VM2 = 20;
-    const DISPLAY_COUNT = 100; // 調整為 100 根 K 線
+    const DISPLAY_COUNT = 100;
 
     window.addEventListener('DOMContentLoaded', updateHeaderTickers);
 
@@ -267,13 +282,11 @@
         const volumes = klinesRaw.map(k => parseFloat(k[5]));
         const price = closes[totalLen - 1];
 
-        // 計算價格 SMA
         const ma5Arr = calculateSMA(closes, P0);
         const ma1Arr = calculateSMA(closes, P1);
         const ma2Arr = calculateSMA(closes, P2);
         const ma3Arr = calculateSMA(closes, P3);
 
-        // 計算成交量 SMA
         const vm5Arr = calculateSMA(volumes, VM1);
         const vm20Arr = calculateSMA(volumes, VM2);
 
@@ -377,8 +390,7 @@
 
         const klines = item.klines, displayCount = klines.length;
         
-        // 區分價格區 (70%) 與 成交量區 (25%)
-        const priceChartHeight = height * 0.68;
+        const priceChartHeight = height * 0.70;
         const volChartHeight = height * 0.25;
         const volAreaTop = height - volChartHeight;
 
@@ -393,14 +405,14 @@
             if (vol > maxVol) maxVol = vol;
         }
 
-        const padding = 6;
+        const padding = 8;
         const priceRange = maxPrice - minPrice || 1;
         const getYPrice = (price) => priceChartHeight - padding - ((price - minPrice) / priceRange) * (priceChartHeight - padding * 2);
         const getYVol = (vol) => height - ((vol / (maxVol || 1)) * (volChartHeight - 4));
 
         const candleWidth = (width / displayCount) * 0.65, stepX = width / displayCount;
 
-        // 1. 繪製 K 線 & 成交量柱狀圖
+        // 1. K線 & 成交量柱狀圖
         klines.forEach((k, idx) => {
             const open = parseFloat(k[1]), high = parseFloat(k[2]), low = parseFloat(k[3]), close = parseFloat(k[4]);
             const vol = parseFloat(k[5]);
@@ -409,29 +421,25 @@
             ctx.strokeStyle = isUp ? '#00ff66' : '#ff3366';
             ctx.fillStyle = isUp ? '#00ff66' : '#ff3366';
 
-            // K線 影線
             ctx.beginPath();
             ctx.moveTo(x, getYPrice(high)); ctx.lineTo(x, getYPrice(low));
             ctx.stroke();
 
-            // K線 實體
             const topY = getYPrice(Math.max(open, close)), bottomY = getYPrice(Math.min(open, close));
             ctx.fillRect(x - candleWidth / 2, topY, candleWidth, Math.max(1, bottomY - topY));
 
-            // 成交量柱
             const vY = getYVol(vol);
             ctx.globalAlpha = 0.4;
             ctx.fillRect(x - candleWidth / 2, vY, candleWidth, height - vY);
             ctx.globalAlpha = 1.0;
         });
 
-        // 分隔虛線
         ctx.strokeStyle = '#233048';
         ctx.setLineDash([2, 2]);
         ctx.beginPath(); ctx.moveTo(0, volAreaTop); ctx.lineTo(width, volAreaTop); ctx.stroke();
         ctx.setLineDash([]);
 
-        // 2. 繪製價格 MA 均線
+        // 2. 價格 MA 均線
         const drawLine = (series, color, getYFunc, width = 1.2) => {
             ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = width;
             let started = false;
@@ -449,7 +457,7 @@
         drawLine(item.maSeries[P2], '#a855f7', getYPrice);
         drawLine(item.maSeries[P3], '#00ff66', getYPrice);
 
-        // 3. 繪製成交量均線 (5VM & 20VM)
+        // 3. 成交量均線 (5VM & 20VM)
         drawLine(item.vmSeries[VM1], '#ffe600', getYVol, 1.0);
         drawLine(item.vmSeries[VM2], '#a855f7', getYVol, 1.0);
     }
@@ -476,7 +484,6 @@
         document.getElementById('valMA2').innerText = item.ma2.toFixed(4);
         document.getElementById('valMA3').innerText = item.ma3.toFixed(4);
 
-        // 顯示 5VM & 20VM 數據
         document.getElementById('valVM5').innerText = formatVol(item.vm5);
         document.getElementById('valVM20').innerText = formatVol(item.vm20);
 
