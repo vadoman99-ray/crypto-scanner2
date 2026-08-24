@@ -78,7 +78,7 @@ body.modal-open { overflow: hidden; }
 .val-up { color: var(--manga-green); } 
 .val-down { color: var(--manga-red); } 
 
-/* 🚀 Modal 樣式 */
+/* 🚀 精簡版 Modal 樣式 */
 .chart-modal {
   position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
   background: rgba(4, 6, 14, 0.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
@@ -88,40 +88,23 @@ body.modal-open { overflow: hidden; }
 }
 .chart-modal.active { opacity: 1; visibility: visible; pointer-events: auto; }
 .chart-box {
-  width: 100%; max-width: 1050px; height: 90vh; background: #0b0f19;
+  width: 100%; max-width: 1050px; height: 85vh; background: #0b0f19;
   border: 1px solid rgba(0, 240, 255, 0.35); border-radius: 16px; overflow: hidden;
   display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0, 240, 255, 0.2), 0 20px 60px rgba(0,0,0,0.9);
   transform: scale(0.95); transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 .chart-modal.active .chart-box { transform: scale(1); }
-.chart-box.full-mode { max-width: 100vw; height: 100vh; border-radius: 0; border: none; }
 
 .chart-header {
-  padding: 10px 16px; background: #111726; display: flex; justify-content: space-between; align-items: center;
-  border-bottom: 1px solid rgba(255,255,255,0.08); flex-wrap: wrap; gap: 8px;
+  padding: 12px 16px; background: #111726; display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
 }
-.chart-title { font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 800; color: var(--manga-cyan); display: flex; align-items: center; gap: 8px; }
-
-.chart-tools { display: flex; align-items: center; gap: 8px; }
-.tf-btn-group { display: flex; background: rgba(255, 255, 255, 0.06); border-radius: 8px; padding: 2px; }
-.tf-btn {
-  background: transparent; color: #94a3b8; border: none; padding: 4px 8px; font-size: 0.75rem;
-  font-weight: 800; font-family: 'JetBrains Mono', monospace; cursor: pointer; border-radius: 6px;
-  transition: all 0.2s ease;
-}
-.tf-btn.active { background: var(--manga-cyan); color: #000; box-shadow: 0 0 10px rgba(0, 240, 255, 0.4); }
-
-.action-icon-btn {
-  background: rgba(255,255,255,0.08); color: #a0aec0; border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 8px; padding: 5px 10px; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 4px;
-  font-weight: 700; transition: all 0.2s ease; text-decoration: none;
-}
-.action-icon-btn:hover { background: rgba(0, 240, 255, 0.15); color: var(--manga-cyan); border-color: var(--manga-cyan); }
+.chart-title { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 800; color: var(--manga-cyan); }
 
 .close-btn {
   background: rgba(255,255,255,0.08); color: #a0aec0; border: 1px solid rgba(255,255,255,0.1); border-radius: 50%;
   width: 32px; height: 32px; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s ease; margin-left: 4px;
+  transition: all 0.2s ease;
 }
 .close-btn:hover { background: var(--manga-red); color: #fff; border-color: var(--manga-red); transform: rotate(90deg); }
 
@@ -142,9 +125,8 @@ body.modal-open { overflow: hidden; }
 @media (max-width: 600px) {
   .chart-modal { padding: 0; }
   .chart-box { height: 100vh; border-radius: 0; border: none; }
-  .chart-header { padding: 8px 10px; }
-  .chart-title { font-size: 0.85rem; }
-  .tf-btn { padding: 4px 6px; font-size: 0.7rem; }
+  .chart-header { padding: 10px 14px; }
+  .chart-title { font-size: 0.95rem; }
 }
 </style> 
 </head> 
@@ -174,29 +156,14 @@ body.modal-open { overflow: hidden; }
 <div id="chartModal" class="chart-modal" aria-hidden="true">
   <div id="chartBox" class="chart-box" role="dialog" aria-modal="true">
     <div class="chart-header">
-      <div id="modalSymbolTitle" class="chart-title">📈 BINANCE:BTCUSDT.P</div>
-      
-      <div class="chart-tools">
-        <div class="tf-btn-group">
-          <button class="tf-btn" data-interval="15">15m</button>
-          <button class="tf-btn active" data-interval="60">1H</button>
-          <button class="tf-btn" data-interval="240">4H</button>
-          <button class="tf-btn" data-interval="D">1D</button>
-        </div>
-        
-        <a id="tvExternalLink" href="#" target="_blank" class="action-icon-btn" title="在 TradingView 開啟分析">
-          ↗ TV
-        </a>
-
-        <button id="toggleExpandBtn" class="action-icon-btn" title="切換全螢幕">⛶</button>
-        <button id="closeModalBtn" class="close-btn" aria-label="關閉">✕</button>
-      </div>
+      <div id="modalSymbolTitle" class="chart-title">📈 BINANCE:BTCUSDT.P (1H)</div>
+      <button id="closeModalBtn" class="close-btn" aria-label="關閉">✕</button>
     </div>
 
     <div class="chart-container">
       <div id="chartLoading" class="chart-loading">
         <div class="spinner"></div>
-        <span>載入 TradingView 技術圖表中...</span>
+        <span>載入 K 線與均線中...</span>
       </div>
       <div id="tvChartContainer" style="width:100%; height:100%;"></div>
     </div>
@@ -212,8 +179,6 @@ body.modal-open { overflow: hidden; }
   let rawResults = []; 
   let tickerMap = new Map(); 
   let tvWidget = null;
-  let currentSymbol = 'BTCUSDT';
-  let currentInterval = '60';
 
   const dom = {
     scanBtn: document.getElementById('scanBtn'),
@@ -222,13 +187,10 @@ body.modal-open { overflow: hidden; }
     statEntry: document.getElementById('statEntry'),
     symbolList: document.getElementById('symbolList'),
     chartModal: document.getElementById('chartModal'),
-    chartBox: document.getElementById('chartBox'),
     modalTitle: document.getElementById('modalSymbolTitle'),
     closeModalBtn: document.getElementById('closeModalBtn'),
     tvContainer: document.getElementById('tvChartContainer'),
-    chartLoading: document.getElementById('chartLoading'),
-    tvExternalLink: document.getElementById('tvExternalLink'),
-    toggleExpandBtn: document.getElementById('toggleExpandBtn')
+    chartLoading: document.getElementById('chartLoading')
   };
 
   function calculateSMA(data, period) { 
@@ -386,12 +348,10 @@ body.modal-open { overflow: hidden; }
     dom.symbolList.replaceChildren(fragment); 
   } 
 
-  // 🚀 核心圖表渲染邏輯（修復 Volume 指標與 Loading 卡死問題）
-  function renderTradingViewWidget(symbol, interval) {
+  // 🚀 只顯示 K線 + 4條均線的 TradingView 設定
+  function renderTradingViewWidget(symbol) {
     const formattedSymbol = `BINANCE:${symbol}.P`;
-    dom.modalTitle.innerText = `📈 ${symbol} (${interval === 'D' ? '日線' : interval + 'm'})`;
-    dom.tvExternalLink.href = `https://www.tradingview.com/chart/?symbol=${formattedSymbol}`;
-    
+    dom.modalTitle.innerText = `📈 ${symbol} (1H K線圖)`;
     dom.chartLoading.style.display = 'flex';
 
     if (tvWidget && typeof tvWidget.remove === 'function') {
@@ -400,7 +360,6 @@ body.modal-open { overflow: hidden; }
     }
     dom.tvContainer.replaceChildren();
 
-    // ⚡ 自動防禦機制：超時 2.5 秒強制關閉遮罩
     const timeoutTimer = setTimeout(() => {
       dom.chartLoading.style.display = 'none';
     }, 2500);
@@ -408,7 +367,7 @@ body.modal-open { overflow: hidden; }
     tvWidget = new TradingView.widget({
       "autosize": true,
       "symbol": formattedSymbol,
-      "interval": interval, 
+      "interval": "60", 
       "timezone": "Asia/Taipei",
       "theme": "dark",
       "style": "1", 
@@ -419,24 +378,11 @@ body.modal-open { overflow: hidden; }
       "allow_symbol_change": false,
       "container_id": "tvChartContainer",
       "studies": [
-        // K線 4條均線
+        // 僅保留 K 線上的 4 條移動平均線 (5MA, 30MA, 45MA, 60MA)
         { "id": "MASimple@tv-basicstudies", "inputs": { "length": 5 }, "styles": { "plot": { "color": "#00ff66", "linewidth": 2 } } },  
         { "id": "MASimple@tv-basicstudies", "inputs": { "length": 30 }, "styles": { "plot": { "color": "#ffea00", "linewidth": 2 } } }, 
         { "id": "MASimple@tv-basicstudies", "inputs": { "length": 45 }, "styles": { "plot": { "color": "#ff9100", "linewidth": 2 } } }, 
-        { "id": "MASimple@tv-basicstudies", "inputs": { "length": 60 }, "styles": { "plot": { "color": "#ff007f", "linewidth": 2 } } },
-        
-        // ⚡ 合併後的標準 Volume + 5MA 均量線（避免重複加載 Volume 崩潰）
-        { 
-          "id": "Volume@tv-basicstudies", 
-          "inputs": { "showMA": true, "maLength": 5 }, 
-          "styles": { "volume ma": { "color": "#00f0ff", "linewidth": 2 } } 
-        },
-        // ⚡ 20MA 均量線 (使用 Simple Moving Average 繪製)
-        { 
-          "id": "MASimple@tv-basicstudies", 
-          "inputs": { "length": 20, "source": "volume" }, 
-          "styles": { "plot": { "color": "#9d4edd", "linewidth": 2 } } 
-        }
+        { "id": "MASimple@tv-basicstudies", "inputs": { "length": 60 }, "styles": { "plot": { "color": "#ff007f", "linewidth": 2 } } }
       ],
       "onChartReady": function() {
         clearTimeout(timeoutTimer);
@@ -446,12 +392,11 @@ body.modal-open { overflow: hidden; }
   }
 
   function openChartModal(symbol) {
-    currentSymbol = symbol;
     dom.chartModal.classList.add('active');
     dom.chartModal.setAttribute('aria-hidden', 'false');
     document.body.classList.add('modal-open');
 
-    renderTradingViewWidget(currentSymbol, currentInterval);
+    renderTradingViewWidget(symbol);
   }
 
   function closeChartModal() {
@@ -476,19 +421,6 @@ body.modal-open { overflow: hidden; }
     if (e.key === 'Escape' && dom.chartModal.classList.contains('active')) {
       closeChartModal();
     }
-  });
-
-  dom.toggleExpandBtn.addEventListener('click', () => {
-    dom.chartBox.classList.toggle('full-mode');
-  });
-
-  document.querySelectorAll('.tf-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
-      e.target.classList.add('active');
-      currentInterval = e.target.getAttribute('data-interval');
-      renderTradingViewWidget(currentSymbol, currentInterval);
-    });
   });
 })();
 </script> 
