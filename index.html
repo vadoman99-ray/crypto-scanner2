@@ -1,689 +1,635 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>⚡ 1H MA 多頭排列極速篩選器</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@700;800;900&display=swap');
+<!DOCTYPE html> 
+<html lang="zh-TW"> 
+<head> 
+<meta charset="UTF-8"> 
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
+<title>⚡ 1H MA 多頭排列極速篩選器 (振幅版)</title> 
+<style> 
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@700;800;900&display=swap'); 
+:root { 
+  --bg-dark: #060911; 
+  --card-bg: rgba(15, 23, 42, 0.75); 
+  --border-color: rgba(0, 240, 255, 0.25); 
+  --manga-pink: #ff007f; 
+  --manga-purple: #9d4edd; 
+  --manga-cyan: #00f0ff; 
+  --manga-yellow: #ffea00; 
+  --manga-orange: #ff9100; 
+  --manga-green: #00ff66; 
+  --manga-red: #ff2a6d; 
+  --btc-gold: #f7931a; 
+  --eth-blue: #627eea; 
+  --pop-shadow: 0 10px 30px -10px rgba(0, 240, 255, 0.3); 
+} 
+* { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; } 
+body { 
+  font-family: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif; 
+  background-color: var(--bg-dark); 
+  background-image: radial-gradient(at 0% 0%, rgba(255, 0, 127, 0.12) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(0, 240, 255, 0.12) 0px, transparent 50%), radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px); 
+  background-size: 100% 100%, 100% 100%, 20px 20px; 
+  color: #fff; 
+  margin: 0; 
+  padding-bottom: 50px; 
+  min-height: 100vh; 
+} 
+/* 頂部 Sticky Bar */ 
+.app-header { 
+  position: sticky; 
+  top: 0; 
+  z-index: 100; 
+  background: rgba(8, 12, 22, 0.88); 
+  backdrop-filter: blur(14px); 
+  -webkit-backdrop-filter: blur(14px); 
+  border-bottom: 1px solid var(--border-color); 
+  padding: 12px 16px; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 12px; 
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6); 
+} 
+.header-top { display: flex; justify-content: space-between; align-items: center; } 
+.header-title { 
+  font-size: 1.1rem; 
+  font-weight: 900; 
+  letter-spacing: -0.5px; 
+  background: linear-gradient(135deg, #fff 30%, var(--manga-cyan)); 
+  -webkit-background-clip: text; 
+  -webkit-text-fill-color: transparent; 
+  display: flex; 
+  align-items: center; 
+  gap: 6px; 
+} 
+/* ⚡ 賽博圖卡風格 BTC / ETH 專區 ⚡ */ 
+.cyber-cards-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; } 
+.cyber-card { 
+  position: relative; 
+  background: linear-gradient(135deg, rgba(20, 28, 48, 0.9) 0%, rgba(10, 15, 28, 0.95) 100%); 
+  border: 1px solid rgba(255, 255, 255, 0.12); 
+  border-radius: 12px; 
+  padding: 8px 12px; 
+  cursor: pointer; 
+  overflow: hidden; 
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); 
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%); 
+} 
+.cyber-card::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; } 
+.cyber-card:active { transform: scale(0.97); } 
+/* BTC 卡片樣式 */ 
+.cyber-card.btc-card { border-color: rgba(247, 147, 26, 0.4); } 
+.cyber-card.btc-card::before { background: var(--btc-gold); box-shadow: 0 0 10px var(--btc-gold); } 
+.cyber-card.btc-card:hover { border-color: var(--btc-gold); box-shadow: 0 0 20px rgba(247, 147, 26, 0.3); transform: translateY(-2px); } 
+/* ETH 卡片樣式 */ 
+.cyber-card.eth-card { border-color: rgba(0, 240, 255, 0.4); } 
+.cyber-card.eth-card::before { background: var(--manga-cyan); box-shadow: 0 0 10px var(--manga-cyan); } 
+.cyber-card.eth-card:hover { border-color: var(--manga-cyan); box-shadow: 0 0 20px rgba(0, 240, 255, 0.3); transform: translateY(-2px); } 
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; } 
+.card-badge { font-family: 'JetBrains Mono', monospace; font-weight: 900; font-size: 0.85rem; display: flex; align-items: center; gap: 4px; } 
+.btc-card .card-badge { color: var(--btc-gold); } 
+.eth-card .card-badge { color: var(--manga-cyan); } 
+.card-price { font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 800; color: #fff; line-height: 1.1; } 
+.card-change { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; backdrop-filter: blur(4px); } 
+.card-change.up { background: rgba(0, 255, 102, 0.15); color: var(--manga-green); border: 1px solid rgba(0, 255, 102, 0.3); } 
+.card-change.down { background: rgba(255, 42, 109, 0.15); color: var(--manga-red); border: 1px solid rgba(255, 42, 109, 0.3); } 
+/* 動態狀態閃爍點 */ 
+.live-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; animation: blink 1.2s infinite alternate; } 
+.btc-card .live-dot { background: var(--btc-gold); box-shadow: 0 0 6px var(--btc-gold); } 
+.eth-card .live-dot { background: var(--manga-cyan); box-shadow: 0 0 6px var(--manga-cyan); } 
+@keyframes blink { 0% { opacity: 0.3; } 100% { opacity: 1; } } 
+/* 掃描按鈕按壓質感 */ 
+.scan-btn { 
+  background: linear-gradient(135deg, var(--manga-pink) 0%, #ff5500 100%); 
+  color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 900; font-size: 0.85rem; cursor: pointer; 
+  box-shadow: 0 0 15px rgba(255, 0, 127, 0.4); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; gap: 4px; 
+} 
+.scan-btn:active { transform: scale(0.95); } 
+.scan-btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); transform: none; } 
+/* 進度條 */ 
+.progress-container { height: 3px; background: rgba(255, 255, 255, 0.05); width: 100%; } 
+.progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--manga-pink), var(--manga-cyan)); transition: width 0.15s ease-out; } 
+/* 儀表板 */ 
+.dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 16px; } 
+.stat-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; padding: 12px; text-align: center; backdrop-filter: blur(10px); box-shadow: var(--pop-shadow); } 
+.stat-card .val { font-family: 'JetBrains Mono', monospace; font-size: 1.6rem; font-weight: 800; } 
+.stat-card.entry { border-color: rgba(255, 0, 127, 0.4); } 
+.stat-card.entry .val { color: var(--manga-pink); text-shadow: 0 0 10px rgba(255, 0, 127, 0.3); } 
+/* 清單列表 */ 
+.container { padding: 0 16px; } 
+.symbol-card { 
+  background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.08); border-left: 4px solid var(--manga-green); border-radius: 12px; 
+  padding: 14px 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(10px); transition: all 0.2s ease; 
+} 
+.symbol-card:active { transform: scale(0.98); } 
+.symbol-card:hover { border-color: var(--manga-cyan); background: rgba(255, 255, 255, 0.05); } 
+.symbol-name { font-family: 'JetBrains Mono', monospace; font-size: 1.15rem; font-weight: 800; letter-spacing: -0.5px; } 
+.symbol-price { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; color: var(--manga-yellow); font-weight: 700; } 
+.detail-row { font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; color: #94a3b8; margin-top: 4px; } 
+.badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(0, 255, 102, 0.15); color: var(--manga-green); border: 1px solid rgba(0, 255, 102, 0.3); } 
+.badge-rank { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 234, 0, 0.2); color: var(--manga-yellow); border: 1px solid rgba(255, 234, 0, 0.4); } 
+.badge-new-high { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 0, 127, 0.2); color: var(--manga-pink); border: 1px solid rgba(255, 0, 127, 0.5); box-shadow: 0 0 8px rgba(255, 0, 127, 0.3); } 
+/* Modal 彈窗優化 */ 
+.modal-backdrop { 
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(4, 6, 12, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); 
+  z-index: 999; display: none; justify-content: center; align-items: center; padding: 16px; 
+} 
+.modal-card { 
+  background: #0d1322; border: 1px solid var(--manga-cyan); border-radius: 20px; width: 100%; max-width: 500px; padding: 20px; box-shadow: 0 0 40px rgba(0, 240, 255, 0.25); max-height: 90vh; overflow-y: auto; animation: modalUp 0.25s cubic-bezier(0.16, 1, 0.3, 1); 
+} 
+@keyframes modalUp { from { transform: translateY(20px) scale(0.95); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } } 
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; } 
+/* Canvas 圖表外框 */ 
+.chart-container { background: #050811; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 12px; margin-bottom: 14px; position: relative; } 
+.chart-title { font-size: 0.72rem; color: #64748b; margin-bottom: 8px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px; } 
+canvas { width: 100%; height: 260px; display: block; } 
+/* 數據框 */ 
+.info-box { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); padding: 12px 14px; border-radius: 12px; margin-bottom: 14px; } 
+.info-row { display: flex; justify-content: space-between; font-size: 0.82rem; font-family: 'JetBrains Mono', monospace; margin-bottom: 8px; color: #94a3b8; } 
+.info-row:last-child { margin-bottom: 0; } 
+.info-row span { color: #cbd5e1; } 
+.binance-btn { 
+  width: 100%; background: linear-gradient(135deg, #f0b90b 0%, #f8d12f 100%); color: #000; border: none; padding: 12px; border-radius: 10px; 
+  font-weight: 900; font-size: 0.95rem; cursor: pointer; box-shadow: 0 4px 15px rgba(240, 185, 11, 0.3); text-align: center; text-decoration: none; display: block; transition: transform 0.15s; 
+} 
+.binance-btn:active { transform: scale(0.97); } 
+.val-up { color: var(--manga-green); } 
+.val-down { color: var(--manga-red); } 
+.highlight-ma3 { color: var(--manga-green); font-weight: 800; } 
+.highlight-amp { color: var(--manga-cyan); font-weight: 800; }
+</style> 
+</head> 
+<body> 
+<div class="app-header"> 
+  <div class="header-top"> 
+    <div class="header-title">⚡ 1H MA 多頭排列篩選器</div> 
+    <button id="scanBtn" class="scan-btn" onclick="startScan()">啟動極速掃描</button> 
+  </div> 
+  <!-- ⚡ 賽博龐克風格 BTC / ETH 圖卡區塊 ⚡ --> 
+  <div class="cyber-cards-container"> 
+    <div class="cyber-card btc-card" onclick="openModalForSymbol('BTCUSDT')"> 
+      <div class="card-header"> 
+        <span class="card-badge"><i class="live-dot"></i> BTC</span> 
+        <span id="btcChange" class="card-change up">--</span> 
+      </div> 
+      <div id="btcPrice" class="card-price">--</div> 
+    </div> 
+    <div class="cyber-card eth-card" onclick="openModalForSymbol('ETHUSDT')"> 
+      <div class="card-header"> 
+        <span class="card-badge"><i class="live-dot"></i> ETH</span> 
+        <span id="ethChange" class="card-change up">--</span> 
+      </div> 
+      <div id="ethPrice" class="card-price">--</div> 
+    </div> 
+  </div> 
+</div> 
+<div class="progress-container"><div id="progress" class="progress-fill"></div></div> 
+<div class="dashboard"> 
+  <div class="stat-card"> 
+    <div class="val" id="statTotal" style="color:var(--manga-cyan)">0</div> 
+    <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">掃描目標數 (振幅≥10%)</div> 
+  </div> 
+  <div class="stat-card entry"> 
+    <div class="val" id="statEntry">0</div> 
+    <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">符合條件標的</div> 
+  </div> 
+</div> 
+<div class="container" id="symbolList"></div> 
+<div class="modal-backdrop" id="tradeModal" onclick="if(event.target.id==='tradeModal') closeModal()"> 
+  <div class="modal-card"> 
+    <div class="modal-header"> 
+      <span id="modalSymbol" style="font-family:'JetBrains Mono'; font-weight:900; font-size:1.3rem; color:var(--manga-cyan);">BTCUSDT</span> 
+      <button onclick="closeModal()" style="background:rgba(255,255,255,0.1); color:#fff; border:none; border-radius:50%; width:28px; height:28px; font-weight:900; cursor:pointer;">✕</button> 
+    </div> 
+    <div class="chart-container"> 
+      <div class="chart-title"> 
+        <span>1H K線 + 均線/均量折線</span> 
+        <span style="font-weight:800;"> 
+          <span style="color:var(--manga-orange);">● 5MA</span> 
+          <span style="color:var(--manga-pink);">● 快</span> 
+          <span style="color:var(--manga-purple);">● 中</span> 
+          <span style="color:var(--manga-green);">● 慢</span> 
+          <span style="color:var(--manga-yellow); margin-left:4px;">● 5VOL</span> 
+          <span style="color:var(--manga-cyan);">● 20VOL</span> 
+        </span> 
+      </div> 
+      <canvas id="klineCanvas" width="480" height="260"></canvas> 
+    </div> 
+    <div class="info-box"> 
+      <div class="info-row"><span>當前現價</span><b id="valPrice" style="color:var(--manga-yellow);">0</b></div> 
+      <div class="info-row"><span>20根1H K線新高</span><b id="val20kHigh">--</b></div> 
+      <div class="info-row"><span>24H 振幅</span><b id="val24hAmp" class="highlight-amp">0%</b></div> 
+      <div class="info-row"><span>距慢線幅度</span><b id="valMa3Dist" class="highlight-ma3">0%</b></div> 
+      <div class="info-row"><span>24H 漲跌幅</span><b id="val24hChange">0%</b></div> 
+      <div class="info-row"><span>5 Vol MA (5均量)</span><b id="valVolMA5" style="color:var(--manga-yellow);">0</b></div> 
+      <div class="info-row"><span>20 Vol MA (20均量)</span><b id="valVolMA20" style="color:var(--manga-cyan);">0</b></div> 
+      <div class="info-row"><span>快 / 中 / 慢線</span><b id="valMAs" style="color:#94a3b8;">0 / 0 / 0</b></div> 
+    </div> 
+    <a id="binanceLink" href="#" target="_blank" class="binance-btn">🚀 前往幣安交易此標的</a> 
+  </div> 
+</div> 
+<script> 
+const API_BASE = 'https://fapi.binance.com'; 
+let rawResults = []; 
+let tickerMap = {}; 
+const klineCache = new Map(); 
+const CACHE_TTL = 45000; 
+const P0 = 5, P1 = 30, P2 = 45, P3 = 60, DISPLAY_COUNT = 80; 
+const VOL_P1 = 5, VOL_P2 = 20; 
 
-        :root {
-            --bg-dark: #060911;
-            --card-bg: rgba(15, 23, 42, 0.75);
-            --border-color: rgba(0, 240, 255, 0.25);
-            --manga-pink: #ff007f;
-            --manga-purple: #9d4edd;
-            --manga-cyan: #00f0ff;
-            --manga-yellow: #ffea00;
-            --manga-orange: #ff9100;
-            --manga-green: #00ff66;
-            --manga-red: #ff2a6d;
-            --btc-gold: #f7931a;
-            --eth-blue: #627eea;
-            --pop-shadow: 0 10px 30px -10px rgba(0, 240, 255, 0.3);
-        }
+window.addEventListener('DOMContentLoaded', updateHeaderTickers); 
 
-        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
-        
-        body { 
-            font-family: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif; 
-            background-color: var(--bg-dark); 
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(255, 0, 127, 0.12) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(0, 240, 255, 0.12) 0px, transparent 50%),
-                radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-            background-size: 100% 100%, 100% 100%, 20px 20px;
-            color: #fff; margin: 0; padding-bottom: 50px; 
-            min-height: 100vh;
-        }
+async function updateHeaderTickers() { 
+  try { 
+    const res = await fetch(`${API_BASE}/fapi/v1/ticker/24hr`); 
+    if (!res.ok) return; 
+    const data = await res.json(); 
+    tickerMap = {}; 
+    for (let i = 0; i < data.length; i++) { 
+      tickerMap[data[i].symbol] = data[i]; 
+    } 
+    const btc = tickerMap['BTCUSDT']; 
+    const eth = tickerMap['ETHUSDT']; 
+    if (btc) updateTickerCard('btcPrice', 'btcChange', btc); 
+    if (eth) updateTickerCard('ethPrice', 'ethChange', eth); 
+  } catch (e) { 
+    console.error("無法取得主流幣數據", e); 
+  } 
+} 
 
-        /* 頂部 Sticky Bar */
-        .app-header { 
-            position: sticky; top: 0; z-index: 100; 
-            background: rgba(8, 12, 22, 0.88);
-            backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-            border-bottom: 1px solid var(--border-color); 
-            padding: 12px 16px; display: flex; flex-direction: column; gap: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
-        }
-        .header-top { display: flex; justify-content: space-between; align-items: center; }
-        .header-title { 
-            font-size: 1.1rem; font-weight: 900; letter-spacing: -0.5px;
-            background: linear-gradient(135deg, #fff 30%, var(--manga-cyan));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            display: flex; align-items: center; gap: 6px;
-        }
+function updateTickerCard(priceId, changeId, ticker) { 
+  document.getElementById(priceId).innerText = `$${parseFloat(ticker.lastPrice).toLocaleString()}`; 
+  const chg = parseFloat(ticker.priceChangePercent); 
+  const chgEl = document.getElementById(changeId); 
+  chgEl.innerText = `${chg >= 0 ? '+' : ''}${chg.toFixed(2)}%`; 
+  chgEl.className = `card-change ${chg >= 0 ? 'up' : 'down'}`; 
+} 
 
-        /* ⚡ 賽博圖卡風格 BTC / ETH 專區 ⚡ */
-        .cyber-cards-container {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-        }
-        .cyber-card {
-            position: relative;
-            background: linear-gradient(135deg, rgba(20, 28, 48, 0.9) 0%, rgba(10, 15, 28, 0.95) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 12px; padding: 8px 12px;
-            cursor: pointer; overflow: hidden;
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-            clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
-        }
-        .cyber-card::before {
-            content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%;
-        }
-        .cyber-card:active { transform: scale(0.97); }
+async function asyncPool(poolLimit, array, iteratorFn) { 
+  const ret = []; 
+  const executing = new Set(); 
+  for (const item of array) { 
+    const p = Promise.resolve().then(() => iteratorFn(item)); 
+    ret.push(p); 
+    executing.add(p); 
+    const clean = () => executing.delete(p); 
+    p.then(clean, clean); 
+    if (executing.size >= poolLimit) { 
+      await Promise.race(executing); 
+    } 
+  } 
+  return Promise.all(ret); 
+} 
 
-        /* BTC 卡片樣式 */
-        .cyber-card.btc-card { border-color: rgba(247, 147, 26, 0.4); }
-        .cyber-card.btc-card::before { background: var(--btc-gold); box-shadow: 0 0 10px var(--btc-gold); }
-        .cyber-card.btc-card:hover {
-            border-color: var(--btc-gold);
-            box-shadow: 0 0 20px rgba(247, 147, 26, 0.3);
-            transform: translateY(-2px);
-        }
+function calculateSMA(dataArray, period) { 
+  const len = dataArray.length; 
+  if (len < period) return new Array(len).fill(null); 
+  const ma = new Array(len).fill(null); 
+  let sum = 0; 
+  for (let i = 0; i < period; i++) sum += dataArray[i]; 
+  ma[period - 1] = sum / period; 
+  for (let i = period; i < len; i++) { 
+    sum += dataArray[i] - dataArray[i - period]; 
+    ma[i] = sum / period; 
+  } 
+  return ma; 
+} 
 
-        /* ETH 卡片樣式 */
-        .cyber-card.eth-card { border-color: rgba(0, 240, 255, 0.4); }
-        .cyber-card.eth-card::before { background: var(--manga-cyan); box-shadow: 0 0 10px var(--manga-cyan); }
-        .cyber-card.eth-card:hover {
-            border-color: var(--manga-cyan);
-            box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
-            transform: translateY(-2px);
-        }
+async function fetchSymbolDetailsData(symbol) { 
+  const now = Date.now(); 
+  if (klineCache.has(symbol)) { 
+    const cached = klineCache.get(symbol); 
+    if (now - cached.timestamp < CACHE_TTL) { 
+      return cached.data; 
+    } 
+  } 
+  const fetchLimit = DISPLAY_COUNT + P3; 
+  const res = await fetch(`${API_BASE}/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=${fetchLimit}`); 
+  if (!res.ok) return null; 
+  const klinesRaw = await res.json(); 
+  const totalLen = klinesRaw.length; 
+  if (totalLen < P3) return null; 
 
-        .card-header {
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;
-        }
-        .card-badge {
-            font-family: 'JetBrains Mono', monospace; font-weight: 900; font-size: 0.85rem;
-            display: flex; align-items: center; gap: 4px;
-        }
-        .btc-card .card-badge { color: var(--btc-gold); }
-        .eth-card .card-badge { color: var(--manga-cyan); }
+  const closes = klinesRaw.map(k => parseFloat(k[4])); 
+  const volumes = klinesRaw.map(k => parseFloat(k[5])); 
+  const price = closes[totalLen - 1]; 
 
-        .card-price {
-            font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 800; color: #fff;
-            line-height: 1.1;
-        }
-        .card-change {
-            font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 800; padding: 2px 6px;
-            border-radius: 4px; backdrop-filter: blur(4px);
-        }
-        .card-change.up { background: rgba(0, 255, 102, 0.15); color: var(--manga-green); border: 1px solid rgba(0, 255, 102, 0.3); }
-        .card-change.down { background: rgba(255, 42, 109, 0.15); color: var(--manga-red); border: 1px solid rgba(255, 42, 109, 0.3); }
+  // --- 計算是否為前 20 根 1H K 線新高 --- // 
+  const past20Klines = klinesRaw.slice(-21, -1); 
+  const past20MaxHigh = Math.max(...past20Klines.map(k => parseFloat(k[2]))); 
+  const is20kHigh = price >= past20MaxHigh; 
 
-        /* 動態狀態閃爍點 */
-        .live-dot {
-            width: 6px; height: 6px; border-radius: 50%;
-            display: inline-block; animation: blink 1.2s infinite alternate;
-        }
-        .btc-card .live-dot { background: var(--btc-gold); box-shadow: 0 0 6px var(--btc-gold); }
-        .eth-card .live-dot { background: var(--manga-cyan); box-shadow: 0 0 6px var(--manga-cyan); }
-        @keyframes blink { 0% { opacity: 0.3; } 100% { opacity: 1; } }
-
-        /* 掃描按鈕按壓質感 */
-        .scan-btn { 
-            background: linear-gradient(135deg, var(--manga-pink) 0%, #ff5500 100%); 
-            color: #fff; border: none; padding: 8px 16px; border-radius: 8px; 
-            font-weight: 900; font-size: 0.85rem; cursor: pointer;
-            box-shadow: 0 0 15px rgba(255, 0, 127, 0.4);
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex; align-items: center; gap: 4px;
-        }
-        .scan-btn:active { transform: scale(0.95); }
-        .scan-btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); transform: none; }
-
-        /* 進度條 */
-        .progress-container { height: 3px; background: rgba(255, 255, 255, 0.05); width: 100%; }
-        .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--manga-pink), var(--manga-cyan)); transition: width 0.15s ease-out; }
-
-        /* 儀表板 */
-        .dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 16px; }
-        .stat-card {
-            background: var(--card-bg); border: 1px solid var(--border-color);
-            border-radius: 14px; padding: 12px; text-align: center;
-            backdrop-filter: blur(10px); box-shadow: var(--pop-shadow);
-        }
-        .stat-card .val { font-family: 'JetBrains Mono', monospace; font-size: 1.6rem; font-weight: 800; }
-        .stat-card.entry { border-color: rgba(255, 0, 127, 0.4); }
-        .stat-card.entry .val { color: var(--manga-pink); text-shadow: 0 0 10px rgba(255, 0, 127, 0.3); }
-
-        /* 清單列表 */
-        .container { padding: 0 16px; }
-        .symbol-card { 
-            background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.08); 
-            border-left: 4px solid var(--manga-green); border-radius: 12px; 
-            padding: 14px 16px; margin-bottom: 10px; 
-            display: flex; justify-content: space-between; align-items: center; 
-            backdrop-filter: blur(10px); transition: all 0.2s ease;
-        }
-        .symbol-card:active { transform: scale(0.98); }
-        .symbol-card:hover { border-color: var(--manga-cyan); background: rgba(255, 255, 255, 0.05); }
-        .symbol-name { font-family: 'JetBrains Mono', monospace; font-size: 1.15rem; font-weight: 800; letter-spacing: -0.5px; }
-        .symbol-price { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; color: var(--manga-yellow); font-weight: 700; }
-        .detail-row { font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; color: #94a3b8; margin-top: 4px; }
-        
-        .badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(0, 255, 102, 0.15); color: var(--manga-green); border: 1px solid rgba(0, 255, 102, 0.3); }
-        .badge-rank { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 234, 0, 0.2); color: var(--manga-yellow); border: 1px solid rgba(255, 234, 0, 0.4); }
-
-        /* Modal 彈窗優化 */
-        .modal-backdrop {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(4, 6, 12, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            z-index: 999; display: none; justify-content: center; align-items: center; padding: 16px;
-        }
-        .modal-card {
-            background: #0d1322; border: 1px solid var(--manga-cyan);
-            border-radius: 20px; width: 100%; max-width: 500px; padding: 20px;
-            box-shadow: 0 0 40px rgba(0, 240, 255, 0.25);
-            max-height: 90vh; overflow-y: auto;
-            animation: modalUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        @keyframes modalUp {
-            from { transform: translateY(20px) scale(0.95); opacity: 0; }
-            to { transform: translateY(0) scale(1); opacity: 1; }
-        }
-
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-        
-        /* Canvas 圖表外框 */
-        .chart-container {
-            background: #050811; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px;
-            padding: 12px; margin-bottom: 14px; position: relative;
-        }
-        .chart-title { font-size: 0.72rem; color: #64748b; margin-bottom: 8px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px; }
-        canvas { width: 100%; height: 260px; display: block; }
-
-        /* 數據框 */
-        .info-box { 
-            background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); 
-            padding: 12px 14px; border-radius: 12px; margin-bottom: 14px; 
-        }
-        .info-row { display: flex; justify-content: space-between; font-size: 0.82rem; font-family: 'JetBrains Mono', monospace; margin-bottom: 8px; color: #94a3b8; }
-        .info-row:last-child { margin-bottom: 0; }
-        .info-row span { color: #cbd5e1; }
-        
-        .binance-btn {
-            width: 100%; background: linear-gradient(135deg, #f0b90b 0%, #f8d12f 100%); 
-            color: #000; border: none; padding: 12px; border-radius: 10px; 
-            font-weight: 900; font-size: 0.95rem; cursor: pointer;
-            box-shadow: 0 4px 15px rgba(240, 185, 11, 0.3); text-align: center; text-decoration: none; display: block;
-            transition: transform 0.15s;
-        }
-        .binance-btn:active { transform: scale(0.97); }
-
-        .val-up { color: var(--manga-green); }
-        .val-down { color: var(--manga-red); }
-        .highlight-ma3 { color: var(--manga-green); font-weight: 800; }
-    </style>
-</head>
-<body>
-
-    <div class="app-header">
-        <div class="header-top">
-            <div class="header-title">⚡ 1H MA 多頭排列篩選器</div>
-            <button id="scanBtn" class="scan-btn" onclick="startScan()">啟動極速掃描</button>
-        </div>
-
-        <!-- ⚡ 賽博龐克風格 BTC / ETH 圖卡區塊 ⚡ -->
-        <div class="cyber-cards-container">
-            <div class="cyber-card btc-card" onclick="openModalForSymbol('BTCUSDT')">
-                <div class="card-header">
-                    <span class="card-badge"><i class="live-dot"></i> BTC</span>
-                    <span id="btcChange" class="card-change up">--</span>
-                </div>
-                <div id="btcPrice" class="card-price">--</div>
-            </div>
-            <div class="cyber-card eth-card" onclick="openModalForSymbol('ETHUSDT')">
-                <div class="card-header">
-                    <span class="card-badge"><i class="live-dot"></i> ETH</span>
-                    <span id="ethChange" class="card-change up">--</span>
-                </div>
-                <div id="ethPrice" class="card-price">--</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="progress-container"><div id="progress" class="progress-fill"></div></div>
-
-    <div class="dashboard">
-        <div class="stat-card">
-            <div class="val" id="statTotal" style="color:var(--manga-cyan)">0</div>
-            <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">掃描目標數</div>
-        </div>
-        <div class="stat-card entry">
-            <div class="val" id="statEntry">0</div>
-            <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">符合條件標的</div>
-        </div>
-    </div>
-
-    <div class="container" id="symbolList"></div>
-
-    <div class="modal-backdrop" id="tradeModal" onclick="if(event.target.id==='tradeModal') closeModal()">
-        <div class="modal-card">
-            <div class="modal-header">
-                <span id="modalSymbol" style="font-family:'JetBrains Mono'; font-weight:900; font-size:1.3rem; color:var(--manga-cyan);">BTCUSDT</span>
-                <button onclick="closeModal()" style="background:rgba(255,255,255,0.1); color:#fff; border:none; border-radius:50%; width:28px; height:28px; font-weight:900; cursor:pointer;">✕</button>
-            </div>
-            
-            <div class="chart-container">
-                <div class="chart-title">
-                    <span>1H K線 + 均線/均量折線</span>
-                    <span style="font-weight:800;">
-                        <span style="color:var(--manga-orange);">● 5MA</span> 
-                        <span style="color:var(--manga-pink);">● 快</span> 
-                        <span style="color:var(--manga-purple);">● 中</span> 
-                        <span style="color:var(--manga-green);">● 慢</span>
-                        <span style="color:var(--manga-yellow); margin-left:4px;">● 5VOL</span>
-                        <span style="color:var(--manga-cyan);">● 20VOL</span>
-                    </span>
-                </div>
-                <canvas id="klineCanvas" width="480" height="260"></canvas>
-            </div>
-
-            <div class="info-box">
-                <div class="info-row"><span>當前現價</span><b id="valPrice" style="color:var(--manga-yellow);">0</b></div>
-                <div class="info-row"><span>距慢線幅度</span><b id="valMa3Dist" class="highlight-ma3">0%</b></div>
-                <div class="info-row"><span>24H 漲跌幅</span><b id="val24hChange">0%</b></div>
-                <div class="info-row"><span>5 Vol MA (5均量)</span><b id="valVolMA5" style="color:var(--manga-yellow);">0</b></div>
-                <div class="info-row"><span>20 Vol MA (20均量)</span><b id="valVolMA20" style="color:var(--manga-cyan);">0</b></div>
-                <div class="info-row"><span>快 / 中 / 慢線</span><b id="valMAs" style="color:#94a3b8;">0 / 0 / 0</b></div>
-            </div>
-
-            <a id="binanceLink" href="#" target="_blank" class="binance-btn">🚀 前往幣安交易此標的</a>
-        </div>
-    </div>
-
-<script>
-    const API_BASE = 'https://fapi.binance.com';
-    let rawResults = [];
-    let tickerMap = {};
-    const klineCache = new Map();
-    const CACHE_TTL = 45000;
-
-    const P0 = 5, P1 = 30, P2 = 45, P3 = 60, DISPLAY_COUNT = 80;
-    const VOL_P1 = 5, VOL_P2 = 20;
-
-    window.addEventListener('DOMContentLoaded', updateHeaderTickers);
-
-    async function updateHeaderTickers() {
-        try {
-            const res = await fetch(`${API_BASE}/fapi/v1/ticker/24hr`);
-            if (!res.ok) return;
-            const data = await res.json();
-            
-            tickerMap = {};
-            for (let i = 0; i < data.length; i++) {
-                tickerMap[data[i].symbol] = data[i];
-            }
-
-            const btc = tickerMap['BTCUSDT'];
-            const eth = tickerMap['ETHUSDT'];
-
-            if (btc) updateTickerCard('btcPrice', 'btcChange', btc);
-            if (eth) updateTickerCard('ethPrice', 'ethChange', eth);
-        } catch (e) {
-            console.error("無法取得主流幣數據", e);
-        }
+  // --- 計算 24 小時振幅與漲跌幅 --- //
+  let amplitude24h = 0;
+  let priceChange24h = 0;
+  if (tickerMap[symbol]) {
+    const high24 = parseFloat(tickerMap[symbol].highPrice);
+    const low24 = parseFloat(tickerMap[symbol].lowPrice);
+    if (low24 > 0) {
+      amplitude24h = ((high24 - low24) / low24) * 100;
     }
-
-    function updateTickerCard(priceId, changeId, ticker) {
-        document.getElementById(priceId).innerText = `$${parseFloat(ticker.lastPrice).toLocaleString()}`;
-        const chg = parseFloat(ticker.priceChangePercent);
-        const chgEl = document.getElementById(changeId);
-        chgEl.innerText = `${chg >= 0 ? '+' : ''}${chg.toFixed(2)}%`;
-        chgEl.className = `card-change ${chg >= 0 ? 'up' : 'down'}`;
-    }
-
-    async function asyncPool(poolLimit, array, iteratorFn) {
-        const ret = [];
-        const executing = new Set();
-        for (const item of array) {
-            const p = Promise.resolve().then(() => iteratorFn(item));
-            ret.push(p);
-            executing.add(p);
-            const clean = () => executing.delete(p);
-            p.then(clean, clean);
-            if (executing.size >= poolLimit) {
-                await Promise.race(executing);
-            }
-        }
-        return Promise.all(ret);
-    }
-
-    function calculateSMA(dataArray, period) {
-        const len = dataArray.length;
-        if (len < period) return new Array(len).fill(null);
-
-        const ma = new Array(len).fill(null);
-        let sum = 0;
-        for (let i = 0; i < period; i++) sum += dataArray[i];
-        ma[period - 1] = sum / period;
-
-        for (let i = period; i < len; i++) {
-            sum += dataArray[i] - dataArray[i - period];
-            ma[i] = sum / period;
-        }
-        return ma;
-    }
-
-    async function fetchSymbolDetailsData(symbol) {
-        const now = Date.now();
-        if (klineCache.has(symbol)) {
-            const cached = klineCache.get(symbol);
-            if (now - cached.timestamp < CACHE_TTL) {
-                return cached.data;
-            }
-        }
-
-        const fetchLimit = DISPLAY_COUNT + P3;
-        const res = await fetch(`${API_BASE}/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=${fetchLimit}`);
-        if (!res.ok) return null;
-
-        const klinesRaw = await res.json();
-        const totalLen = klinesRaw.length;
-        if (totalLen < P3) return null;
-
-        const closes = klinesRaw.map(k => parseFloat(k[4]));
-        const volumes = klinesRaw.map(k => parseFloat(k[5]));
-        const price = closes[totalLen - 1];
-
-        const ma5 = calculateSMA(closes, P0)[totalLen - 1];
-        const ma1 = calculateSMA(closes, P1)[totalLen - 1];
-        const ma2 = calculateSMA(closes, P2)[totalLen - 1];
-        const ma3 = calculateSMA(closes, P3)[totalLen - 1];
-
-        const fullVolMa5 = calculateSMA(volumes, VOL_P1);
-        const fullVolMa20 = calculateSMA(volumes, VOL_P2);
-
-        const volMa5 = fullVolMa5[totalLen - 1];
-        const volMa20 = fullVolMa20[totalLen - 1];
-
-        const ma3DistPercent = ((price - ma3) / ma3) * 100;
-        const priceChange24h = tickerMap[symbol] ? parseFloat(tickerMap[symbol].priceChangePercent) : 0;
-
-        const displayKlines = klinesRaw.slice(-DISPLAY_COUNT);
-        const displayMas = {
-            [P0]: calculateSMA(closes, P0).slice(-DISPLAY_COUNT),
-            [P1]: calculateSMA(closes, P1).slice(-DISPLAY_COUNT),
-            [P2]: calculateSMA(closes, P2).slice(-DISPLAY_COUNT),
-            [P3]: calculateSMA(closes, P3).slice(-DISPLAY_COUNT)
-        };
-        const displayVolMas = {
-            5: fullVolMa5.slice(-DISPLAY_COUNT),
-            20: fullVolMa20.slice(-DISPLAY_COUNT)
-        };
-
-        const resultData = { 
-            symbol, price, ma5, ma1, ma2, ma3, 
-            volMa5, volMa20,
-            ma3DistPercent, priceChange24h, 
-            klines: displayKlines, 
-            maSeries: displayMas,
-            volMaSeries: displayVolMas,
-            isBullish: (ma1 > ma2 && ma2 > ma3 && price >= ma3)
-        };
-
-        klineCache.set(symbol, { timestamp: now, data: resultData });
-        return resultData;
-    }
-
-    async function evaluateSymbolMA(symbol, updateProgress) {
-        try {
-            const data = await fetchSymbolDetailsData(symbol);
-            updateProgress();
-            return (data && data.isBullish) ? data : null;
-        } catch {
-            updateProgress();
-            return null;
-        }
-    }
-
-    async function startScan() {
-        const btn = document.getElementById('scanBtn');
-        btn.disabled = true; 
-        btn.innerText = "⚡ 掃描中...";
-        rawResults = [];
-        document.getElementById('symbolList').innerHTML = '';
-
-        await updateHeaderTickers();
-
-        // 篩選條件改為：漲跌幅 >= 10%
-        const candidateSymbols = Object.keys(tickerMap).filter(sym => 
-            sym.endsWith('USDT') && 
-            parseFloat(tickerMap[sym].priceChangePercent) >= 10 && 
-            parseFloat(tickerMap[sym].quoteVolume) > 10000000
-        );
-
-        document.getElementById('statTotal').innerText = candidateSymbols.length;
-
-        let completed = 0;
-        const progressBar = document.getElementById('progress');
-        const updateProgress = () => {
-            completed++;
-            progressBar.style.width = `${(completed / candidateSymbols.length) * 100}%`;
-        };
-
-        btn.innerText = "🔍 計算中...";
-        const results = await asyncPool(15, candidateSymbols, sym => evaluateSymbolMA(sym, updateProgress));
-
-        rawResults = results.filter(Boolean).sort((a, b) => b.ma3DistPercent - a.ma3DistPercent);
-        document.getElementById('statEntry').innerText = rawResults.length;
-
-        btn.disabled = false; 
-        btn.innerText = "啟動極速掃描";
-        renderList();
-    }
-
-    function renderList() {
-        const container = document.getElementById('symbolList');
-        if (rawResults.length === 0) {
-            container.innerHTML = `<div style="text-align:center; padding:40px; color:#64748b; font-weight:800;">無符合多頭排列標的</div>`;
-            return;
-        }
-
-        const fragment = document.createDocumentFragment();
-        rawResults.forEach((item, index) => {
-            const card = document.createElement('div');
-            card.className = 'symbol-card';
-            card.onclick = () => openModal(item);
-
-            const chg24Class = item.priceChange24h >= 0 ? 'val-up' : 'val-down';
-            const chg24Sign = item.priceChange24h >= 0 ? '+' : '';
-            const dist3Class = item.ma3DistPercent >= 0 ? 'val-up' : 'val-down';
-            const dist3Sign = item.ma3DistPercent >= 0 ? '+' : '';
-
-            let rankTag = `<span class="badge-rank">#${index + 1}</span>`;
-            if (index === 0) rankTag = `<span class="badge-rank" style="background:rgba(255,215,0,0.2); color:#ffd700; border-color:rgba(255,215,0,0.5);">🏆 TOP 1</span>`;
-            else if (index === 1) rankTag = `<span class="badge-rank" style="background:rgba(192,192,192,0.2); color:#c0c0c0; border-color:rgba(192,192,192,0.5);">🥈 TOP 2</span>`;
-            else if (index === 2) rankTag = `<span class="badge-rank" style="background:rgba(205,127,50,0.2); color:#cd7f32; border-color:rgba(205,127,50,0.5);">🥉 TOP 3</span>`;
-
-            card.innerHTML = `
-                <div style="flex: 1;">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        ${rankTag}
-                        <span class="symbol-name">${item.symbol.replace('USDT','')}</span>
-                        <span class="badge">均線幅度</span>
-                    </div>
-                    <div class="detail-row">
-                        <b class="highlight-ma3">距慢線: <span class="${dist3Class}">${dist3Sign}${item.ma3DistPercent.toFixed(2)}%</span></b>
-                    </div>
-                    <div class="detail-row" style="opacity: 0.8;">
-                        24H 漲跌: <span class="${chg24Class}">${chg24Sign}${item.priceChange24h.toFixed(2)}%</span>
-                    </div>
-                </div>
-                <div style="text-align:right;">
-                    <div class="symbol-price">${item.price}</div>
-                </div>
-            `;
-            fragment.appendChild(card);
-        });
-
-        container.replaceChildren(fragment);
-    }
-
-    function drawChart(item) {
-        const canvas = document.getElementById('klineCanvas');
-        const ctx = canvas.getContext('2d');
-        const width = canvas.width;
-        const height = canvas.height;
-
-        ctx.clearRect(0, 0, width, height);
-
-        const klines = item.klines;
-        const displayCount = klines.length;
-
-        const priceChartHeight = height * 0.68;
-        const volChartHeight = height * 0.25;
-
-        let minPrice = Infinity, maxPrice = -Infinity;
-        let maxVolMA = -Infinity, minVolMA = Infinity;
-
-        const v5Series = item.volMaSeries[5];
-        const v20Series = item.volMaSeries[20];
-
-        for (let i = 0; i < displayCount; i++) {
-            const high = parseFloat(klines[i][2]);
-            const low = parseFloat(klines[i][3]);
-            if (high > maxPrice) maxPrice = high;
-            if (low < minPrice) minPrice = low;
-
-            const v5 = v5Series[i];
-            const v20 = v20Series[i];
-            if (v5 !== null && v5 > maxVolMA) maxVolMA = v5;
-            if (v5 !== null && v5 < minVolMA) minVolMA = v5;
-            if (v20 !== null && v20 > maxVolMA) maxVolMA = v20;
-            if (v20 !== null && v20 < minVolMA) minVolMA = v20;
-        }
-
-        const pricePadding = 10;
-        const priceRange = (maxPrice - minPrice) || 1;
-        const getYPrice = (price) => priceChartHeight - pricePadding - ((price - minPrice) / priceRange) * (priceChartHeight - pricePadding * 2);
-
-        const volPadding = 5;
-        const volRange = (maxVolMA - minVolMA) || 1;
-        const getYVol = (vol) => height - volPadding - ((vol - minVolMA) / volRange) * (volChartHeight - volPadding * 2);
-
-        const candleWidth = (width / displayCount) * 0.65;
-        const stepX = width / displayCount;
-
-        // --- 背景網格線 ---
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
-        ctx.lineWidth = 1;
-        for (let i = 1; i <= 3; i++) {
-            const y = (priceChartHeight / 4) * i;
-            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
-        }
-
-        // --- 區域分隔虛線 ---
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-        ctx.setLineDash([4, 4]);
-        ctx.beginPath();
-        ctx.moveTo(0, priceChartHeight + 2);
-        ctx.lineTo(width, priceChartHeight + 2);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        // --- 1. 繪製 K 線 ---
-        const upPath = new Path2D();
-        const downPath = new Path2D();
-
-        klines.forEach((k, idx) => {
-            const open = parseFloat(k[1]);
-            const high = parseFloat(k[2]);
-            const low = parseFloat(k[3]);
-            const close = parseFloat(k[4]);
-
-            const x = idx * stepX + stepX / 2;
-            const targetPath = close >= open ? upPath : downPath;
-
-            targetPath.moveTo(x, getYPrice(high));
-            targetPath.lineTo(x, getYPrice(low));
-
-            const topY = getYPrice(Math.max(open, close));
-            const bottomY = getYPrice(Math.min(open, close));
-            const h = Math.max(2, bottomY - topY);
-            targetPath.rect(x - candleWidth / 2, topY, candleWidth, h);
-        });
-
-        ctx.strokeStyle = '#00ff66';
-        ctx.fillStyle = '#00ff66';
-        ctx.stroke(upPath);
-        ctx.fill(upPath);
-
-        ctx.strokeStyle = '#ff2a6d';
-        ctx.fillStyle = '#ff2a6d';
-        ctx.stroke(downPath);
-        ctx.fill(downPath);
-
-        // --- 2. 繪製價格 MA 均線 ---
-        const drawSeries = (series, color, lineWidth = 1.5, getYFunc = getYPrice) => {
-            ctx.beginPath();
-            ctx.strokeStyle = color;
-            ctx.lineWidth = lineWidth;
-            let started = false;
-
-            for (let i = 0; i < displayCount; i++) {
-                const val = series[i];
-                if (val !== null && val !== undefined) {
-                    const x = i * stepX + stepX / 2;
-                    const y = getYFunc(val);
-                    if (!started) {
-                        ctx.moveTo(x, y);
-                        started = true;
-                    } else {
-                        ctx.lineTo(x, y);
-                    }
-                }
-            }
-            ctx.stroke();
-        };
-
-        drawSeries(item.maSeries[P0], '#ff9100', 1.8);
-        drawSeries(item.maSeries[P1], '#ff007f');
-        drawSeries(item.maSeries[P2], '#9d4edd');
-        drawSeries(item.maSeries[P3], '#00ff66');
-
-        // --- 3. 繪製 5日 與 20日 純均量折線 (Vol MA) ---
-        drawSeries(item.volMaSeries[5], '#ffea00', 1.8, getYVol);
-        drawSeries(item.volMaSeries[20], '#00f0ff', 1.8, getYVol);
-    }
-
-    async function openModalForSymbol(symbol) {
-        let item = rawResults.find(r => r.symbol === symbol);
-        if (!item) {
-            item = await fetchSymbolDetailsData(symbol);
-        }
-        if (item) openModal(item);
-    }
-
-    function openModal(item) {
-        document.getElementById('modalSymbol').innerText = item.symbol;
-        document.getElementById('valPrice').innerText = item.price.toFixed(4);
-
-        const dist3El = document.getElementById('valMa3Dist');
-        const dist3Sign = item.ma3DistPercent >= 0 ? '+' : '';
-        dist3El.innerText = `${dist3Sign}${item.ma3DistPercent.toFixed(2)}%`;
-
-        const chgEl = document.getElementById('val24hChange');
-        const chgSign = item.priceChange24h >= 0 ? '+' : '';
-        chgEl.innerText = `${chgSign}${item.priceChange24h.toFixed(2)}%`;
-        chgEl.className = item.priceChange24h >= 0 ? 'val-up' : 'val-down';
-
-        const formatVol = (val) => val >= 1e6 ? `${(val/1e6).toFixed(2)}M` : `${(val/1e3).toFixed(2)}K`;
-        document.getElementById('valVolMA5').innerText = item.volMa5 ? formatVol(item.volMa5) : '--';
-        document.getElementById('valVolMA20').innerText = item.volMa20 ? formatVol(item.volMa20) : '--';
-
-        document.getElementById('valMAs').innerText = `${item.ma1.toFixed(2)} / ${item.ma2.toFixed(2)} / ${item.ma3.toFixed(2)}`;
-
-        document.getElementById('binanceLink').href = `https://www.binance.com/zh-TC/futures/${item.symbol}`;
-        document.getElementById('tradeModal').style.display = 'flex';
-
-        requestAnimationFrame(() => drawChart(item));
-    }
-
-    function closeModal() {
-        document.getElementById('tradeModal').style.display = 'none';
-    }
-</script>
-</body>
+    priceChange24h = parseFloat(tickerMap[symbol].priceChangePercent);
+  }
+
+  const ma5 = calculateSMA(closes, P0)[totalLen - 1]; 
+  const ma1 = calculateSMA(closes, P1)[totalLen - 1]; 
+  const ma2 = calculateSMA(closes, P2)[totalLen - 1]; 
+  const ma3 = calculateSMA(closes, P3)[totalLen - 1]; 
+
+  const fullVolMa5 = calculateSMA(volumes, VOL_P1); 
+  const fullVolMa20 = calculateSMA(volumes, VOL_P2); 
+  const volMa5 = fullVolMa5[totalLen - 1]; 
+  const volMa20 = fullVolMa20[totalLen - 1]; 
+
+  const ma3DistPercent = ((price - ma3) / ma3) * 100; 
+
+  const displayKlines = klinesRaw.slice(-DISPLAY_COUNT); 
+  const displayMas = { 
+    [P0]: calculateSMA(closes, P0).slice(-DISPLAY_COUNT), 
+    [P1]: calculateSMA(closes, P1).slice(-DISPLAY_COUNT), 
+    [P2]: calculateSMA(closes, P2).slice(-DISPLAY_COUNT), 
+    [P3]: calculateSMA(closes, P3).slice(-DISPLAY_COUNT) 
+  }; 
+  const displayVolMas = { 
+    5: fullVolMa5.slice(-DISPLAY_COUNT), 
+    20: fullVolMa20.slice(-DISPLAY_COUNT) 
+  }; 
+
+  const resultData = { 
+    symbol, price, ma5, ma1, ma2, ma3, volMa5, volMa20, 
+    ma3DistPercent, priceChange24h, amplitude24h, is20kHigh,
+    klines: displayKlines, maSeries: displayMas, volMaSeries: displayVolMas, 
+    isBullish: (ma1 > ma2 && ma2 > ma3 && price >= ma3) 
+  }; 
+  klineCache.set(symbol, { timestamp: now, data: resultData }); 
+  return resultData; 
+} 
+
+async function evaluateSymbolMA(symbol, updateProgress) { 
+  try { 
+    const data = await fetchSymbolDetailsData(symbol); 
+    updateProgress(); 
+    return (data && data.isBullish) ? data : null; 
+  } catch { 
+    updateProgress(); 
+    return null; 
+  } 
+} 
+
+async function startScan() { 
+  const btn = document.getElementById('scanBtn'); 
+  btn.disabled = true; 
+  btn.innerText = "⚡ 掃描中..."; 
+  rawResults = []; 
+  document.getElementById('symbolList').innerHTML = ''; 
+  await updateHeaderTickers(); 
+
+  // ⚡ 篩選條件調整：從 24H 漲跌幅 >= 10% 改為 24H 振幅 >= 10% ⚡
+  const candidateSymbols = Object.keys(tickerMap).filter(sym => {
+    if (!sym.endsWith('USDT')) return false;
+    const ticker = tickerMap[sym];
+    const high = parseFloat(ticker.highPrice);
+    const low = parseFloat(ticker.lowPrice);
+    const quoteVol = parseFloat(ticker.quoteVolume);
+    
+    // 計算振幅: (High - Low) / Low
+    const amplitude = low > 0 ? ((high - low) / low) * 100 : 0;
+    
+    return amplitude >= 10 && quoteVol > 10000000;
+  });
+
+  document.getElementById('statTotal').innerText = candidateSymbols.length; 
+  let completed = 0; 
+  const progressBar = document.getElementById('progress'); 
+  const updateProgress = () => { 
+    completed++; 
+    progressBar.style.width = `${(completed / candidateSymbols.length) * 100}%`; 
+  }; 
+
+  btn.innerText = "🔍 計算中..."; 
+  const results = await asyncPool(15, candidateSymbols, sym => evaluateSymbolMA(sym, updateProgress)); 
+  rawResults = results.filter(Boolean).sort((a, b) => b.ma3DistPercent - a.ma3DistPercent); 
+  document.getElementById('statEntry').innerText = rawResults.length; 
+  btn.disabled = false; 
+  btn.innerText = "啟動極速掃描"; 
+  renderList(); 
+} 
+
+function renderList() { 
+  const container = document.getElementById('symbolList'); 
+  if (rawResults.length === 0) { 
+    container.innerHTML = `<div style="text-align:center; padding:40px; color:#64748b; font-weight:800;">無符合多頭排列標的</div>`; 
+    return; 
+  } 
+  const fragment = document.createDocumentFragment(); 
+  rawResults.forEach((item, index) => { 
+    const card = document.createElement('div'); 
+    card.className = 'symbol-card'; 
+    card.onclick = () => openModal(item); 
+
+    const chg24Class = item.priceChange24h >= 0 ? 'val-up' : 'val-down'; 
+    const chg24Sign = item.priceChange24h >= 0 ? '+' : ''; 
+    const dist3Class = item.ma3DistPercent >= 0 ? 'val-up' : 'val-down'; 
+    const dist3Sign = item.ma3DistPercent >= 0 ? '+' : ''; 
+
+    let rankTag = `<span class="badge-rank">#${index + 1}</span>`; 
+    if (index === 0) rankTag = `<span class="badge-rank" style="background:rgba(255,215,0,0.2); color:#ffd700; border-color:rgba(255,215,0,0.5);">🏆 TOP 1</span>`; 
+    else if (index === 1) rankTag = `<span class="badge-rank" style="background:rgba(192,192,192,0.2); color:#c0c0c0; border-color:rgba(192,192,192,0.5);">🥈 TOP 2</span>`; 
+    else if (index === 2) rankTag = `<span class="badge-rank" style="background:rgba(205,127,50,0.2); color:#cd7f32; border-color:rgba(205,127,50,0.5);">🥉 TOP 3</span>`; 
+
+    const newHighTag = item.is20kHigh ? `<span class="badge-new-high">🔥 20K新高</span>` : ''; 
+
+    card.innerHTML = ` 
+      <div style="flex: 1;"> 
+        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;"> 
+          ${rankTag} 
+          <span class="symbol-name">${item.symbol.replace('USDT','')}</span> 
+          <span class="badge">均線多頭</span> 
+          ${newHighTag} 
+        </div> 
+        <div class="detail-row"> 
+          <b class="highlight-ma3">距慢線: <span class="${dist3Class}">${dist3Sign}${item.ma3DistPercent.toFixed(2)}%</span></b> 
+        </div> 
+        <div class="detail-row" style="opacity: 0.85;"> 
+          24H 振幅: <span class="highlight-amp">${item.amplitude24h.toFixed(2)}%</span> | 漲跌: <span class="${chg24Class}">${chg24Sign}${item.priceChange24h.toFixed(2)}%</span>
+        </div> 
+      </div> 
+      <div style="text-align:right;"> 
+        <div class="symbol-price">${item.price}</div> 
+      </div> 
+    `; 
+    fragment.appendChild(card); 
+  }); 
+  container.replaceChildren(fragment); 
+} 
+
+function drawChart(item) { 
+  const canvas = document.getElementById('klineCanvas'); 
+  const ctx = canvas.getContext('2d'); 
+  const width = canvas.width; 
+  const height = canvas.height; 
+  ctx.clearRect(0, 0, width, height); 
+
+  const klines = item.klines; 
+  const displayCount = klines.length; 
+  const priceChartHeight = height * 0.68; 
+  const volChartHeight = height * 0.25; 
+
+  let minPrice = Infinity, maxPrice = -Infinity; 
+  let maxVolMA = -Infinity, minVolMA = Infinity; 
+
+  const v5Series = item.volMaSeries[5]; 
+  const v20Series = item.volMaSeries[20]; 
+
+  for (let i = 0; i < displayCount; i++) { 
+    const high = parseFloat(klines[i][2]); 
+    const low = parseFloat(klines[i][3]); 
+    if (high > maxPrice) maxPrice = high; 
+    if (low < minPrice) minPrice = low; 
+
+    const v5 = v5Series[i]; 
+    const v20 = v20Series[i]; 
+    if (v5 !== null && v5 > maxVolMA) maxVolMA = v5; 
+    if (v5 !== null && v5 < minVolMA) minVolMA = v5; 
+    if (v20 !== null && v20 > maxVolMA) maxVolMA = v20; 
+    if (v20 !== null && v20 < minVolMA) minVolMA = v20; 
+  } 
+
+  const pricePadding = 10; 
+  const priceRange = (maxPrice - minPrice) || 1; 
+  const getYPrice = (price) => priceChartHeight - pricePadding - ((price - minPrice) / priceRange) * (priceChartHeight - pricePadding * 2); 
+
+  const volPadding = 5; 
+  const volRange = (maxVolMA - minVolMA) || 1; 
+  const getYVol = (vol) => height - volPadding - ((vol - minVolMA) / volRange) * (volChartHeight - volPadding * 2); 
+
+  const candleWidth = (width / displayCount) * 0.65; 
+  const stepX = width / displayCount; 
+
+  // --- 背景網格線 --- 
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)'; 
+  ctx.lineWidth = 1; 
+  for (let i = 1; i <= 3; i++) { 
+    const y = (priceChartHeight / 4) * i; 
+    ctx.beginPath(); 
+    ctx.moveTo(0, y); 
+    ctx.lineTo(width, y); 
+    ctx.stroke(); 
+  } 
+
+  // --- 區域分隔虛線 --- 
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'; 
+  ctx.setLineDash([4, 4]); 
+  ctx.beginPath(); 
+  ctx.moveTo(0, priceChartHeight + 2); 
+  ctx.lineTo(width, priceChartHeight + 2); 
+  ctx.stroke(); 
+  ctx.setLineDash([]); 
+
+  // --- 1. 繪製 K 線 --- 
+  const upPath = new Path2D(); 
+  const downPath = new Path2D(); 
+  klines.forEach((k, idx) => { 
+    const open = parseFloat(k[1]); 
+    const high = parseFloat(k[2]); 
+    const low = parseFloat(k[3]); 
+    const close = parseFloat(k[4]); 
+    const x = idx * stepX + stepX / 2; 
+
+    const targetPath = close >= open ? upPath : downPath; 
+    targetPath.moveTo(x, getYPrice(high)); 
+    targetPath.lineTo(x, getYPrice(low)); 
+
+    const topY = getYPrice(Math.max(open, close)); 
+    const bottomY = getYPrice(Math.min(open, close)); 
+    const h = Math.max(2, bottomY - topY); 
+    targetPath.rect(x - candleWidth / 2, topY, candleWidth, h); 
+  }); 
+
+  ctx.strokeStyle = '#00ff66'; 
+  ctx.fillStyle = '#00ff66'; 
+  ctx.stroke(upPath); 
+  ctx.fill(upPath); 
+
+  ctx.strokeStyle = '#ff2a6d'; 
+  ctx.fillStyle = '#ff2a6d'; 
+  ctx.stroke(downPath); 
+  ctx.fill(downPath); 
+
+  // --- 2. 繪製價格 MA 均線 --- 
+  const drawSeries = (series, color, lineWidth = 1.5, getYFunc = getYPrice) => { 
+    ctx.beginPath(); 
+    ctx.strokeStyle = color; 
+    ctx.lineWidth = lineWidth; 
+    let started = false; 
+    for (let i = 0; i < displayCount; i++) { 
+      const val = series[i]; 
+      if (val !== null && val !== undefined) { 
+        const x = i * stepX + stepX / 2; 
+        const y = getYFunc(val); 
+        if (!started) { 
+          ctx.moveTo(x, y); 
+          started = true; 
+        } else { 
+          ctx.lineTo(x, y); 
+        } 
+      } 
+    } 
+    ctx.stroke(); 
+  }; 
+
+  drawSeries(item.maSeries[P0], '#ff9100', 1.8); 
+  drawSeries(item.maSeries[P1], '#ff007f'); 
+  drawSeries(item.maSeries[P2], '#9d4edd'); 
+  drawSeries(item.maSeries[P3], '#00ff66'); 
+
+  // --- 3. 繪製 5日 與 20日 純均量折線 (Vol MA) --- 
+  drawSeries(item.volMaSeries[5], '#ffea00', 1.8, getYVol); 
+  drawSeries(item.volMaSeries[20], '#00f0ff', 1.8, getYVol); 
+} 
+
+async function openModalForSymbol(symbol) { 
+  let item = rawResults.find(r => r.symbol === symbol); 
+  if (!item) { 
+    item = await fetchSymbolDetailsData(symbol); 
+  } 
+  if (item) openModal(item); 
+} 
+
+function openModal(item) { 
+  document.getElementById('modalSymbol').innerText = item.symbol; 
+  document.getElementById('valPrice').innerText = item.price.toFixed(4); 
+
+  const highEl = document.getElementById('val20kHigh'); 
+  if (item.is20kHigh) { 
+    highEl.innerText = '🔥 是 (突破新高)'; 
+    highEl.style.color = 'var(--manga-pink)'; 
+  } else { 
+    highEl.innerText = '否'; 
+    highEl.style.color = '#94a3b8'; 
+  } 
+
+  document.getElementById('val24hAmp').innerText = `${item.amplitude24h.toFixed(2)}%`;
+
+  const dist3El = document.getElementById('valMa3Dist'); 
+  const dist3Sign = item.ma3DistPercent >= 0 ? '+' : ''; 
+  dist3El.innerText = `${dist3Sign}${item.ma3DistPercent.toFixed(2)}%`; 
+
+  const chgEl = document.getElementById('val24hChange'); 
+  const chgSign = item.priceChange24h >= 0 ? '+' : ''; 
+  chgEl.innerText = `${chgSign}${item.priceChange24h.toFixed(2)}%`; 
+  chgEl.className = item.priceChange24h >= 0 ? 'val-up' : 'val-down'; 
+
+  const formatVol = (val) => val >= 1e6 ? `${(val/1e6).toFixed(2)}M` : `${(val/1e3).toFixed(2)}K`; 
+  document.getElementById('valVolMA5').innerText = item.volMa5 ? formatVol(item.volMa5) : '--'; 
+  document.getElementById('valVolMA20').innerText = item.volMa20 ? formatVol(item.volMa20) : '--'; 
+  document.getElementById('valMAs').innerText = `${item.ma1.toFixed(2)} / ${item.ma2.toFixed(2)} / ${item.ma3.toFixed(2)}`; 
+
+  document.getElementById('binanceLink').href = `https://www.binance.com/zh-TC/futures/${item.symbol}`; 
+  document.getElementById('tradeModal').style.display = 'flex'; 
+  requestAnimationFrame(() => drawChart(item)); 
+} 
+
+function closeModal() { 
+  document.getElementById('tradeModal').style.display = 'none'; 
+} 
+</script> 
+</body> 
 </html>
