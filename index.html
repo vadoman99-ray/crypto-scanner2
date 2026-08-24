@@ -29,7 +29,7 @@ body {
   background-size: 100% 100%, 100% 100%, 20px 20px; 
   color: #fff; margin: 0; padding-bottom: 50px; min-height: 100vh; 
 } 
-body.modal-open { overflow: hidden; } /* 防穿透滾動 */
+body.modal-open { overflow: hidden; } /* 防背景滾動穿透 */
 
 .app-header { 
   position: sticky; top: 0; z-index: 100; background: rgba(8, 12, 22, 0.88); 
@@ -78,7 +78,7 @@ body.modal-open { overflow: hidden; } /* 防穿透滾動 */
 .val-up { color: var(--manga-green); } 
 .val-down { color: var(--manga-red); } 
 
-/* 🚀 優化後的跳出視窗 (Modal) 樣式 */
+/* 跳出視窗 (Modal) 樣式 */
 .chart-modal {
   position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
   background: rgba(4, 6, 14, 0.88); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
@@ -111,7 +111,7 @@ body.modal-open { overflow: hidden; } /* 防穿透滾動 */
 .close-btn:hover { background: var(--manga-red); color: #fff; border-color: var(--manga-red); transform: rotate(90deg); }
 .chart-container { flex: 1; width: 100%; height: 100%; position: relative; }
 
-/* 🌀 載入動畫 (Loading Spinner) */
+/* 載入動畫 (Loading Spinner) */
 .chart-loading {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
   background: #0b0f19; display: flex; flex-direction: column; justify-content: center; align-items: center;
@@ -124,7 +124,7 @@ body.modal-open { overflow: hidden; } /* 防穿透滾動 */
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* 📱 行動端適應優化 */
+/* 行動端適應優化 */
 @media (max-width: 600px) {
   .chart-modal { padding: 6px; }
   .chart-box { height: 94vh; border-radius: 12px; }
@@ -156,7 +156,7 @@ body.modal-open { overflow: hidden; } /* 防穿透滾動 */
 
 <div class="container" id="symbolList"></div> 
 
-<!-- 🚀 優化 Modal 結構 -->
+<!-- Modal 結構 -->
 <div id="chartModal" class="chart-modal" aria-hidden="true">
   <div class="chart-box" role="dialog" aria-modal="true">
     <div class="chart-header">
@@ -351,14 +351,13 @@ body.modal-open { overflow: hidden; } /* 防穿透滾動 */
     dom.symbolList.replaceChildren(fragment); 
   } 
 
-  // 🚀 優化 Modal 開啟邏輯
+  // Modal 開啟邏輯（加入均量線設定）
   function openChartModal(symbol) {
     closeChartModal(); 
 
     const formattedSymbol = `BINANCE:${symbol}.P`; 
     dom.modalTitle.innerText = `📈 ${symbol} (1H K線圖)`;
     
-    // 顯示 Loading & 開啟視窗 & 鎖定背景滾動
     dom.chartLoading.style.display = 'flex';
     dom.chartModal.classList.add('active');
     dom.chartModal.setAttribute('aria-hidden', 'false');
@@ -378,21 +377,36 @@ body.modal-open { overflow: hidden; } /* 防穿透滾動 */
       "allow_symbol_change": false,
       "container_id": "tvChartContainer",
       "studies": [
+        // K線 均線設定
         { "id": "MASimple@tv-basicstudies", "inputs": { "length": 5 }, "styles": { "plot": { "color": "#00ff66", "linewidth": 2 } } },  
         { "id": "MASimple@tv-basicstudies", "inputs": { "length": 30 }, "styles": { "plot": { "color": "#ffea00", "linewidth": 2 } } }, 
         { "id": "MASimple@tv-basicstudies", "inputs": { "length": 45 }, "styles": { "plot": { "color": "#ff9100", "linewidth": 2 } } }, 
         { "id": "MASimple@tv-basicstudies", "inputs": { "length": 60 }, "styles": { "plot": { "color": "#ff007f", "linewidth": 2 } } },
-        { "id": "Volume@tv-basicstudies", "inputs": { "showMA": true, "maLength": 5 }, "styles": { "vol": { "visible": false }, "volume ma": { "color": "#00f0ff", "linewidth": 2 } } },
-        { "id": "Volume@tv-basicstudies", "inputs": { "showMA": true, "maLength": 20 }, "styles": { "vol": { "visible": false }, "volume ma": { "color": "#9d4edd", "linewidth": 2 } } }
+        
+        // ⚡ 成交量 + 5MA 均量線（亮青色）
+        { 
+          "id": "Volume@tv-basicstudies", 
+          "inputs": { "showMA": true, "maLength": 5 }, 
+          "styles": { 
+            "volume ma": { "color": "#00f0ff", "linewidth": 2, "visible": true } 
+          } 
+        },
+        // ⚡ 成交量 + 20MA 均量線（紫色）
+        { 
+          "id": "Volume@tv-basicstudies", 
+          "inputs": { "showMA": true, "maLength": 20 }, 
+          "styles": { 
+            "volume ma": { "color": "#9d4edd", "linewidth": 2, "visible": true } 
+          } 
+        }
       ],
       "onChartReady": function() {
-        // 圖表渲染完畢，隱藏 Loading Spinner
         dom.chartLoading.style.display = 'none';
       }
     });
   }
 
-  // 🚀 優化 Modal 關閉邏輯
+  // Modal 關閉邏輯
   function closeChartModal() {
     if (tvWidget && typeof tvWidget.remove === 'function') {
       try { tvWidget.remove(); } catch {}
@@ -401,19 +415,16 @@ body.modal-open { overflow: hidden; } /* 防穿透滾動 */
     dom.tvContainer.replaceChildren();
     dom.chartModal.classList.remove('active');
     dom.chartModal.setAttribute('aria-hidden', 'true');
-    document.body.classList.remove('modal-open'); // 恢復背景滾動
+    document.body.classList.remove('modal-open');
   }
 
-  // 事件監聽綁定
   dom.scanBtn.addEventListener('click', startScan);
   dom.closeModalBtn.addEventListener('click', closeChartModal);
   
-  // 點擊 Modal 背景黑影處自動關閉
   dom.chartModal.addEventListener('click', (e) => {
     if (e.target === dom.chartModal) closeChartModal();
   });
   
-  // Esc 鍵快捷關閉
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && dom.chartModal.classList.contains('active')) {
       closeChartModal();
