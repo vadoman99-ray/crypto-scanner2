@@ -4,7 +4,10 @@
 <meta charset="UTF-8"> 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
 <title>⚡ 1H MA 多頭 + 5MA 突破狀態全排行 (>1億USDT)</title> 
-<script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+<!-- ⚡ 使用 defer 避免阻塞主線程，並預先連接 DNS -->
+<link rel="dns-prefetch" href="//s3.tradingview.com">
+<link rel="preconnect" href="https://s3.tradingview.com">
+<script type="text/javascript" src="https://s3.tradingview.com/tv.js" defer></script>
 <style> 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@700;800;900&display=swap'); 
 :root { 
@@ -78,22 +81,18 @@ body.modal-open { overflow: hidden; }
 .val-up { color: var(--manga-green); } 
 .val-down { color: var(--manga-red); } 
 
-/* 🚀 精簡版 Modal 樣式 */
+/* 🚀 高速 Modal 樣式：取消延遲動畫以追求極致速度 */
 .chart-modal {
   position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(4, 6, 14, 0.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-  z-index: 1000; display: flex; justify-content: center; align-items: center; padding: 12px;
-  opacity: 0; visibility: hidden; pointer-events: none;
-  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(4, 6, 14, 0.92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  z-index: 1000; display: none; justify-content: center; align-items: center; padding: 12px;
 }
-.chart-modal.active { opacity: 1; visibility: visible; pointer-events: auto; }
+.chart-modal.active { display: flex; }
 .chart-box {
   width: 100%; max-width: 1050px; height: 85vh; background: #0b0f19;
   border: 1px solid rgba(0, 240, 255, 0.35); border-radius: 16px; overflow: hidden;
-  display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0, 240, 255, 0.2), 0 20px 60px rgba(0,0,0,0.9);
-  transform: scale(0.95); transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0, 240, 255, 0.2);
 }
-.chart-modal.active .chart-box { transform: scale(1); }
 
 .chart-header {
   padding: 12px 16px; background: #111726; display: flex; justify-content: space-between; align-items: center;
@@ -104,23 +103,11 @@ body.modal-open { overflow: hidden; }
 .close-btn {
   background: rgba(255,255,255,0.08); color: #a0aec0; border: 1px solid rgba(255,255,255,0.1); border-radius: 50%;
   width: 32px; height: 32px; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
-.close-btn:hover { background: var(--manga-red); color: #fff; border-color: var(--manga-red); transform: rotate(90deg); }
+.close-btn:hover { background: var(--manga-red); color: #fff; border-color: var(--manga-red); }
 
 .chart-container { flex: 1; width: 100%; height: 100%; position: relative; }
-
-.chart-loading {
-  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-  background: #0b0f19; display: flex; flex-direction: column; justify-content: center; align-items: center;
-  z-index: 10; gap: 12px; color: var(--manga-cyan); font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;
-}
-.spinner {
-  width: 36px; height: 36px; border: 3px solid rgba(0, 240, 255, 0.15);
-  border-top-color: var(--manga-cyan); border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
 
 @media (max-width: 600px) {
   .chart-modal { padding: 0; }
@@ -161,10 +148,6 @@ body.modal-open { overflow: hidden; }
     </div>
 
     <div class="chart-container">
-      <div id="chartLoading" class="chart-loading">
-        <div class="spinner"></div>
-        <span>載入 K 線與均線中...</span>
-      </div>
       <div id="tvChartContainer" style="width:100%; height:100%;"></div>
     </div>
   </div>
@@ -189,8 +172,7 @@ body.modal-open { overflow: hidden; }
     chartModal: document.getElementById('chartModal'),
     modalTitle: document.getElementById('modalSymbolTitle'),
     closeModalBtn: document.getElementById('closeModalBtn'),
-    tvContainer: document.getElementById('tvChartContainer'),
-    chartLoading: document.getElementById('chartLoading')
+    tvContainer: document.getElementById('tvChartContainer')
   };
 
   function calculateSMA(data, period) { 
@@ -348,21 +330,12 @@ body.modal-open { overflow: hidden; }
     dom.symbolList.replaceChildren(fragment); 
   } 
 
-  // 🚀 只顯示 K線 + 4條均線的 TradingView 設定
+  // 🚀 極速圖表渲染設定 (移除大量不必要的 UI 模組以提升速度)
   function renderTradingViewWidget(symbol) {
     const formattedSymbol = `BINANCE:${symbol}.P`;
     dom.modalTitle.innerText = `📈 ${symbol} (1H K線圖)`;
-    dom.chartLoading.style.display = 'flex';
 
-    if (tvWidget && typeof tvWidget.remove === 'function') {
-      try { tvWidget.remove(); } catch {}
-      tvWidget = null;
-    }
     dom.tvContainer.replaceChildren();
-
-    const timeoutTimer = setTimeout(() => {
-      dom.chartLoading.style.display = 'none';
-    }, 2500);
 
     tvWidget = new TradingView.widget({
       "autosize": true,
@@ -372,22 +345,18 @@ body.modal-open { overflow: hidden; }
       "theme": "dark",
       "style": "1", 
       "locale": "zh_TW",
-      "toolbar_bg": "#f1f3f6",
       "enable_publishing": false,
       "hide_top_toolbar": false,
+      "hide_side_toolbar": true, // ⚡ 隱藏繪圖側邊欄 (顯著提升載入速度)
       "allow_symbol_change": false,
+      "save_image": false,      // ⚡ 關閉截圖按鈕功能
       "container_id": "tvChartContainer",
       "studies": [
-        // 僅保留 K 線上的 4 條移動平均線 (5MA, 30MA, 45MA, 60MA)
         { "id": "MASimple@tv-basicstudies", "inputs": { "length": 5 }, "styles": { "plot": { "color": "#00ff66", "linewidth": 2 } } },  
         { "id": "MASimple@tv-basicstudies", "inputs": { "length": 30 }, "styles": { "plot": { "color": "#ffea00", "linewidth": 2 } } }, 
         { "id": "MASimple@tv-basicstudies", "inputs": { "length": 45 }, "styles": { "plot": { "color": "#ff9100", "linewidth": 2 } } }, 
         { "id": "MASimple@tv-basicstudies", "inputs": { "length": 60 }, "styles": { "plot": { "color": "#ff007f", "linewidth": 2 } } }
-      ],
-      "onChartReady": function() {
-        clearTimeout(timeoutTimer);
-        dom.chartLoading.style.display = 'none';
-      }
+      ]
     });
   }
 
@@ -400,14 +369,10 @@ body.modal-open { overflow: hidden; }
   }
 
   function closeChartModal() {
-    if (tvWidget && typeof tvWidget.remove === 'function') {
-      try { tvWidget.remove(); } catch {}
-      tvWidget = null;
-    }
-    dom.tvContainer.replaceChildren();
     dom.chartModal.classList.remove('active');
     dom.chartModal.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('modal-open');
+    dom.tvContainer.replaceChildren();
   }
 
   dom.scanBtn.addEventListener('click', startScan);
