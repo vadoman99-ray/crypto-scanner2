@@ -3,7 +3,7 @@
 <head> 
 <meta charset="UTF-8"> 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
-<title>⚡ 1H MA 多頭 + 5MA 突破狀態全排行 (含 K 棒圖表)</title> 
+<title>⚡ 1H MA 多頭 + 5MA 突破狀態全排行 (>1億USDT)</title> 
 <!-- 引入 TradingView 圖表庫 -->
 <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
 <style> 
@@ -107,7 +107,7 @@ body {
 
 <div class="app-header"> 
   <div class="header-top"> 
-    <div class="header-title">⚡ 5MA 突破狀態全排行 (點擊查看 K 棒)</div> 
+    <div class="header-title">⚡ 5MA 突破狀態全排行 (>1億USDT)</div> 
     <button id="scanBtn" class="scan-btn" onclick="startScan()">啟動極速掃描</button> 
   </div> 
 </div> 
@@ -116,7 +116,7 @@ body {
 <div class="dashboard"> 
   <div class="stat-card"> 
     <div class="val" id="statTotal" style="color:var(--manga-cyan)">0</div> 
-    <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">掃描目標數 (>1,000萬)</div> 
+    <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">掃描目標數 (>1億USDT)</div> 
   </div> 
   <div class="stat-card entry"> 
     <div class="val" id="statEntry">0</div> 
@@ -246,9 +246,10 @@ async function startScan() {
     data.forEach(d => tickerMap[d.symbol] = d); 
   } 
 
+  // 修改處：門檻調高為 > 100,000,000 USDT (1億)
   const candidateSymbols = Object.keys(tickerMap).filter(sym => { 
     if (!sym.endsWith('USDT')) return false; 
-    return parseFloat(tickerMap[sym].quoteVolume) > 10000000; 
+    return parseFloat(tickerMap[sym].quoteVolume) > 100000000; 
   }); 
 
   document.getElementById('statTotal').innerText = candidateSymbols.length; 
@@ -291,7 +292,7 @@ function renderList() {
   rawResults.forEach((item, index) => { 
     const card = document.createElement('div'); 
     card.className = 'symbol-card'; 
-    card.onclick = () => openChartModal(item.symbol); // 綁定點擊跳出 K 棒事件
+    card.onclick = () => openChartModal(item.symbol); 
 
     const chg24Class = item.priceChange24h >= 0 ? 'val-up' : 'val-down'; 
     const chg24Sign = item.priceChange24h >= 0 ? '+' : ''; 
@@ -320,24 +321,23 @@ function renderList() {
   container.replaceChildren(fragment); 
 } 
 
-// --- TradingView K 棒彈窗控制邏輯 ---
 function openChartModal(symbol) {
   const modal = document.getElementById('chartModal');
   const title = document.getElementById('modalSymbolTitle');
   
-  const formattedSymbol = `BINANCE:${symbol}.P`; // 永續合約 TradingView 格式
+  const formattedSymbol = `BINANCE:${symbol}.P`; 
   title.innerText = `📈 ${symbol} (1H K線圖)`;
   
   modal.classList.add('active');
-  document.getElementById('tvChartContainer').innerHTML = ''; // 清空舊圖表
+  document.getElementById('tvChartContainer').innerHTML = ''; 
 
   new TradingView.widget({
     "autosize": true,
     "symbol": formattedSymbol,
-    "interval": "60", // 1H K線
+    "interval": "60", 
     "timezone": "Asia/Taipei",
     "theme": "dark",
-    "style": "1", // 燭台圖
+    "style": "1", 
     "locale": "zh_TW",
     "toolbar_bg": "#f1f3f6",
     "enable_publishing": false,
@@ -345,10 +345,10 @@ function openChartModal(symbol) {
     "allow_symbol_change": false,
     "container_id": "tvChartContainer",
     "studies": [
-      { "id": "MASimple@tv-basicstudies", "inputs": { "length": 5 } },  // 5MA
-      { "id": "MASimple@tv-basicstudies", "inputs": { "length": 30 } }, // 30MA
-      { "id": "MASimple@tv-basicstudies", "inputs": { "length": 45 } }, // 45MA
-      { "id": "MASimple@tv-basicstudies", "inputs": { "length": 60 } }  // 60MA
+      { "id": "MASimple@tv-basicstudies", "inputs": { "length": 5 } },  
+      { "id": "MASimple@tv-basicstudies", "inputs": { "length": 30 } }, 
+      { "id": "MASimple@tv-basicstudies", "inputs": { "length": 45 } }, 
+      { "id": "MASimple@tv-basicstudies", "inputs": { "length": 60 } }  
     ]
   });
 }
@@ -357,7 +357,7 @@ function closeChartModal(event) {
   if (event && event.target !== event.currentTarget) return;
   const modal = document.getElementById('chartModal');
   modal.classList.remove('active');
-  document.getElementById('tvChartContainer').innerHTML = ''; // 關閉時銷毀圖表釋放記憶體
+  document.getElementById('tvChartContainer').innerHTML = ''; 
 }
 </script> 
 </body> 
