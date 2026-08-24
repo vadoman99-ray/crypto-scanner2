@@ -14,6 +14,7 @@
             --manga-purple: #a855f7;
             --manga-cyan: #00f0ff;
             --manga-yellow: #ffe600;
+            --manga-orange: #ff9900;
             --manga-green: #00ff66;
             --manga-red: #ff3366;
             --pop-shadow: 4px 4px 0px #000;
@@ -42,29 +43,6 @@
             transition: opacity 0.2s;
         }
         .scan-btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
-
-        .action-bar {
-            padding: 10px 16px 0 16px;
-            display: flex;
-            gap: 10px;
-        }
-        .copy-btn {
-            width: 100%;
-            background: #1a2638;
-            color: var(--manga-cyan);
-            border: 2px solid var(--manga-cyan);
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-weight: 900;
-            font-size: 0.85rem;
-            cursor: pointer;
-            box-shadow: var(--pop-shadow);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-        .copy-btn:hover { background: var(--manga-cyan); color: #000; }
 
         .progress-container { height: 6px; background: #090d16; width: 100%; margin-top: 0; }
         .progress-fill { height: 100%; width: 0%; background: var(--manga-cyan); transition: width 0.05s ease-out; }
@@ -111,7 +89,7 @@
             background: #070a12; border: 1px solid #2a3a5c; border-radius: 6px;
             padding: 8px; margin-bottom: 12px; position: relative;
         }
-        .chart-title { font-size: 0.75rem; color: #a0aec0; margin-bottom: 4px; display: flex; justify-content: space-between; }
+        .chart-title { font-size: 0.72rem; color: #a0aec0; margin-bottom: 4px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px; }
         canvas { width: 100%; height: 200px; display: block; }
 
         .info-box { background: #070a12; border: 1px solid #2a3a5c; padding: 10px; border-radius: 6px; margin-bottom: 12px; }
@@ -148,10 +126,6 @@
 
     <div class="progress-container"><div id="progress" class="progress-fill"></div></div>
 
-    <div class="action-bar">
-        <button class="copy-btn" onclick="copySymbolList()">📋 複製所有符合標的 (方便貼上搜尋)</button>
-    </div>
-
     <div class="dashboard">
         <div class="stat-card">
             <div class="val" id="statTotal">0</div>
@@ -176,6 +150,7 @@
                 <div class="chart-title">
                     <span>1H 近 100 根 K 線圖</span>
                     <span style="font-weight:900;">
+                        <span style="color:var(--manga-orange);">● 5MA</span> 
                         <span style="color:var(--manga-pink);">● 快線</span> 
                         <span style="color:var(--manga-purple);">● 中線</span> 
                         <span style="color:var(--manga-green);">● 慢線</span>
@@ -186,6 +161,7 @@
 
             <div class="info-box">
                 <div class="info-row"><span>當前現價:</span><b id="valPrice" style="color:var(--manga-yellow);">0</b></div>
+                <div class="info-row"><span>5 MA (超快線):</span><b id="valMA5" style="color:var(--manga-orange);">0</b></div>
                 <div class="info-row"><span>距慢線幅度 (排行):</span><b id="valMa3Dist" class="highlight-ma3">0%</b></div>
                 <div class="info-row"><span>24H 漲跌幅:</span><b id="val24hChange">0%</b></div>
                 <div class="info-row"><span>快線:</span><b id="valMA1" style="color:var(--manga-pink);">0</b></div>
@@ -203,6 +179,7 @@
     let currentItem = null;
     let tickerMap = {};
 
+    const P0 = 5;  // 新增 5 MA
     const P1 = 30;
     const P2 = 45;
     const P3 = 60;
@@ -261,7 +238,8 @@
             const closes = klinesRaw.map(k => parseFloat(k[4]));
             const price = closes[totalLen - 1];
 
-            const fullMas = calculateAllSMA(closes, [P1, P2, P3]);
+            const fullMas = calculateAllSMA(closes, [P0, P1, P2, P3]);
+            const ma5 = fullMas[P0][totalLen - 1];
             const ma1 = fullMas[P1][totalLen - 1];
             const ma2 = fullMas[P2][totalLen - 1];
             const ma3 = fullMas[P3][totalLen - 1];
@@ -272,6 +250,7 @@
 
                 const displayKlines = klinesRaw.slice(-DISPLAY_COUNT);
                 const displayMas = {
+                    [P0]: fullMas[P0].slice(-DISPLAY_COUNT),
                     [P1]: fullMas[P1].slice(-DISPLAY_COUNT),
                     [P2]: fullMas[P2].slice(-DISPLAY_COUNT),
                     [P3]: fullMas[P3].slice(-DISPLAY_COUNT)
@@ -280,6 +259,7 @@
                 return { 
                     symbol, 
                     price, 
+                    ma5,
                     ma1, 
                     ma2, 
                     ma3, 
@@ -379,19 +359,6 @@
         container.appendChild(fragment);
     }
 
-    function copySymbolList() {
-        if (rawResults.length === 0) {
-            alert("目前尚無符合條件的標的！");
-            return;
-        }
-        const symbolsText = rawResults.map(r => r.symbol).join(', ');
-        navigator.clipboard.writeText(symbolsText).then(() => {
-            alert(`已複製 ${rawResults.length} 個標的名稱至剪貼簿！\n\n範例：${symbolsText.slice(0, 40)}...`);
-        }).catch(err => {
-            alert("複製失敗，請手動複製。");
-        });
-    }
-
     function drawChart(item) {
         const canvas = document.getElementById('klineCanvas');
         const ctx = canvas.getContext('2d');
@@ -453,10 +420,10 @@
         ctx.stroke(downPath);
         ctx.fill(downPath);
 
-        const drawMA = (maValues, color) => {
+        const drawMA = (maValues, color, width = 1.5) => {
             ctx.beginPath();
             ctx.strokeStyle = color;
-            ctx.lineWidth = 1.5;
+            ctx.lineWidth = width;
             let started = false;
 
             for (let i = 0; i < displayCount; i++) {
@@ -475,6 +442,8 @@
             ctx.stroke();
         };
 
+        // 繪製均線，含新增的 5 MA (橘黃色)
+        drawMA(item.maSeries[P0], '#ff9900', 1.8);
         drawMA(item.maSeries[P1], '#ff007f');
         drawMA(item.maSeries[P2], '#a855f7');
         drawMA(item.maSeries[P3], '#00ff66');
@@ -486,6 +455,7 @@
 
         document.getElementById('modalSymbol').innerText = symbol;
         document.getElementById('valPrice').innerText = currentItem.price.toFixed(4);
+        document.getElementById('valMA5').innerText = currentItem.ma5.toFixed(4);
 
         const dist3El = document.getElementById('valMa3Dist');
         const dist3Sign = currentItem.ma3DistPercent >= 0 ? '+' : '';
@@ -500,7 +470,6 @@
         document.getElementById('valMA2').innerText = currentItem.ma2.toFixed(4);
         document.getElementById('valMA3').innerText = currentItem.ma3.toFixed(4);
 
-        // 綁定前往幣安合約頁面的連結
         const linkEl = document.getElementById('binanceLink');
         linkEl.href = `https://www.binance.com/zh-TC/futures/${symbol}`;
 
