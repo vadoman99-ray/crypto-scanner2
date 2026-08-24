@@ -246,7 +246,6 @@ async function startScan() {
     data.forEach(d => tickerMap[d.symbol] = d); 
   } 
 
-  // 修改處：門檻調高為 > 100,000,000 USDT (1億)
   const candidateSymbols = Object.keys(tickerMap).filter(sym => { 
     if (!sym.endsWith('USDT')) return false; 
     return parseFloat(tickerMap[sym].quoteVolume) > 100000000; 
@@ -345,10 +344,38 @@ function openChartModal(symbol) {
     "allow_symbol_change": false,
     "container_id": "tvChartContainer",
     "studies": [
-      { "id": "MASimple@tv-basicstudies", "inputs": { "length": 5 } },  
-      { "id": "MASimple@tv-basicstudies", "inputs": { "length": 30 } }, 
-      { "id": "MASimple@tv-basicstudies", "inputs": { "length": 45 } }, 
-      { "id": "MASimple@tv-basicstudies", "inputs": { "length": 60 } }  
+      // --- 價格均線 (不同顏色區隔) ---
+      { 
+        "id": "MASimple@tv-basicstudies", 
+        "inputs": { "length": 5 }, 
+        "styles": { "plot": { "color": "#00ff66", "linewidth": 2 } } // 5MA: 螢光綠
+      },  
+      { 
+        "id": "MASimple@tv-basicstudies", 
+        "inputs": { "length": 30 }, 
+        "styles": { "plot": { "color": "#ffea00", "linewidth": 2 } } // 30MA: 黃色
+      }, 
+      { 
+        "id": "MASimple@tv-basicstudies", 
+        "inputs": { "length": 45 }, 
+        "styles": { "plot": { "color": "#ff9100", "linewidth": 2 } } // 45MA: 橘色
+      }, 
+      { 
+        "id": "MASimple@tv-basicstudies", 
+        "inputs": { "length": 60 }, 
+        "styles": { "plot": { "color": "#ff007f", "linewidth": 2 } } // 60MA: 桃紅/紅色
+      },
+      // --- 成交量均線 (5VM / 20VM) ---
+      { 
+        "id": "Volume@tv-basicstudies", 
+        "inputs": { "showMA": true, "maLength": 5 },
+        "styles": { "volume ma": { "color": "#00f0ff", "linewidth": 2 } } // 5VM: 青藍色
+      },
+      { 
+        "id": "Volume@tv-basicstudies", 
+        "inputs": { "showMA": true, "maLength": 20 },
+        "styles": { "volume ma": { "color": "#9d4edd", "linewidth": 2 } } // 20VM: 紫色
+      }
     ]
   });
 }
@@ -356,6 +383,7 @@ function openChartModal(symbol) {
 function closeChartModal(event) {
   if (event && event.target !== event.currentTarget) return;
   const modal = document.getElementById('chartModal');
+  modal.classList.remove('remove');
   modal.classList.remove('active');
   document.getElementById('tvChartContainer').innerHTML = ''; 
 }
