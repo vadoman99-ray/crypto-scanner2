@@ -148,7 +148,7 @@
             
             <div class="chart-container">
                 <div class="chart-title">
-                    <span>1H 近 100 根 K 線圖</span>
+                    <span>1H 近 80 根 K 線圖</span>
                     <span style="font-weight:900;">
                         <span style="color:var(--manga-orange);">● 5MA</span> 
                         <span style="color:var(--manga-pink);">● 快線</span> 
@@ -179,11 +179,11 @@
     let currentItem = null;
     let tickerMap = {};
 
-    const P0 = 5;  // 新增 5 MA
+    const P0 = 5;
     const P1 = 30;
     const P2 = 45;
     const P3 = 60;
-    const DISPLAY_COUNT = 100;
+    const DISPLAY_COUNT = 80; // 已改為 80 根 K 線
 
     async function asyncPool(poolLimit, array, iteratorFn) {
         const ret = [];
@@ -442,7 +442,6 @@
             ctx.stroke();
         };
 
-        // 繪製均線，含新增的 5 MA (橘黃色)
         drawMA(item.maSeries[P0], '#ff9900', 1.8);
         drawMA(item.maSeries[P1], '#ff007f');
         drawMA(item.maSeries[P2], '#a855f7');
