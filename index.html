@@ -3,223 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>⚡ 1H MA 多頭排列篩選器</title>
+    <title>⚡ 1H MA 多頭篩選</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@700;800&display=swap');
 
         :root {
-            --manga-dark: #0a0e1a;
-            --manga-navy: #121b2d;
-            --manga-pink: #ff007f;
-            --manga-purple: #a855f7;
-            --manga-cyan: #00f0ff;
-            --manga-yellow: #ffe600;
-            --manga-orange: #ff9900;
-            --manga-green: #00ff66;
-            --manga-red: #ff3366;
-            --pop-shadow: 4px 4px 0px #000;
+            --bg-dark: #0a0e17;
+            --card-bg: #131b2e;
+            --cyan: #00f0ff;
+            --yellow: #ffe600;
+            --pink: #ff007f;
+            --purple: #a855f7;
+            --green: #00ff66;
+            --red: #ff3366;
+            --border: #233048;
         }
 
-        * { box-sizing: border-box; outline: none; }
+        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
         body { 
             font-family: 'Noto Sans TC', sans-serif; 
-            background-color: var(--manga-dark); 
-            background-image: radial-gradient(rgba(0, 240, 255, 0.15) 15%, transparent 16%);
-            background-size: 16px 16px;
-            color: #fff; margin: 0; padding-bottom: 40px; 
+            background-color: var(--bg-dark); 
+            color: #fff; margin: 0; padding: 0;
+            user-select: none;
         }
 
-        /* 頂部固定 Header 區塊 */
+        /* 頂部極簡 Header */
         .app-header { 
             position: sticky; top: 0; z-index: 100; 
-            background: #101424; border-bottom: 3px solid var(--manga-cyan); 
-            padding: 10px 16px; display: flex; flex-direction: column; gap: 8px;
-            box-shadow: 0 4px 15px rgba(0, 240, 255, 0.3);
+            background: #0f1524; border-bottom: 2px solid var(--cyan); 
+            padding: 8px 12px; display: flex; flex-direction: column; gap: 6px;
         }
-        .header-top {
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .header-title { font-size: 1.05rem; font-weight: 900; color: #fff; text-shadow: 0 0 8px var(--manga-cyan); }
+        .header-top { display: flex; justify-content: space-between; align-items: center; }
+        .header-title { font-size: 0.95rem; font-weight: 900; color: #fff; }
         
-        /* 固定標的 (BTC & ETH) 顯示區 - 增加可點擊樣式 */
-        .crypto-ticker-bar {
-            display: flex; gap: 10px; background: #070a12; border: 1px solid #2a3a5c;
-            padding: 6px 10px; border-radius: 6px; justify-content: space-around;
-        }
-        .ticker-item {
-            display: flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;
-            cursor: pointer; padding: 2px 6px; border-radius: 4px; transition: background 0.2s;
-        }
-        .ticker-item:hover {
-            background: rgba(0, 240, 255, 0.15);
-        }
-        .ticker-name { font-weight: 900; color: var(--manga-yellow); }
-        .ticker-price { font-weight: 800; }
-
         .scan-btn { 
-            background: linear-gradient(135deg, #ff007f 0%, #ff5500 100%); 
-            color: #fff; border: 2px solid #fff; padding: 6px 12px; border-radius: 6px; 
-            font-weight: 900; font-size: 0.85rem; cursor: pointer; box-shadow: var(--pop-shadow);
-            transition: opacity 0.2s;
+            background: linear-gradient(135deg, var(--pink), #ff5500); 
+            color: #fff; border: none; padding: 5px 12px; border-radius: 6px; 
+            font-weight: 900; font-size: 0.8rem; cursor: pointer;
         }
-        .scan-btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
+        .scan-btn:disabled { opacity: 0.5; filter: grayscale(1); }
 
-        .progress-container { height: 6px; background: #090d16; width: 100%; margin-top: 0; }
-        .progress-fill { height: 100%; width: 0%; background: var(--manga-cyan); transition: width 0.05s ease-out; }
-
-        .dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 14px 16px; }
-        .stat-card {
-            background: rgba(18, 27, 45, 0.85); border: 2px solid var(--manga-cyan);
-            border-radius: 8px; padding: 10px; text-align: center; box-shadow: var(--pop-shadow);
+        /* BTC & ETH 頂部快速看板 */
+        .crypto-ticker-bar {
+            display: flex; background: #070a12; border: 1px solid var(--border);
+            padding: 4px 8px; border-radius: 4px; justify-content: space-around;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
         }
-        .stat-card .val { font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-weight: 900; }
-        .stat-card.entry { border-color: var(--manga-pink); }
-        .stat-card.entry .val { color: var(--manga-pink); }
+        .ticker-item { display: flex; align-items: center; gap: 4px; cursor: pointer; padding: 2px 4px; }
+        .ticker-name { color: var(--yellow); font-weight: 800; }
 
-        .container { padding: 0 16px; }
+        .progress-container { height: 3px; background: #090d16; width: 100%; }
+        .progress-fill { height: 100%; width: 0%; background: var(--cyan); transition: width 0.05s ease-out; }
+
+        /* 極簡計數狀態欄 */
+        .stats-bar {
+            display: flex; justify-content: space-between; padding: 6px 12px;
+            font-size: 0.75rem; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border);
+            font-family: 'JetBrains Mono', monospace; color: #8a9bbd;
+        }
+        .stats-bar b { color: #fff; }
+
+        /* 標的清單（單行化） */
+        .container { padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; }
         .symbol-card { 
-            background: rgba(20, 30, 50, 0.9); border: 2px solid #2a3a5c; 
-            border-left: 6px solid var(--manga-green); border-radius: 8px; 
-            padding: 12px 14px; margin-bottom: 12px; 
-            display: flex; justify-content: space-between; align-items: center; 
-            box-shadow: var(--pop-shadow); cursor: pointer; transition: transform 0.1s;
+            background: var(--card-bg); border: 1px solid var(--border); 
+            border-left: 4px solid var(--green); border-radius: 6px; 
+            padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; 
+            cursor: pointer;
         }
-        .symbol-card:hover { transform: translateY(-2px); border-color: var(--manga-cyan); }
-        .symbol-name { font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; font-weight: 900; }
-        .symbol-price { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; color: var(--manga-yellow); }
-        .detail-row { font-size: 0.82rem; font-family: 'JetBrains Mono', monospace; color: #a0aec0; margin-top: 4px; }
-        
-        .badge { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 900; background: var(--manga-green); color: #000; }
-        .badge-rank { font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; font-weight: 900; background: var(--manga-yellow); color: #000; }
+        .symbol-card:active { background: #1a253e; }
+        .symbol-left { display: flex; align-items: center; gap: 8px; }
+        .symbol-rank { font-size: 0.7rem; color: var(--yellow); font-family: 'JetBrains Mono'; font-weight: 800; width: 22px; }
+        .symbol-name { font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; font-weight: 800; }
+        .symbol-price { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #e0e6ed; }
+        .symbol-dist { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 800; }
 
+        /* Mobile Modal 滿版優化 */
         .modal-backdrop {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(5, 8, 17, 0.85); backdrop-filter: blur(8px);
-            z-index: 999; display: none; justify-content: center; align-items: center; padding: 16px;
+            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px);
+            z-index: 999; display: none; justify-content: center; align-items: flex-end;
         }
         .modal-card {
-            background: var(--manga-navy); border: 2px solid var(--manga-cyan);
-            border-radius: 12px; width: 100%; max-width: 520px; padding: 18px;
-            box-shadow: 0 0 25px rgba(0, 240, 255, 0.3);
-            max-height: 90vh; overflow-y: auto;
+            background: var(--card-bg); border: 1px solid var(--cyan);
+            border-radius: 12px 12px 0 0; width: 100%; padding: 14px;
+            max-height: 85vh; overflow-y: auto;
         }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         
         .chart-container {
-            background: #070a12; border: 1px solid #2a3a5c; border-radius: 6px;
-            padding: 8px; margin-bottom: 12px; position: relative;
+            background: #070a12; border: 1px solid var(--border); border-radius: 6px;
+            padding: 6px; margin-bottom: 8px;
         }
-        .chart-title { font-size: 0.72rem; color: #a0aec0; margin-bottom: 4px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px; }
-        canvas { width: 100%; height: 200px; display: block; }
+        .chart-title { font-size: 0.65rem; color: #8a9bbd; margin-bottom: 4px; display: flex; justify-content: space-between; }
+        canvas { width: 100%; height: 180px; display: block; }
 
-        .info-box { background: #070a12; border: 1px solid #2a3a5c; padding: 10px; border-radius: 6px; margin-bottom: 12px; }
-        .info-row { display: flex; justify-content: space-between; font-size: 0.85rem; font-family: 'JetBrains Mono', monospace; margin-bottom: 6px; }
-        .info-row:last-child { margin-bottom: 0; }
-        
+        .info-grid { 
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;
+            background: #070a12; border: 1px solid var(--border); padding: 8px; border-radius: 6px; margin-bottom: 10px;
+            font-size: 0.75rem; font-family: 'JetBrains Mono', monospace;
+        }
+        .info-item { display: flex; justify-content: space-between; }
+        .info-item span { color: #8a9bbd; }
+
         .binance-btn {
-            width: 100%;
-            background: var(--manga-yellow);
-            color: #000;
-            border: 2px solid #fff;
-            padding: 10px;
-            border-radius: 6px;
-            font-weight: 900;
-            font-size: 0.95rem;
-            cursor: pointer;
-            box-shadow: var(--pop-shadow);
-            text-align: center;
-            text-decoration: none;
-            display: block;
+            width: 100%; background: var(--yellow); color: #000; border: none;
+            padding: 8px; border-radius: 6px; font-weight: 900; font-size: 0.85rem;
+            text-align: center; text-decoration: none; display: block;
         }
 
-        .val-up { color: var(--manga-green); }
-        .val-down { color: var(--manga-red); }
-        .highlight-ma3 { color: var(--manga-green); font-weight: 900; }
+        .val-up { color: var(--green); }
+        .val-down { color: var(--red); }
     </style>
 </head>
 <body>
 
     <div class="app-header">
         <div class="header-top">
-            <div class="header-title">⚡ 1H 多頭排列篩選器</div>
-            <button id="scanBtn" class="scan-btn" onclick="startScan()">啟動極速掃描</button>
+            <div class="header-title">⚡ 1H 多頭排列篩選</div>
+            <button id="scanBtn" class="scan-btn" onclick="startScan()">開始掃描</button>
         </div>
-        <!-- 頂部固定看板：支援點擊開啟 Modal -->
         <div class="crypto-ticker-bar">
             <div class="ticker-item" onclick="openModalForSymbol('BTCUSDT')">
-                <span class="ticker-name">BTC:</span>
-                <span id="btcPrice" class="ticker-price">--</span>
-                <span id="btcChange" style="font-size: 0.75rem;">--</span>
+                <span class="ticker-name">BTC</span>
+                <span id="btcPrice">--</span>
+                <span id="btcChange">--</span>
             </div>
-            <div style="color: #2a3a5c;">|</div>
+            <div style="color: var(--border);">|</div>
             <div class="ticker-item" onclick="openModalForSymbol('ETHUSDT')">
-                <span class="ticker-name">ETH:</span>
-                <span id="ethPrice" class="ticker-price">--</span>
-                <span id="ethChange" style="font-size: 0.75rem;">--</span>
+                <span class="ticker-name">ETH</span>
+                <span id="ethPrice">--</span>
+                <span id="ethChange">--</span>
             </div>
         </div>
     </div>
 
     <div class="progress-container"><div id="progress" class="progress-fill"></div></div>
 
-    <div class="dashboard">
-        <div class="stat-card">
-            <div class="val" id="statTotal">0</div>
-            <div style="font-size:0.75rem;">掃描目標數</div>
-        </div>
-        <div class="stat-card entry">
-            <div class="val" id="statEntry">0</div>
-            <div style="font-size:0.75rem;">符合條件標的</div>
-        </div>
+    <div class="stats-bar">
+        <span>目標: <b id="statTotal">0</b></span>
+        <span>符合條件: <b id="statEntry" style="color: var(--green);">0</b></span>
     </div>
 
     <div class="container" id="symbolList"></div>
 
+    <!-- Modal 彈窗 -->
     <div class="modal-backdrop" id="tradeModal" onclick="if(event.target.id==='tradeModal') closeModal()">
         <div class="modal-card">
             <div class="modal-header">
-                <span id="modalSymbol" style="font-family:'JetBrains Mono'; font-weight:900; font-size:1.2rem;">BTCUSDT</span>
-                <button onclick="closeModal()" style="background:var(--manga-pink); color:#fff; border:none; border-radius:4px; font-weight:900; padding:4px 8px; cursor:pointer;">✕</button>
+                <span id="modalSymbol" style="font-family:'JetBrains Mono'; font-weight:900; font-size:1.1rem;">BTCUSDT</span>
+                <button onclick="closeModal()" style="background:var(--pink); color:#fff; border:none; border-radius:4px; font-weight:900; padding:2px 8px; cursor:pointer;">✕</button>
             </div>
             
             <div class="chart-container">
                 <div class="chart-title">
-                    <span>1H 近 80 根 K 線圖</span>
-                    <span style="font-weight:900;">
-                        <span style="color:var(--manga-orange);">● 5MA</span> 
-                        <span style="color:var(--manga-pink);">● 快線</span> 
-                        <span style="color:var(--manga-purple);">● 中線</span> 
-                        <span style="color:var(--manga-green);">● 慢線</span>
-                    </span>
+                    <span>1H 近 80 根 K 線</span>
+                    <span><span style="color:var(--yellow);">●5</span> <span style="color:var(--pink);">●30</span> <span style="color:var(--purple);">●45</span> <span style="color:var(--green);">●60</span></span>
                 </div>
-                <canvas id="klineCanvas" width="480" height="200"></canvas>
+                <canvas id="klineCanvas" width="480" height="180"></canvas>
             </div>
 
-            <div class="info-box">
-                <div class="info-row"><span>當前現價:</span><b id="valPrice" style="color:var(--manga-yellow);">0</b></div>
-                <div class="info-row"><span>5 MA (超快線):</span><b id="valMA5" style="color:var(--manga-orange);">0</b></div>
-                <div class="info-row"><span>距慢線幅度:</span><b id="valMa3Dist" class="highlight-ma3">0%</b></div>
-                <div class="info-row"><span>24H 漲跌幅:</span><b id="val24hChange">0%</b></div>
-                <div class="info-row"><span>快線:</span><b id="valMA1" style="color:var(--manga-pink);">0</b></div>
-                <div class="info-row"><span>中線:</span><b id="valMA2" style="color:var(--manga-purple);">0</b></div>
-                <div class="info-row"><span>慢線:</span><b id="valMA3" style="color:var(--manga-green);">0</b></div>
+            <div class="info-grid">
+                <div class="info-item"><span>現價</span><b id="valPrice" style="color:var(--yellow);">0</b></div>
+                <div class="info-item"><span>距慢線</span><b id="valMa3Dist" class="val-up">0%</b></div>
+                <div class="info-item"><span>5MA</span><b id="valMA5">0</b></div>
+                <div class="info-item"><span>24H漲跌</span><b id="val24hChange">0%</b></div>
+                <div class="info-item"><span>快(30)</span><b id="valMA1">0</b></div>
+                <div class="info-item"><span>中(45)</span><b id="valMA2">0</b></div>
+                <div class="info-item"><span>慢(60)</span><b id="valMA3">0</b></div>
             </div>
 
-            <a id="binanceLink" href="#" target="_blank" class="binance-btn">🚀 前往幣安交易此標的</a>
+            <a id="binanceLink" href="#" target="_blank" class="binance-btn">🚀 幣安交易</a>
         </div>
     </div>
 
 <script>
     const API_BASE = 'https://fapi.binance.com';
     let rawResults = [];
-    let currentItem = null;
     let tickerMap = {};
 
-    const P0 = 5;
-    const P1 = 30;
-    const P2 = 45;
-    const P3 = 60;
-    const DISPLAY_COUNT = 80;
+    const P0 = 5, P1 = 30, P2 = 45, P3 = 60, DISPLAY_COUNT = 80;
 
     window.addEventListener('DOMContentLoaded', updateHeaderTickers);
 
@@ -227,65 +190,47 @@
         try {
             const res = await fetch(`${API_BASE}/fapi/v1/ticker/24hr`);
             const data = await res.json();
-            
             data.forEach(t => { tickerMap[t.symbol] = t; });
 
-            const btc = tickerMap['BTCUSDT'];
-            const eth = tickerMap['ETHUSDT'];
-
+            const btc = tickerMap['BTCUSDT'], eth = tickerMap['ETHUSDT'];
             if (btc) {
                 document.getElementById('btcPrice').innerText = parseFloat(btc.lastPrice).toLocaleString();
                 const chg = parseFloat(btc.priceChangePercent);
-                const chgEl = document.getElementById('btcChange');
-                chgEl.innerText = `${chg >= 0 ? '+' : ''}${chg.toFixed(2)}%`;
-                chgEl.className = chg >= 0 ? 'val-up' : 'val-down';
+                const el = document.getElementById('btcChange');
+                el.innerText = `${chg >= 0 ? '+' : ''}${chg.toFixed(1)}%`;
+                el.className = chg >= 0 ? 'val-up' : 'val-down';
             }
             if (eth) {
                 document.getElementById('ethPrice').innerText = parseFloat(eth.lastPrice).toLocaleString();
                 const chg = parseFloat(eth.priceChangePercent);
-                const chgEl = document.getElementById('ethChange');
-                chgEl.innerText = `${chg >= 0 ? '+' : ''}${chg.toFixed(2)}%`;
-                chgEl.className = chg >= 0 ? 'val-up' : 'val-down';
+                const el = document.getElementById('ethChange');
+                el.innerText = `${chg >= 0 ? '+' : ''}${chg.toFixed(1)}%`;
+                el.className = chg >= 0 ? 'val-up' : 'val-down';
             }
-        } catch (e) {
-            console.error("無法取得頂部主流幣數據", e);
-        }
+        } catch (e) {}
     }
 
     async function asyncPool(poolLimit, array, iteratorFn) {
-        const ret = [];
-        const executing = new Set();
+        const ret = [], executing = new Set();
         for (const item of array) {
             const p = Promise.resolve().then(() => iteratorFn(item));
-            ret.push(p);
-            executing.add(p);
+            ret.push(p); executing.add(p);
             const clean = () => executing.delete(p);
             p.then(clean, clean);
-            if (executing.size >= poolLimit) {
-                await Promise.race(executing);
-            }
+            if (executing.size >= poolLimit) await Promise.race(executing);
         }
         return Promise.all(ret);
     }
 
     function calculateAllSMA(closes, periods) {
-        const result = {};
-        const len = closes.length;
-
+        const result = {}, len = closes.length;
         for (const p of periods) {
-            if (len < p) {
-                result[p] = new Array(len).fill(null);
-                continue;
-            }
+            if (len < p) { result[p] = new Array(len).fill(null); continue; }
             const ma = new Array(len).fill(null);
             let sum = 0;
             for (let i = 0; i < p; i++) sum += closes[i];
             ma[p - 1] = sum / p;
-
-            for (let i = p; i < len; i++) {
-                sum += closes[i] - closes[i - p];
-                ma[i] = sum / p;
-            }
+            for (let i = p; i < len; i++) { sum += closes[i] - closes[i - p]; ma[i] = sum / p; }
             result[p] = ma;
         }
         return result;
@@ -296,72 +241,39 @@
         const res = await fetch(`${API_BASE}/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=${fetchLimit}`);
         if (!res.ok) return null;
 
-        const klinesRaw = await res.json();
-        const totalLen = klinesRaw.length;
+        const klinesRaw = await res.json(), totalLen = klinesRaw.length;
         if (totalLen < P3) return null;
 
         const closes = klinesRaw.map(k => parseFloat(k[4]));
         const price = closes[totalLen - 1];
 
         const fullMas = calculateAllSMA(closes, [P0, P1, P2, P3]);
-        const ma5 = fullMas[P0][totalLen - 1];
-        const ma1 = fullMas[P1][totalLen - 1];
-        const ma2 = fullMas[P2][totalLen - 1];
-        const ma3 = fullMas[P3][totalLen - 1];
+        const ma5 = fullMas[P0][totalLen - 1], ma1 = fullMas[P1][totalLen - 1], ma2 = fullMas[P2][totalLen - 1], ma3 = fullMas[P3][totalLen - 1];
 
         const ma3DistPercent = ((price - ma3) / ma3) * 100;
         const priceChange24h = tickerMap[symbol] ? parseFloat(tickerMap[symbol].priceChangePercent) : 0;
 
-        const displayKlines = klinesRaw.slice(-DISPLAY_COUNT);
-        const displayMas = {
-            [P0]: fullMas[P0].slice(-DISPLAY_COUNT),
-            [P1]: fullMas[P1].slice(-DISPLAY_COUNT),
-            [P2]: fullMas[P2].slice(-DISPLAY_COUNT),
-            [P3]: fullMas[P3].slice(-DISPLAY_COUNT)
-        };
-
         return { 
-            symbol, 
-            price, 
-            ma5,
-            ma1, 
-            ma2, 
-            ma3, 
-            ma3DistPercent, 
-            priceChange24h, 
-            klines: displayKlines, 
-            maSeries: displayMas,
+            symbol, price, ma5, ma1, ma2, ma3, ma3DistPercent, priceChange24h, 
+            klines: klinesRaw.slice(-DISPLAY_COUNT), 
+            maSeries: {
+                [P0]: fullMas[P0].slice(-DISPLAY_COUNT), [P1]: fullMas[P1].slice(-DISPLAY_COUNT),
+                [P2]: fullMas[P2].slice(-DISPLAY_COUNT), [P3]: fullMas[P3].slice(-DISPLAY_COUNT)
+            },
             isBullish: (ma1 > ma2 && ma2 > ma3 && price >= ma3)
         };
     }
 
-    async function evaluateSymbolMA(symbol, updateProgress) {
-        try {
-            const data = await fetchSymbolDetailsData(symbol);
-            updateProgress();
-            if (data && data.isBullish) {
-                return data;
-            }
-            return null;
-        } catch {
-            updateProgress();
-            return null;
-        }
-    }
-
     async function startScan() {
         const btn = document.getElementById('scanBtn');
-        btn.disabled = true; btn.innerText = "⚡ 掃描中...";
-        rawResults = [];
-        tickerMap = {};
+        btn.disabled = true; btn.innerText = "掃描中...";
+        rawResults = []; tickerMap = {};
         document.getElementById('symbolList').innerHTML = '';
 
         await updateHeaderTickers();
 
         const candidateSymbols = Object.keys(tickerMap).filter(sym => 
-            sym.endsWith('USDT') && 
-            parseFloat(tickerMap[sym].priceChangePercent) > 0 && 
-            parseFloat(tickerMap[sym].quoteVolume) > 10000000
+            sym.endsWith('USDT') && parseFloat(tickerMap[sym].priceChangePercent) > 0 && parseFloat(tickerMap[sym].quoteVolume) > 10000000
         );
 
         document.getElementById('statTotal').innerText = candidateSymbols.length;
@@ -372,20 +284,25 @@
             document.getElementById('progress').style.width = `${(completed / candidateSymbols.length) * 100}%`;
         };
 
-        btn.innerText = "🔍 計算中...";
-        const results = await asyncPool(50, candidateSymbols, sym => evaluateSymbolMA(sym, updateProgress));
+        const results = await asyncPool(40, candidateSymbols, async (sym) => {
+            try {
+                const data = await fetchSymbolDetailsData(sym);
+                updateProgress();
+                return (data && data.isBullish) ? data : null;
+            } catch { updateProgress(); return null; }
+        });
 
         rawResults = results.filter(Boolean).sort((a, b) => b.ma3DistPercent - a.ma3DistPercent);
         document.getElementById('statEntry').innerText = rawResults.length;
 
-        btn.disabled = false; btn.innerText = "啟動極速掃描";
+        btn.disabled = false; btn.innerText = "開始掃描";
         renderList();
     }
 
     function renderList() {
         const container = document.getElementById('symbolList');
         if (rawResults.length === 0) {
-            container.innerHTML = `<div style="text-align:center; padding:40px; color:#5a7094; font-weight:900;">無符合多頭排列標的</div>`;
+            container.innerHTML = `<div style="text-align:center; padding:30px; color:#5a7094; font-size:0.85rem;">無符合資料</div>`;
             return;
         }
 
@@ -395,34 +312,15 @@
             card.className = 'symbol-card';
             card.onclick = () => openModal(item);
 
-            const chg24Class = item.priceChange24h >= 0 ? 'val-up' : 'val-down';
-            const chg24Sign = item.priceChange24h >= 0 ? '+' : '';
-
-            const dist3Class = item.ma3DistPercent >= 0 ? 'val-up' : 'val-down';
-            const dist3Sign = item.ma3DistPercent >= 0 ? '+' : '';
-
-            let rankTag = `<span class="badge-rank">#${index + 1}</span>`;
-            if (index === 0) rankTag = `<span class="badge-rank" style="background:#ffd700;">🏆 TOP 1</span>`;
-            else if (index === 1) rankTag = `<span class="badge-rank" style="background:#c0c0c0;">🥈 TOP 2</span>`;
-            else if (index === 2) rankTag = `<span class="badge-rank" style="background:#cd7f32; color:#fff;">🥉 TOP 3</span>`;
+            const distClass = item.ma3DistPercent >= 0 ? 'val-up' : 'val-down';
 
             card.innerHTML = `
-                <div style="flex: 1;">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        ${rankTag}
-                        <span class="symbol-name">${item.symbol.replace('USDT','')}</span>
-                        <span class="badge">均線幅度排行</span>
-                    </div>
-                    <div class="detail-row">
-                        <b class="highlight-ma3">距慢線: <span class="${dist3Class}">${dist3Sign}${item.ma3DistPercent.toFixed(2)}%</span></b>
-                    </div>
-                    <div class="detail-row" style="opacity: 0.8;">
-                        24H 漲跌: <span class="${chg24Class}">${chg24Sign}${item.priceChange24h.toFixed(2)}%</span>
-                    </div>
+                <div class="symbol-left">
+                    <span class="symbol-rank">#${index + 1}</span>
+                    <span class="symbol-name">${item.symbol.replace('USDT','')}</span>
                 </div>
-                <div style="text-align:right;">
-                    <div class="symbol-price">${item.price}</div>
-                </div>
+                <div class="symbol-price">${item.price}</div>
+                <div class="symbol-dist ${distClass}">${item.ma3DistPercent >= 0 ? '+' : ''}${item.ma3DistPercent.toFixed(1)}%</div>
             `;
             fragment.appendChild(card);
         });
@@ -433,88 +331,50 @@
 
     function drawChart(item) {
         const canvas = document.getElementById('klineCanvas');
-        const ctx = canvas.getContext('2d');
-        const width = canvas.width;
-        const height = canvas.height;
-
+        const ctx = canvas.getContext('2d'), width = canvas.width, height = canvas.height;
         ctx.clearRect(0, 0, width, height);
 
-        const klines = item.klines;
-        const displayCount = klines.length;
-
-        let minPrice = Infinity;
-        let maxPrice = -Infinity;
+        const klines = item.klines, displayCount = klines.length;
+        let minPrice = Infinity, maxPrice = -Infinity;
 
         for (let i = 0; i < displayCount; i++) {
-            const high = parseFloat(klines[i][2]);
-            const low = parseFloat(klines[i][3]);
+            const high = parseFloat(klines[i][2]), low = parseFloat(klines[i][3]);
             if (high > maxPrice) maxPrice = high;
             if (low < minPrice) minPrice = low;
         }
 
-        const padding = 15;
-        const chartHeight = height - padding * 2;
-        const priceRange = maxPrice - minPrice || 1;
-
+        const padding = 10, chartHeight = height - padding * 2, priceRange = maxPrice - minPrice || 1;
         const getY = (price) => height - padding - ((price - minPrice) / priceRange) * chartHeight;
-        const candleWidth = (width / displayCount) * 0.7;
-        const stepX = width / displayCount;
-
-        const upPath = new Path2D();
-        const downPath = new Path2D();
+        const candleWidth = (width / displayCount) * 0.65, stepX = width / displayCount;
 
         klines.forEach((k, idx) => {
-            const open = parseFloat(k[1]);
-            const high = parseFloat(k[2]);
-            const low = parseFloat(k[3]);
-            const close = parseFloat(k[4]);
+            const open = parseFloat(k[1]), high = parseFloat(k[2]), low = parseFloat(k[3]), close = parseFloat(k[4]);
+            const x = idx * stepX + stepX / 2, isUp = close >= open;
 
-            const x = idx * stepX + stepX / 2;
-            const isUp = close >= open;
-            const targetPath = isUp ? upPath : downPath;
+            ctx.strokeStyle = isUp ? '#00ff66' : '#ff3366';
+            ctx.fillStyle = isUp ? '#00ff66' : '#ff3366';
 
-            targetPath.moveTo(x, getY(high));
-            targetPath.lineTo(x, getY(low));
+            ctx.beginPath();
+            ctx.moveTo(x, getY(high)); ctx.lineTo(x, getY(low));
+            ctx.stroke();
 
-            const topY = getY(Math.max(open, close));
-            const bottomY = getY(Math.min(open, close));
-            const h = Math.max(2, bottomY - topY);
-            targetPath.rect(x - candleWidth / 2, topY, candleWidth, h);
+            const topY = getY(Math.max(open, close)), bottomY = getY(Math.min(open, close));
+            ctx.fillRect(x - candleWidth / 2, topY, candleWidth, Math.max(1, bottomY - topY));
         });
 
-        ctx.strokeStyle = '#00ff66';
-        ctx.fillStyle = '#00ff66';
-        ctx.stroke(upPath);
-        ctx.fill(upPath);
-
-        ctx.strokeStyle = '#ff3366';
-        ctx.fillStyle = '#ff3366';
-        ctx.stroke(downPath);
-        ctx.fill(downPath);
-
-        const drawMA = (maValues, color, width = 1.5) => {
-            ctx.beginPath();
-            ctx.strokeStyle = color;
-            ctx.lineWidth = width;
+        const drawMA = (maValues, color) => {
+            ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 1.2;
             let started = false;
-
             for (let i = 0; i < displayCount; i++) {
-                const maVal = maValues[i];
-                if (maVal !== null) {
-                    const x = i * stepX + stepX / 2;
-                    const y = getY(maVal);
-                    if (!started) {
-                        ctx.moveTo(x, y);
-                        started = true;
-                    } else {
-                        ctx.lineTo(x, y);
-                    }
+                if (maValues[i] !== null) {
+                    const x = i * stepX + stepX / 2, y = getY(maValues[i]);
+                    if (!started) { ctx.moveTo(x, y); started = true; } else { ctx.lineTo(x, y); }
                 }
             }
             ctx.stroke();
         };
 
-        drawMA(item.maSeries[P0], '#ff9900', 1.8);
+        drawMA(item.maSeries[P0], '#ffe600');
         drawMA(item.maSeries[P1], '#ff007f');
         drawMA(item.maSeries[P2], '#a855f7');
         drawMA(item.maSeries[P3], '#00ff66');
@@ -522,37 +382,27 @@
 
     async function openModalForSymbol(symbol) {
         let item = rawResults.find(r => r.symbol === symbol);
-        if (!item) {
-            item = await fetchSymbolDetailsData(symbol);
-        }
-        if (item) {
-            openModal(item);
-        }
+        if (!item) item = await fetchSymbolDetailsData(symbol);
+        if (item) openModal(item);
     }
 
     function openModal(item) {
-        currentItem = item;
-
         document.getElementById('modalSymbol').innerText = item.symbol;
         document.getElementById('valPrice').innerText = item.price.toFixed(4);
         document.getElementById('valMA5').innerText = item.ma5.toFixed(4);
 
         const dist3El = document.getElementById('valMa3Dist');
-        const dist3Sign = item.ma3DistPercent >= 0 ? '+' : '';
-        dist3El.innerText = `${dist3Sign}${item.ma3DistPercent.toFixed(2)}%`;
+        dist3El.innerText = `${item.ma3DistPercent >= 0 ? '+' : ''}${item.ma3DistPercent.toFixed(2)}%`;
 
         const chgEl = document.getElementById('val24hChange');
-        const chgSign = item.priceChange24h >= 0 ? '+' : '';
-        chgEl.innerText = `${chgSign}${item.priceChange24h.toFixed(2)}%`;
+        chgEl.innerText = `${item.priceChange24h >= 0 ? '+' : ''}${item.priceChange24h.toFixed(2)}%`;
         chgEl.className = item.priceChange24h >= 0 ? 'val-up' : 'val-down';
 
         document.getElementById('valMA1').innerText = item.ma1.toFixed(4);
         document.getElementById('valMA2').innerText = item.ma2.toFixed(4);
         document.getElementById('valMA3').innerText = item.ma3.toFixed(4);
 
-        const linkEl = document.getElementById('binanceLink');
-        linkEl.href = `https://www.binance.com/zh-TC/futures/${item.symbol}`;
-
+        document.getElementById('binanceLink').href = `https://www.binance.com/zh-TC/futures/${item.symbol}`;
         document.getElementById('tradeModal').style.display = 'flex';
 
         requestAnimationFrame(() => drawChart(item));
