@@ -75,7 +75,7 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
 .val-up { color: var(--manga-green); } 
 .val-down { color: var(--manga-red); } 
 
-/* Modal 區塊 */
+/* Modal 區塊 - 優化適應單一視窗 */
 .chart-modal {
   position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh;
   background: rgba(4, 6, 14, 0.95); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
@@ -94,28 +94,17 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
   border-bottom: 1px solid rgba(255,255,255,0.08); gap: 6px; flex-shrink: 0;
 }
 
-.header-title-group {
-  display: flex; align-items: center; gap: 6px;
-}
-
-.symbol-title {
-  font-family: 'JetBrains Mono', monospace; font-size: 1rem; font-weight: 800; color: #fff;
-}
+.header-title-group { display: flex; align-items: center; gap: 6px; }
+.symbol-title { font-family: 'JetBrains Mono', monospace; font-size: 1rem; font-weight: 800; color: #fff; }
 
 .ma5-status-badge {
   font-family: 'JetBrains Mono', 'Noto Sans TC', sans-serif;
   font-size: 0.7rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center;
 }
-.ma5-status-badge.above {
-  background: rgba(0, 255, 102, 0.15); color: var(--manga-green); border: 1px solid var(--manga-green);
-}
-.ma5-status-badge.below {
-  background: rgba(255, 42, 109, 0.15); color: var(--manga-red); border: 1px solid var(--manga-red);
-}
+.ma5-status-badge.above { background: rgba(0, 255, 102, 0.15); color: var(--manga-green); border: 1px solid var(--manga-green); }
+.ma5-status-badge.below { background: rgba(255, 42, 109, 0.15); color: var(--manga-red); border: 1px solid var(--manga-red); }
 
-.legend-bar {
-  display: flex; gap: 6px; font-size: 0.65rem; font-family: 'JetBrains Mono', monospace; flex-wrap: wrap;
-}
+.legend-bar { display: flex; gap: 6px; font-size: 0.65rem; font-family: 'JetBrains Mono', monospace; flex-wrap: wrap; }
 .legend-item { display: flex; align-items: center; gap: 3px; }
 .legend-color { width: 6px; height: 6px; border-radius: 2px; }
 
@@ -188,9 +177,10 @@ canvas { display: block; width: 100%; height: 100%; }
 <script> 
 (() => {
   const API_BASE = 'https://fapi.binance.com'; 
-  const P0 = 5, P1 = 30, P2 = 45, P3 = 60, DISPLAY_COUNT = 80; 
+  const P0 = 5, P1 = 30, P2 = 45, P3 = 60; 
   const MIN_VOLUME = 100000000;
   const KLINE_SHOW_COUNT = 100;
+  const CONCURRENCY_LIMIT = 12; // 提升併發數至 12 降低並行請求時間
 
   let rawResults = []; 
   let tickerMap = new Map(); 
@@ -227,8 +217,7 @@ canvas { display: block; width: 100%; height: 100%; }
 
   async function fetchSymbolDetailsData(symbol, signal) { 
     try {
-      const fetchLimit = DISPLAY_COUNT + P3; 
-      const res = await fetch(`${API_BASE}/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=${fetchLimit}`, { signal }); 
+      const res = await fetch(`${API_BASE}/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=${P3 + 1}`, { signal }); 
       if (!res.ok) return null; 
       const klinesRaw = await res.json(); 
       const totalLen = klinesRaw.length; 
@@ -294,11 +283,11 @@ canvas { display: block; width: 100%; height: 100%; }
 
     dom.statTotal.innerText = candidateSymbols.length; 
 
-    rawResults = await batchProcess(candidateSymbols, 5, (sym) => fetchSymbolDetailsData(sym), (completed) => {
+    rawResults = await batchProcess(candidateSymbols, CONCURRENCY_LIMIT, (sym) => fetchSymbolDetailsData(sym), (completed) => {
       dom.progress.style.width = `${(completed / candidateSymbols.length) * 100}%`; 
     });
 
-    // 依據「距慢線 60MA 距離」由小到大排序（最靠近 60MA 排在最前面）
+    // 優先排列最靠近 60MA 的標的 (距離比例小到大)
     rawResults.sort((a, b) => a.ma3DistPercent - b.ma3DistPercent); 
 
     dom.statEntry.innerText = rawResults.length; 
