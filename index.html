@@ -3,81 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>⚡ 1H MA 多頭篩選器</title>
+    <title>⚡ 1H MA 多頭篩選器 - 戰記主題版</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@700;800&family=Orbitron:wght@800;900&display=swap');
 
         :root {
-            --bg-dark: #0a0e17;
-            --card-bg: #131b2e;
-            --cyan: #00f0ff;
-            --yellow: #ffe600;
-            --pink: #ff007f;
-            --purple: #a855f7;
-            --orange: #ff9900;
-            --green: #00ff66;
-            --red: #ff3366;
-            --border: #233048;
+            --bg-dark: #070913;
+            --card-bg: #0f1322;
+            --neon-pink: #ff00a0;
+            --neon-cyan: #00f0ff;
+            --neon-yellow: #ffea00;
+            --neon-purple: #b026ff;
+            --neon-green: #00ff66;
+            --neon-red: #ff2a5f;
+            --border-glow: rgba(0, 240, 255, 0.2);
+            --pink-glow: rgba(255, 0, 160, 0.4);
         }
 
         * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+        
         body { 
             font-family: 'Noto Sans TC', sans-serif; 
             background-color: var(--bg-dark); 
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(255, 0, 160, 0.15) 0%, transparent 60%),
+                radial-gradient(circle at 100% 100%, rgba(0, 240, 255, 0.1) 0%, transparent 50%);
             color: #fff; margin: 0; padding: 0;
             user-select: none;
+            min-height: 100vh;
         }
 
-        /* 頂部 Header */
+        /* 頂部 Header - 動漫雜誌風格標題 */
         .app-header { 
             position: sticky; top: 0; z-index: 100; 
-            background: #0f1524; border-bottom: 2px solid var(--cyan); 
-            padding: 8px 12px; display: flex; flex-direction: column; gap: 6px;
+            background: rgba(11, 15, 28, 0.92);
+            backdrop-filter: blur(12px);
+            border-bottom: 2px solid var(--neon-pink); 
+            box-shadow: 0 4px 20px rgba(255, 0, 160, 0.3);
+            padding: 10px 14px; display: flex; flex-direction: column; gap: 8px;
         }
         .header-top { display: flex; justify-content: space-between; align-items: center; }
-        .header-title { font-size: 0.95rem; font-weight: 900; color: #fff; }
+        
+        .header-title { 
+            font-family: 'Orbitron', 'Noto Sans TC', sans-serif;
+            font-size: 1.05rem; font-weight: 900; 
+            background: linear-gradient(135deg, #fff 20%, var(--neon-cyan) 60%, var(--neon-pink) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 12px rgba(0, 240, 255, 0.5);
+            letter-spacing: 0.5px;
+        }
         
         .scan-btn { 
-            background: linear-gradient(135deg, var(--pink), #ff5500); 
-            color: #fff; border: none; padding: 5px 12px; border-radius: 6px; 
+            background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple)); 
+            color: #fff; border: 1px solid rgba(255,255,255,0.4); 
+            padding: 6px 14px; border-radius: 4px; 
             font-weight: 900; font-size: 0.8rem; cursor: pointer;
+            box-shadow: 0 0 12px var(--pink-glow);
+            text-transform: uppercase;
+            transition: all 0.2s ease;
         }
+        .scan-btn:active { transform: scale(0.95); box-shadow: 0 0 20px var(--neon-pink); }
         .scan-btn:disabled { opacity: 0.5; filter: grayscale(1); }
 
         /* BTC & ETH 頂部看板 */
         .crypto-ticker-bar {
-            display: flex; background: #070a12; border: 1px solid var(--border);
-            padding: 4px 8px; border-radius: 4px; justify-content: space-around;
-            font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+            display: flex; background: rgba(5, 8, 16, 0.8); border: 1px solid var(--border-glow);
+            padding: 5px 10px; border-radius: 6px; justify-content: space-around;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
+            box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.05);
         }
-        .ticker-item { display: flex; align-items: center; gap: 4px; cursor: pointer; padding: 2px 4px; }
-        .ticker-name { color: var(--yellow); font-weight: 800; }
+        .ticker-item { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 2px 6px; border-radius: 4px; }
+        .ticker-item:active { background: rgba(0, 240, 255, 0.1); }
+        .ticker-name { color: var(--neon-yellow); font-weight: 800; text-shadow: 0 0 8px rgba(255, 234, 0, 0.5); }
 
-        .progress-container { height: 3px; background: #090d16; width: 100%; }
-        .progress-fill { height: 100%; width: 0%; background: var(--cyan); transition: width 0.05s ease-out; }
+        .progress-container { height: 3px; background: #050810; width: 100%; position: relative; }
+        .progress-fill { 
+            height: 100%; width: 0%; 
+            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink)); 
+            box-shadow: 0 0 8px var(--neon-cyan);
+            transition: width 0.05s ease-out; 
+        }
 
         /* 計數欄 */
         .stats-bar {
-            display: flex; justify-content: space-between; padding: 6px 12px;
-            font-size: 0.75rem; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; padding: 8px 14px;
+            font-size: 0.78rem; background: rgba(255, 255, 255, 0.02); border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             font-family: 'JetBrains Mono', monospace; color: #8a9bbd;
         }
-        .stats-bar b { color: #fff; }
+        .stats-bar b { color: var(--neon-cyan); text-shadow: 0 0 6px rgba(0, 240, 255, 0.5); }
 
         /* 清單列表 */
-        .container { padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; }
+        .container { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+        
         .symbol-card { 
-            background: var(--card-bg); border: 1px solid var(--border); 
-            border-left: 4px solid var(--green); border-radius: 6px; 
-            padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; 
+            background: linear-gradient(135deg, rgba(20, 27, 45, 0.9), rgba(10, 14, 25, 0.9));
+            border: 1px solid rgba(0, 240, 255, 0.2); 
+            border-left: 4px solid var(--neon-pink); 
+            border-radius: 6px; 
+            padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; 
             cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
         }
-        .symbol-card:active { background: #1a253e; }
-        .symbol-left { display: flex; align-items: center; gap: 8px; }
-        .symbol-rank { font-size: 0.7rem; color: var(--yellow); font-family: 'JetBrains Mono'; font-weight: 800; width: 22px; }
-        .symbol-name { font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; font-weight: 800; }
-        .symbol-price { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #e0e6ed; }
-        .symbol-dist { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 800; }
+        .symbol-card::after {
+            content: ''; position: absolute; top: 0; right: 0; width: 40px; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 0, 160, 0.05));
+            pointer-events: none;
+        }
+        .symbol-card:active { 
+            transform: scale(0.98); 
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4); 
+        }
+        
+        .symbol-left { display: flex; align-items: center; gap: 10px; }
+        .symbol-rank { 
+            font-size: 0.75rem; color: var(--neon-yellow); 
+            font-family: 'Orbitron', monospace; font-weight: 900; 
+            width: 26px; text-shadow: 0 0 5px rgba(255, 234, 0, 0.6);
+        }
+        .symbol-name { font-family: 'Orbitron', 'JetBrains Mono', monospace; font-size: 1rem; font-weight: 800; letter-spacing: 0.5px; }
+        .symbol-price { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: #e0e6ed; }
+        .symbol-dist { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; font-weight: 800; }
 
         /* 100% 滿版 App 視窗 Modal */
         .modal-backdrop {
@@ -86,53 +136,66 @@
             flex-direction: column; justify-content: space-between;
         }
         .modal-card {
-            background: var(--bg-dark); width: 100%; height: 100%;
-            display: flex; flex-direction: column; padding: 12px;
+            background: radial-gradient(circle at 50% 0%, #121829 0%, var(--bg-dark) 100%);
+            width: 100%; height: 100%;
+            display: flex; flex-direction: column; padding: 14px;
             box-sizing: border-box; overflow: hidden;
         }
         .modal-header { 
             display: flex; justify-content: space-between; align-items: center; 
-            padding-bottom: 8px; border-bottom: 1px solid var(--border);
+            padding-bottom: 10px; border-bottom: 1px solid var(--border-glow);
         }
 
         .modal-body {
-            flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-top: 8px;
+            flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-top: 10px;
         }
         
         .chart-container {
-            background: #070a12; border: 1px solid var(--border); border-radius: 6px;
-            padding: 6px; flex-shrink: 0;
+            background: rgba(5, 8, 16, 0.9); 
+            border: 1px solid var(--border-glow); 
+            border-radius: 8px;
+            padding: 8px; flex-shrink: 0;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.8);
         }
-        .chart-title { font-size: 0.65rem; color: #8a9bbd; margin-bottom: 4px; display: flex; justify-content: space-between; }
+        .chart-title { font-size: 0.7rem; color: #8a9bbd; margin-bottom: 6px; display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; }
         canvas { width: 100%; height: 320px; display: block; }
 
         .info-grid { 
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 12px;
-            background: #070a12; border: 1px solid var(--border); padding: 10px; border-radius: 6px;
-            font-size: 0.75rem; font-family: 'JetBrains Mono', monospace; flex-shrink: 0;
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 14px;
+            background: rgba(5, 8, 16, 0.9); 
+            border: 1px solid var(--border-glow); 
+            padding: 12px; border-radius: 8px;
+            font-size: 0.78rem; font-family: 'JetBrains Mono', monospace; flex-shrink: 0;
         }
-        .info-item { display: flex; justify-content: space-between; }
+        .info-item { display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 4px; }
         .info-item span { color: #8a9bbd; }
 
         .modal-footer {
-            padding-top: 8px; flex-shrink: 0;
+            padding-top: 10px; flex-shrink: 0;
         }
 
         .binance-btn {
-            width: 100%; background: var(--yellow); color: #000; border: none;
-            padding: 12px; border-radius: 6px; font-weight: 900; font-size: 0.9rem;
+            width: 100%; 
+            background: linear-gradient(135deg, var(--neon-yellow), #ff9900); 
+            color: #000; border: none;
+            padding: 13px; border-radius: 6px; font-weight: 900; font-size: 0.95rem;
             text-align: center; text-decoration: none; display: block;
+            box-shadow: 0 0 15px rgba(255, 234, 0, 0.4);
+            font-family: 'Orbitron', 'Noto Sans TC', sans-serif;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
         }
+        .binance-btn:active { transform: scale(0.98); box-shadow: 0 0 25px var(--neon-yellow); }
 
-        .val-up { color: var(--green); }
-        .val-down { color: var(--red); }
+        .val-up { color: var(--neon-green); text-shadow: 0 0 6px rgba(0, 255, 102, 0.4); }
+        .val-down { color: var(--neon-red); text-shadow: 0 0 6px rgba(255, 42, 95, 0.4); }
     </style>
 </head>
 <body>
 
     <div class="app-header">
         <div class="header-top">
-            <div class="header-title">⚡ 1H MA 多頭篩選</div>
+            <div class="header-title">⚡ 1H MA 多頭戰術篩選器</div>
             <button id="scanBtn" class="scan-btn" onclick="startScan()">開始掃描</button>
         </div>
         <div class="crypto-ticker-bar">
@@ -141,7 +204,7 @@
                 <span id="btcPrice">--</span>
                 <span id="btcChange">--</span>
             </div>
-            <div style="color: var(--border);">|</div>
+            <div style="color: rgba(255,255,255,0.2);">|</div>
             <div class="ticker-item" onclick="openModalForSymbol('ETHUSDT')">
                 <span class="ticker-name">ETH</span>
                 <span id="ethPrice">--</span>
@@ -153,8 +216,8 @@
     <div class="progress-container"><div id="progress" class="progress-fill"></div></div>
 
     <div class="stats-bar">
-        <span>目標: <b id="statTotal">0</b></span>
-        <span>符合條件: <b id="statEntry" style="color: var(--green);">0</b></span>
+        <span>目標標的: <b id="statTotal">0</b></span>
+        <span>符合條件: <b id="statEntry" style="color: var(--neon-green);">0</b></span>
     </div>
 
     <div class="container" id="symbolList"></div>
@@ -163,8 +226,8 @@
     <div class="modal-backdrop" id="tradeModal">
         <div class="modal-card">
             <div class="modal-header">
-                <span id="modalSymbol" style="font-family:'JetBrains Mono'; font-weight:900; font-size:1.2rem; color: var(--cyan);">BTCUSDT</span>
-                <button onclick="closeModal()" style="background:var(--pink); color:#fff; border:none; border-radius:6px; font-weight:900; padding:6px 12px; font-size:0.9rem; cursor:pointer;">關閉 ✕</button>
+                <span id="modalSymbol" style="font-family:'Orbitron', monospace; font-weight:900; font-size:1.3rem; color: var(--neon-cyan); text-shadow:0 0 10px rgba(0,240,255,0.6);">BTCUSDT</span>
+                <button onclick="closeModal()" style="background:var(--neon-pink); color:#fff; border:none; border-radius:6px; font-weight:900; padding:6px 14px; font-size:0.85rem; cursor:pointer; box-shadow: 0 0 10px var(--pink-glow);">關閉 ✕</button>
             </div>
             
             <div class="modal-body">
@@ -172,27 +235,27 @@
                     <div class="chart-title">
                         <span>1H 近 100 根 K 線 & 量均線</span>
                         <span>
-                            <span style="color:var(--orange);">●5</span> 
-                            <span style="color:var(--pink);">●30</span> 
-                            <span style="color:var(--purple);">●45</span> 
-                            <span style="color:var(--green);">●60</span> | 
-                            <span style="color:var(--yellow);">●5VM</span> 
-                            <span style="color:var(--purple);">●20VM</span>
+                            <span style="color:#ff9900;">●5</span> 
+                            <span style="color:var(--neon-pink);">●30</span> 
+                            <span style="color:var(--neon-purple);">●45</span> 
+                            <span style="color:var(--neon-green);">●60</span> | 
+                            <span style="color:var(--neon-yellow);">●5VM</span> 
+                            <span style="color:var(--neon-purple);">●20VM</span>
                         </span>
                     </div>
                     <canvas id="klineCanvas" width="480" height="320"></canvas>
                 </div>
 
                 <div class="info-grid">
-                    <div class="info-item"><span>現價</span><b id="valPrice" style="color:var(--yellow);">0</b></div>
+                    <div class="info-item"><span>現價</span><b id="valPrice" style="color:var(--neon-yellow);">0</b></div>
                     <div class="info-item"><span>距慢線</span><b id="valMa3Dist" class="val-up">0%</b></div>
                     <div class="info-item"><span>5MA</span><b id="valMA5">0</b></div>
                     <div class="info-item"><span>24H漲跌</span><b id="val24hChange">0%</b></div>
                     <div class="info-item"><span>快(30)</span><b id="valMA1">0</b></div>
                     <div class="info-item"><span>中(45)</span><b id="valMA2">0</b></div>
                     <div class="info-item"><span>慢(60)</span><b id="valMA3">0</b></div>
-                    <div class="info-item"><span>5VM</span><b id="valVM5" style="color:var(--yellow);">0</b></div>
-                    <div class="info-item"><span>20VM</span><b id="valVM20" style="color:var(--purple);">0</b></div>
+                    <div class="info-item"><span>5VM</span><b id="valVM5" style="color:var(--neon-yellow);">0</b></div>
+                    <div class="info-item"><span>20VM</span><b id="valVM20" style="color:var(--neon-purple);">0</b></div>
                 </div>
             </div>
 
@@ -412,14 +475,17 @@
 
         const candleWidth = (width / displayCount) * 0.65, stepX = width / displayCount;
 
-        // 1. K線 & 成交量柱狀圖
+        // 1. K線 & 成交量柱狀圖 (霓動漫螢光配色)
         klines.forEach((k, idx) => {
             const open = parseFloat(k[1]), high = parseFloat(k[2]), low = parseFloat(k[3]), close = parseFloat(k[4]);
             const vol = parseFloat(k[5]);
             const x = idx * stepX + stepX / 2, isUp = close >= open;
 
-            ctx.strokeStyle = isUp ? '#00ff66' : '#ff3366';
-            ctx.fillStyle = isUp ? '#00ff66' : '#ff3366';
+            const upColor = '#00ff66';
+            const downColor = '#ff2a5f';
+
+            ctx.strokeStyle = isUp ? upColor : downColor;
+            ctx.fillStyle = isUp ? upColor : downColor;
 
             ctx.beginPath();
             ctx.moveTo(x, getYPrice(high)); ctx.lineTo(x, getYPrice(low));
@@ -429,19 +495,19 @@
             ctx.fillRect(x - candleWidth / 2, topY, candleWidth, Math.max(1, bottomY - topY));
 
             const vY = getYVol(vol);
-            ctx.globalAlpha = 0.4;
+            ctx.globalAlpha = 0.35;
             ctx.fillRect(x - candleWidth / 2, vY, candleWidth, height - vY);
             ctx.globalAlpha = 1.0;
         });
 
-        ctx.strokeStyle = '#233048';
+        ctx.strokeStyle = 'rgba(0, 240, 255, 0.2)';
         ctx.setLineDash([2, 2]);
         ctx.beginPath(); ctx.moveTo(0, volAreaTop); ctx.lineTo(width, volAreaTop); ctx.stroke();
         ctx.setLineDash([]);
 
-        // 2. 價格 MA 均線
-        const drawLine = (series, color, getYFunc, width = 1.2) => {
-            ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = width;
+        // 2. 價格 MA 均線 (鮮艷發光視覺)
+        const drawLine = (series, color, getYFunc, lineWidth = 1.5) => {
+            ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = lineWidth;
             let started = false;
             for (let i = 0; i < displayCount; i++) {
                 if (series[i] !== null) {
@@ -452,14 +518,14 @@
             ctx.stroke();
         };
 
-        drawLine(item.maSeries[P0], '#ff9900', getYPrice, 1.5);
-        drawLine(item.maSeries[P1], '#ff007f', getYPrice);
-        drawLine(item.maSeries[P2], '#a855f7', getYPrice);
-        drawLine(item.maSeries[P3], '#00ff66', getYPrice);
+        drawLine(item.maSeries[P0], '#ff9900', getYPrice, 1.8);
+        drawLine(item.maSeries[P1], '#ff00a0', getYPrice, 1.8);
+        drawLine(item.maSeries[P2], '#b026ff', getYPrice, 1.8);
+        drawLine(item.maSeries[P3], '#00ff66', getYPrice, 2.0);
 
         // 3. 成交量均線 (5VM & 20VM)
-        drawLine(item.vmSeries[VM1], '#ffe600', getYVol, 1.0);
-        drawLine(item.vmSeries[VM2], '#a855f7', getYVol, 1.0);
+        drawLine(item.vmSeries[VM1], '#ffea00', getYVol, 1.2);
+        drawLine(item.vmSeries[VM2], '#b026ff', getYVol, 1.2);
     }
 
     async function openModalForSymbol(symbol) {
