@@ -233,7 +233,7 @@ canvas { display: block; width: 100%; height: 100%; }
 <div class="app-header">
     <div class="header-top">
         <div class="header-title">⚡ 多週期多頭排列儀表板 (>1億USDT)</div>
-        <button id="scanBtn" class="scan-btn">啟動極速掃描</button>
+        <button id="scanBtn" class="scan-btn">⚡ 啟動極速掃描</button>
     </div>
 </div>
 <div class="progress-container"><div id="progress" class="progress-fill"></div></div>
@@ -243,7 +243,7 @@ canvas { display: block; width: 100%; height: 100%; }
     <button id="tab4h" class="tab-btn">⚡4H(<span id="count4h">0</span>)</button>
     <button id="tab1d" class="tab-btn">⚡1D(<span id="count1d">0</span>)</button>
     <button id="tabMulti" class="tab-btn">🔥共振(<span id="countMulti">0</span>)</button>
-    <button id="tabLowRisk" class="tab-btn" style="color:var(--manga-yellow)">⭐低風險(<span id="countLowRisk">0</span>)</button>
+    <button id="tabLowRisk" class="tab-btn" style="color:var(--manga-yellow)">⚡低風險(<span id="countLowRisk">0</span>)</button>
 </div>
 <div class="dashboard">
     <div class="stat-card">
@@ -446,13 +446,11 @@ canvas { display: block; width: 100%; height: 100%; }
             if (bull4h) matchCount++;
             if (bull1d) matchCount++;
 
-            // 低風險高報酬評估：15M 或 1H 接近 60MA (距離 0~3% 內)，且 4H 或 1D 為標準多頭排列
             const is15mNear = bull15m && bull15m.ma3DistPercent >= 0 && bull15m.ma3DistPercent <= 3.0;
             const is1hNear = bull1h && bull1h.ma3DistPercent >= 0 && bull1h.ma3DistPercent <= 3.0;
             const isHigherTrendBull = bull4h || bull1d;
             const isLowRiskMatch = (is15mNear || is1hNear) && isHigherTrendBull;
             
-            // 計算短線距離 60MA 的最小正距離作為風險評分（越接近0風險越低）
             let lowRiskScore = 999;
             if (isLowRiskMatch) {
                 const dist15 = is15mNear ? bull15m.ma3DistPercent : 999;
@@ -506,7 +504,7 @@ canvas { display: block; width: 100%; height: 100%; }
         } catch {
             alert("無法取得行情數據，請檢查網路連線。");
             dom.scanBtn.disabled = false;
-            dom.scanBtn.innerText = "啟動極速掃描";
+            dom.scanBtn.innerText = "⚡ 啟動極速掃描";
             return;
         }
 
@@ -557,7 +555,6 @@ canvas { display: block; width: 100%; height: 100%; }
                 results1D = allMatches.filter(m => m.bull1d);
                 resultsMulti = allMatches.filter(m => m.matchCount >= 2);
                 
-                // 挑選低風險高報酬標的，依貼近 60MA 程度排序並取前 5 名
                 const lowRiskFiltered = allMatches.filter(m => m.isLowRiskMatch);
                 lowRiskFiltered.sort((a, b) => a.lowRiskScore - b.lowRiskScore);
                 resultsLowRisk = lowRiskFiltered.slice(0, 5);
@@ -577,7 +574,7 @@ canvas { display: block; width: 100%; height: 100%; }
                 dom.countLowRisk.innerText = resultsLowRisk.length;
 
                 dom.scanBtn.disabled = false;
-                dom.scanBtn.innerText = "啟動極速掃描";
+                dom.scanBtn.innerText = "⚡ 啟動極速掃描";
                 renderList();
             }
         };
@@ -621,7 +618,7 @@ canvas { display: block; width: 100%; height: 100%; }
 
             let badgeHtml = '';
             if (activeTab === 'lowRisk') {
-                badgeHtml = `<span class="badge-lowrisk">⭐ 低風險回檔 (距60MA: +${item.lowRiskScore.toFixed(2)}%)</span>`;
+                badgeHtml = `<span class="badge-lowrisk">⚡⭐ 低風險回檔 (距60MA: +${item.lowRiskScore.toFixed(2)}%)</span>`;
             } else if (item.matchCount >= 2) {
                 badgeHtml = `<span class="badge-multi">🔥 ${item.matchCount}週期共振 (${matchBadges.join('+')})</span>`;
             } else {
@@ -756,8 +753,6 @@ canvas { display: block; width: 100%; height: 100%; }
 
         const formatVol = (v) => v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : (v / 1e3).toFixed(0) + 'K';
         ctx.fillText(formatVol(maxVol), width - padding.right + 3, volTop + 6);
-
-        const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
 
         showK.forEach((k, i) => {
             const timestamp = parseInt(k[0]);
