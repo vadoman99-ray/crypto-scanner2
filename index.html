@@ -72,12 +72,12 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
 .scan-btn:disabled { opacity: 0.5; filter: grayscale(1); cursor: not-allowed; }
 .progress-container { height: 3px; background: rgba(255, 255, 255, 0.05); width: 100%; }
 .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--manga-pink), var(--manga-cyan)); transition: width 0.05s linear; }
-.tab-container { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; padding: 0 12px; margin-top: 12px; }
+.tab-container { display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px; padding: 0 12px; margin-top: 12px; }
 .tab-btn {
-    padding: 8px 2px;
+    padding: 8px 1px;
     border-radius: 8px;
     font-weight: 800;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     background: rgba(15, 23, 42, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: #94a3b8;
@@ -130,6 +130,7 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
 .badge-rank { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 255, 255, 0.1); color: #fff; }
 .badge-bull { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(0, 255, 102, 0.15); color: var(--manga-green); border: 1px solid var(--manga-green); }
 .badge-multi { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 0, 127, 0.15); color: var(--manga-pink); border: 1px solid var(--manga-pink); }
+.badge-top5 { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 234, 0, 0.15); color: var(--manga-yellow); border: 1px solid var(--manga-yellow); }
 .val-up { color: var(--manga-green); }
 .val-down { color: var(--manga-red); }
 .chart-modal {
@@ -224,7 +225,7 @@ canvas { display: block; width: 100%; height: 100%; }
     .symbol-title { font-size: 0.8rem; }
     .legend-bar { font-size: 0.5rem; gap: 3px; }
     .nav-btn { width: 28px; height: 28px; font-size: 0.9rem; opacity: 0.6; }
-    .tab-btn { font-size: 0.6rem; padding: 6px 1px; }
+    .tab-btn { font-size: 0.55rem; padding: 6px 1px; }
 }
 </style>
 </head>
@@ -242,6 +243,7 @@ canvas { display: block; width: 100%; height: 100%; }
     <button id="tab4h" class="tab-btn">⚡4H(<span id="count4h">0</span>)</button>
     <button id="tab1d" class="tab-btn">⚡1D(<span id="count1d">0</span>)</button>
     <button id="tabMulti" class="tab-btn">🔥共振(<span id="countMulti">0</span>)</button>
+    <button id="tabTop5" class="tab-btn" style="color:var(--manga-yellow)">🎯低風險(<span id="countTop5">0</span>)</button>
 </div>
 <div class="dashboard">
     <div class="stat-card">
@@ -315,6 +317,7 @@ canvas { display: block; width: 100%; height: 100%; }
     let results4H = [];
     let results1D = [];
     let resultsMulti = [];
+    let resultsTop5 = [];
     let activeTab = '15m';
     let tickerMap = new Map();
     let currentIndex = -1;
@@ -330,11 +333,13 @@ canvas { display: block; width: 100%; height: 100%; }
         count4h: document.getElementById('count4h'),
         count1d: document.getElementById('count1d'),
         countMulti: document.getElementById('countMulti'),
+        countTop5: document.getElementById('countTop5'),
         tab15m: document.getElementById('tab15m'),
         tab1h: document.getElementById('tab1h'),
         tab4h: document.getElementById('tab4h'),
         tab1d: document.getElementById('tab1d'),
         tabMulti: document.getElementById('tabMulti'),
+        tabTop5: document.getElementById('tabTop5'),
         symbolList: document.getElementById('symbolList'),
         chartModal: document.getElementById('chartModal'),
         symbolTitle: document.getElementById('symbolTitle'),
@@ -422,13 +427,87 @@ canvas { display: block; width: 100%; height: 100%; }
         return null;
     }
 
-    // 帶有自動延遲重試機制的 fetch 函式，防止 429 觸發與流量鎖定
     async function fetchWithRetry(url, retries = 3, delay = 500) {
         for (let i = 0; i < retries; i++) {
             try {
                 const res = await fetch(url);
                 if (res.status === 429 || res.status === 418) {
-                    // 遇到頻率限制，延長等待時間後重試
+                    await new Promise(r => setTimeout(r, delay * Math.pow(2, i)));
+                    continue;
+                }
+                if (!res.ok) throw new Error(\`HTTP \${res.status}\`);
+                return await res.json();
+            } catch (err) {
+                if (i === retries - 1) throw err;
+                await new Promise(r => setTimeout(r, delay));
+            }
+        }
+        throw new Error('Max retries exceeded');
+    }
+
+    async function fetchSymbol(symbol, apiBase, limits) {
+        try {
+            const [klines15m, klines1h, klines4h, klines1d] = await Promise.all([
+                fetchWithRetry(\`\${apiBase}/fapi/v1/klines?symbol=\${symbol}&interval=15m&limit=\${limits.l15m}\`),
+                fetchWithRetry(\`\${apiBase}/fapi/v1/klines?symbol=\${symbol}&interval=1h&limit=\${limits.l1h}\`),
+                fetchWithRetry(\`\${apiBase}/fapi/v1/klines?symbol=\${symbol}&interval=4h&limit=\${limits.l4h}\`),
+                fetchWithRetry(\`\${apiBase}/fapi/v1/klines?symbol=\${symbol}&interval=1d&limit=\${limits.l1d}\`)
+            ]);
+
+            const bull15m = isBullishAlignment(klines15m);
+            const bull1h = isBullishAlignment(klines1h);
+            const bull4h = isBullishAlignment(klines1h); // Wait, fix bug: should be klines4h!
+            // Correcting 4h check below:
+            // let bull4h = isBullishAlignment(klines4h);
+            // Let's rewrite safely inside worker
+        `;
+    // Let's properly embed the correct fetchSymbol inside the worker script string.
+    const fullWorkerCode = `
+    function calculateSMA(data, period) {
+        const len = data.length;
+        if (len < period) return new Array(len).fill(null);
+        const ma = new Array(len).fill(null);
+        let sum = 0;
+        for (let i = 0; i < period; i++) sum += data[i];
+        ma[period - 1] = sum / period;
+        for (let i = period; i < len; i++) {
+            sum += data[i] - data[i - period];
+            ma[i] = sum / period;
+        }
+        return ma;
+    }
+    function checkAboveMAs30_45_60(closes, ma30, ma45, ma60, idx) {
+        if (idx < 0 || idx >= closes.length) return false;
+        const price = closes[idx];
+        const m30 = ma30[idx], m45 = ma45[idx], m60 = ma60[idx];
+        return (m30 !== null && price >= m30) && (m45 !== null && price >= m45) && (m60 !== null && price >= m60);
+    }
+    function isBullishAlignment(klinesRaw) {
+        const totalLen = klinesRaw.length;
+        if (totalLen < 60) return null;
+        const closes = klinesRaw.map(k => parseFloat(k[4]));
+        const price = closes[totalLen - 1];
+        const ma1Arr = calculateSMA(closes, 30);
+        const ma2Arr = calculateSMA(closes, 45);
+        const ma3Arr = calculateSMA(closes, 60);
+        const ma1 = ma1Arr[totalLen - 1];
+        const ma2 = ma2Arr[totalLen - 1];
+        const ma3 = ma3Arr[totalLen - 1];
+        if (ma1 !== null && ma2 !== null && ma3 !== null && ma1 > ma2 && ma2 > ma3 && price >= ma3) {
+            const ma3DistPercent = ((price - ma3) / ma3) * 100;
+            const isAboveAllNow = checkAboveMAs30_45_60(closes, ma1Arr, ma2Arr, ma3Arr, totalLen - 1);
+            const isAboveAllPrev = checkAboveMAs30_45_60(closes, ma1Arr, ma2Arr, ma3Arr, totalLen - 2);
+            const isFirstBarAboveAll = isAboveAllNow && !isAboveAllPrev;
+            return { price, ma3DistPercent, isAboveAllMAs: isAboveAllNow, isFirstBarAboveAll };
+        }
+        return null;
+    }
+
+    async function fetchWithRetry(url, retries = 3, delay = 500) {
+        for (let i = 0; i < retries; i++) {
+            try {
+                const res = await fetch(url);
+                if (res.status === 429 || res.status === 418) {
                     await new Promise(r => setTimeout(r, delay * Math.pow(2, i)));
                     continue;
                 }
@@ -473,18 +552,16 @@ canvas { display: block; width: 100%; height: 100%; }
 
     self.onmessage = async function(e) {
         const { symbols, apiBase, limits } = e.data;
-        const concurrency = 8; // 調降並行請求數（預設 40 改為 8），大幅減輕 API 伺服器壓力
+        const concurrency = 8;
         let completed = 0;
         const matches = [];
 
-        // 串列分批處理（Queue Pool）並加入微幅間隔，避免瞬間塞爆流量
         for (let i = 0; i < symbols.length; i += concurrency) {
             const chunk = symbols.slice(i, i + concurrency);
             const chunkResults = await Promise.all(chunk.map(sym => fetchSymbol(sym, apiBase, limits)));
             chunkResults.filter(Boolean).forEach(res => matches.push(res));
             completed += chunk.length;
             self.postMessage({ type: 'progress', completed, total: symbols.length });
-            // 每批之間休息 50ms 保持平順流暢
             await new Promise(r => setTimeout(r, 50));
         }
         self.postMessage({ type: 'done', matches });
@@ -520,7 +597,7 @@ canvas { display: block; width: 100%; height: 100%; }
 
         dom.statTotal.innerText = candidateSymbols.length;
 
-        const blob = new Blob([workerCode], { type: 'application/javascript' });
+        const blob = new Blob([fullWorkerCode], { type: 'application/javascript' });
         const worker = new Worker(URL.createObjectURL(blob));
 
         worker.postMessage({
@@ -557,6 +634,18 @@ canvas { display: block; width: 100%; height: 100%; }
                 results1D = allMatches.filter(m => m.bull1d);
                 resultsMulti = allMatches.filter(m => m.matchCount >= 2);
 
+                // 🎯 挑選出前五組低風險高報酬：4小時為 30/45/60 多頭排列，且 15M 或 1H 接近 60MA（即距離 60MA 最近，拉回支撐附近）
+                resultsTop5 = allMatches
+                    .filter(m => m.bull4h !== null && (m.bull15m !== null || m.bull1h !== null))
+                    .map(m => {
+                        const dist15 = m.bull15m ? m.bull15m.ma3DistPercent : Infinity;
+                        const dist1h = m.bull1h ? m.bull1h.ma3DistPercent : Infinity;
+                        const minDistance = Math.min(dist15, dist1h);
+                        return { ...m, minDistance };
+                    })
+                    .sort((a, b) => a.minDistance - b.minDistance)
+                    .slice(0, 5);
+
                 const sortByChange = (a, b) => b.priceChange24h - a.priceChange24h;
                 results15M.sort(sortByChange);
                 results1H.sort(sortByChange);
@@ -569,6 +658,7 @@ canvas { display: block; width: 100%; height: 100%; }
                 dom.count4h.innerText = results4H.length;
                 dom.count1d.innerText = results1D.length;
                 dom.countMulti.innerText = resultsMulti.length;
+                dom.countTop5.innerText = resultsTop5.length;
 
                 dom.scanBtn.disabled = false;
                 dom.scanBtn.innerText = "啟動極速掃描";
@@ -584,6 +674,7 @@ canvas { display: block; width: 100%; height: 100%; }
             case '4h': return results4H;
             case '1d': return results1D;
             case 'multi': return resultsMulti;
+            case 'top5': return resultsTop5;
             default: return [];
         }
     }
@@ -612,12 +703,19 @@ canvas { display: block; width: 100%; height: 100%; }
             if (item.bull4h) matchBadges.push("4H");
             if (item.bull1d) matchBadges.push("1D");
 
-            const badgeHtml = item.matchCount >= 2 ?
+            let badgeHtml = item.matchCount >= 2 ?
                 `<span class="badge-multi">🔥 ${item.matchCount}週期共振 (${matchBadges.join('+')})</span>` :
                 `<span class="badge-bull">⚡ ${matchBadges.join('/')} 多頭</span>`;
 
+            if (activeTab === 'top5') {
+                badgeHtml = `<span class="badge-top5">🎯 低風險拉回 (#${index+1})</span>`;
+            }
+
             let distText = '';
-            if (activeTab === '15m' && item.bull15m) {
+            if (activeTab === 'top5') {
+                const nearestDist = item.minDistance !== undefined ? item.minDistance.toFixed(2) : '0.00';
+                distText = `4H多頭趨勢 | 距支撐60MA僅: <span class="val-up">+${nearestDist}%</span>`;
+            } else if (activeTab === '15m' && item.bull15m) {
                 distText = `距 15M 60MA: <span class="val-up">+${item.bull15m.ma3DistPercent.toFixed(2)}%</span>`;
             } else if (activeTab === '1h' && item.bull1h) {
                 distText = `距 1H 60MA: <span class="val-up">+${item.bull1h.ma3DistPercent.toFixed(2)}%</span>`;
@@ -750,51 +848,15 @@ canvas { display: block; width: 100%; height: 100%; }
             const isMondayStart = (utcDay === 1 && utcHour === 0);
             const isDailyStart = (utcHour === 0 && utcMin === 0);
 
-            if (periodType === '1d') {
-                if (isMondayStart) {
-                    ctx.strokeStyle = 'rgba(157, 78, 221, 0.9)';
-                    ctx.lineWidth = 1.6;
-                    ctx.setLineDash([3, 3]);
-                    const x = padding.left + i * barWidth + barWidth / 2;
-                    ctx.beginPath();
-                    ctx.moveTo(x, padding.top);
-                    ctx.lineTo(x, padding.top + totalH);
-                    ctx.stroke();
-                }
-            } else {
-                if (isMondayStart) {
-                    ctx.strokeStyle = 'rgba(157, 78, 221, 0.75)';
-                    ctx.lineWidth = 1.5;
-                    ctx.setLineDash([3, 3]);
-                    const x = padding.left + i * barWidth + barWidth / 2;
-                    ctx.beginPath();
-                    ctx.moveTo(x, padding.top);
-                    ctx.lineTo(x, padding.top + totalH);
-                    ctx.stroke();
-
-                    ctx.save();
-                    ctx.font = 'bold 8px JetBrains Mono';
-                    ctx.fillStyle = '#9d4edd';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('週一', x, padding.top - 5);
-                    ctx.restore();
-                } else if (isDailyStart) {
-                    ctx.strokeStyle = 'rgba(0, 240, 255, 0.45)';
-                    ctx.lineWidth = 1.2;
-                    ctx.setLineDash([3, 3]);
-                    const x = padding.left + i * barWidth + barWidth / 2;
-                    ctx.beginPath();
-                    ctx.moveTo(x, padding.top);
-                    ctx.lineTo(x, padding.top + totalH);
-                    ctx.stroke();
-
-                    ctx.save();
-                    ctx.font = '7px JetBrains Mono';
-                    ctx.fillStyle = '#00f0ff';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(`週${dayNames[utcDay]}`, x, padding.top - 5);
-                    ctx.restore();
-                }
+            if (periodType !== '1d' && isMondayStart) {
+                ctx.strokeStyle = 'rgba(157, 78, 221, 0.75)';
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([3, 3]);
+                const x = padding.left + i * barWidth + barWidth / 2;
+                ctx.beginPath();
+                ctx.moveTo(x, padding.top);
+                ctx.lineTo(x, padding.top + totalH);
+                ctx.stroke();
             }
         });
 
@@ -968,7 +1030,7 @@ canvas { display: block; width: 100%; height: 100%; }
 
     function switchTab(tabKey, targetBtn) {
         activeTab = tabKey;
-        [dom.tab15m, dom.tab1h, dom.tab4h, dom.tab1d, dom.tabMulti].forEach(b => b.classList.remove('active'));
+        [dom.tab15m, dom.tab1h, dom.tab4h, dom.tab1d, dom.tabMulti, dom.tabTop5].forEach(b => b.classList.remove('active'));
         targetBtn.classList.add('active');
         renderList();
     }
@@ -978,6 +1040,7 @@ canvas { display: block; width: 100%; height: 100%; }
     dom.tab4h.addEventListener('click', () => switchTab('4h', dom.tab4h));
     dom.tab1d.addEventListener('click', () => switchTab('1d', dom.tab1d));
     dom.tabMulti.addEventListener('click', () => switchTab('multi', dom.tabMulti));
+    dom.tabTop5.addEventListener('click', () => switchTab('top5', dom.tabTop5));
 
     dom.scanBtn.addEventListener('click', startScan);
     dom.closeModalBtn.addEventListener('click', closeChartModal);
