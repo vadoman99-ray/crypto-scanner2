@@ -72,12 +72,12 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
 .scan-btn:disabled { opacity: 0.5; filter: grayscale(1); cursor: not-allowed; }
 .progress-container { height: 3px; background: rgba(255, 255, 255, 0.05); width: 100%; }
 .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--manga-pink), var(--manga-cyan)); transition: width 0.05s linear; }
-.tab-container { display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px; padding: 0 12px; margin-top: 12px; }
+.tab-container { display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px; padding: 0 10px; margin-top: 12px; }
 .tab-btn {
     padding: 8px 1px;
     border-radius: 8px;
     font-weight: 800;
-    font-size: 0.65rem;
+    font-size: 0.62rem;
     background: rgba(15, 23, 42, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: #94a3b8;
@@ -130,7 +130,7 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
 .badge-rank { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 255, 255, 0.1); color: #fff; }
 .badge-bull { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(0, 255, 102, 0.15); color: var(--manga-green); border: 1px solid var(--manga-green); }
 .badge-multi { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 0, 127, 0.15); color: var(--manga-pink); border: 1px solid var(--manga-pink); }
-.badge-top5 { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 234, 0, 0.15); color: var(--manga-yellow); border: 1px solid var(--manga-yellow); }
+.badge-lowrisk { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 234, 0, 0.15); color: var(--manga-yellow); border: 1px solid var(--manga-yellow); }
 .val-up { color: var(--manga-green); }
 .val-down { color: var(--manga-red); }
 .chart-modal {
@@ -243,7 +243,7 @@ canvas { display: block; width: 100%; height: 100%; }
     <button id="tab4h" class="tab-btn">⚡4H(<span id="count4h">0</span>)</button>
     <button id="tab1d" class="tab-btn">⚡1D(<span id="count1d">0</span>)</button>
     <button id="tabMulti" class="tab-btn">🔥共振(<span id="countMulti">0</span>)</button>
-    <button id="tabTop5" class="tab-btn" style="color:var(--manga-yellow)">🎯低風險(<span id="countTop5">0</span>)</button>
+    <button id="tabLowRisk" class="tab-btn" style="color:var(--manga-yellow)">⭐低風險(<span id="countLowRisk">0</span>)</button>
 </div>
 <div class="dashboard">
     <div class="stat-card">
@@ -317,7 +317,7 @@ canvas { display: block; width: 100%; height: 100%; }
     let results4H = [];
     let results1D = [];
     let resultsMulti = [];
-    let resultsTop5 = [];
+    let resultsLowRisk = [];
     let activeTab = '15m';
     let tickerMap = new Map();
     let currentIndex = -1;
@@ -333,13 +333,13 @@ canvas { display: block; width: 100%; height: 100%; }
         count4h: document.getElementById('count4h'),
         count1d: document.getElementById('count1d'),
         countMulti: document.getElementById('countMulti'),
-        countTop5: document.getElementById('countTop5'),
+        countLowRisk: document.getElementById('countLowRisk'),
         tab15m: document.getElementById('tab15m'),
         tab1h: document.getElementById('tab1h'),
         tab4h: document.getElementById('tab4h'),
         tab1d: document.getElementById('tab1d'),
         tabMulti: document.getElementById('tabMulti'),
-        tabTop5: document.getElementById('tabTop5'),
+        tabLowRisk: document.getElementById('tabLowRisk'),
         symbolList: document.getElementById('symbolList'),
         chartModal: document.getElementById('chartModal'),
         symbolTitle: document.getElementById('symbolTitle'),
@@ -367,102 +367,7 @@ canvas { display: block; width: 100%; height: 100%; }
     const ctx4h = dom.canvas4h.getContext('2d');
     const ctx1d = dom.canvas1d.getContext('2d');
 
-    function calculateSMA(data, period) {
-        const len = data.length;
-        if (len < period) return new Array(len).fill(null);
-        const ma = new Array(len).fill(null);
-        let sum = 0;
-        for (let i = 0; i < period; i++) sum += data[i];
-        ma[period - 1] = sum / period;
-        for (let i = period; i < len; i++) {
-            sum += data[i] - data[i - period];
-            ma[i] = sum / period;
-        }
-        return ma;
-    }
-
-    function formatVolumeText(volume) {
-        const yi = volume / 100000000;
-        return yi.toFixed(2) + '億';
-    }
-
     const workerCode = `
-    function calculateSMA(data, period) {
-        const len = data.length;
-        if (len < period) return new Array(len).fill(null);
-        const ma = new Array(len).fill(null);
-        let sum = 0;
-        for (let i = 0; i < period; i++) sum += data[i];
-        ma[period - 1] = sum / period;
-        for (let i = period; i < len; i++) {
-            sum += data[i] - data[i - period];
-            ma[i] = sum / period;
-        }
-        return ma;
-    }
-    function checkAboveMAs30_45_60(closes, ma30, ma45, ma60, idx) {
-        if (idx < 0 || idx >= closes.length) return false;
-        const price = closes[idx];
-        const m30 = ma30[idx], m45 = ma45[idx], m60 = ma60[idx];
-        return (m30 !== null && price >= m30) && (m45 !== null && price >= m45) && (m60 !== null && price >= m60);
-    }
-    function isBullishAlignment(klinesRaw) {
-        const totalLen = klinesRaw.length;
-        if (totalLen < 60) return null;
-        const closes = klinesRaw.map(k => parseFloat(k[4]));
-        const price = closes[totalLen - 1];
-        const ma1Arr = calculateSMA(closes, 30);
-        const ma2Arr = calculateSMA(closes, 45);
-        const ma3Arr = calculateSMA(closes, 60);
-        const ma1 = ma1Arr[totalLen - 1];
-        const ma2 = ma2Arr[totalLen - 1];
-        const ma3 = ma3Arr[totalLen - 1];
-        if (ma1 !== null && ma2 !== null && ma3 !== null && ma1 > ma2 && ma2 > ma3 && price >= ma3) {
-            const ma3DistPercent = ((price - ma3) / ma3) * 100;
-            const isAboveAllNow = checkAboveMAs30_45_60(closes, ma1Arr, ma2Arr, ma3Arr, totalLen - 1);
-            const isAboveAllPrev = checkAboveMAs30_45_60(closes, ma1Arr, ma2Arr, ma3Arr, totalLen - 2);
-            const isFirstBarAboveAll = isAboveAllNow && !isAboveAllPrev;
-            return { price, ma3DistPercent, isAboveAllMAs: isAboveAllNow, isFirstBarAboveAll };
-        }
-        return null;
-    }
-
-    async function fetchWithRetry(url, retries = 3, delay = 500) {
-        for (let i = 0; i < retries; i++) {
-            try {
-                const res = await fetch(url);
-                if (res.status === 429 || res.status === 418) {
-                    await new Promise(r => setTimeout(r, delay * Math.pow(2, i)));
-                    continue;
-                }
-                if (!res.ok) throw new Error(\`HTTP \${res.status}\`);
-                return await res.json();
-            } catch (err) {
-                if (i === retries - 1) throw err;
-                await new Promise(r => setTimeout(r, delay));
-            }
-        }
-        throw new Error('Max retries exceeded');
-    }
-
-    async function fetchSymbol(symbol, apiBase, limits) {
-        try {
-            const [klines15m, klines1h, klines4h, klines1d] = await Promise.all([
-                fetchWithRetry(\`\${apiBase}/fapi/v1/klines?symbol=\${symbol}&interval=15m&limit=\${limits.l15m}\`),
-                fetchWithRetry(\`\${apiBase}/fapi/v1/klines?symbol=\${symbol}&interval=1h&limit=\${limits.l1h}\`),
-                fetchWithRetry(\`\${apiBase}/fapi/v1/klines?symbol=\${symbol}&interval=4h&limit=\${limits.l4h}\`),
-                fetchWithRetry(\`\${apiBase}/fapi/v1/klines?symbol=\${symbol}&interval=1d&limit=\${limits.l1d}\`)
-            ]);
-
-            const bull15m = isBullishAlignment(klines15m);
-            const bull1h = isBullishAlignment(klines1h);
-            const bull4h = isBullishAlignment(klines1h); // Wait, fix bug: should be klines4h!
-            // Correcting 4h check below:
-            // let bull4h = isBullishAlignment(klines4h);
-            // Let's rewrite safely inside worker
-        `;
-    // Let's properly embed the correct fetchSymbol inside the worker script string.
-    const fullWorkerCode = `
     function calculateSMA(data, period) {
         const len = data.length;
         if (len < period) return new Array(len).fill(null);
@@ -540,8 +445,24 @@ canvas { display: block; width: 100%; height: 100%; }
             if (bull1h) matchCount++;
             if (bull4h) matchCount++;
             if (bull1d) matchCount++;
+
+            // 低風險高報酬評估：15M 或 1H 接近 60MA (距離 0~3% 內)，且 4H 或 1D 為標準多頭排列
+            const is15mNear = bull15m && bull15m.ma3DistPercent >= 0 && bull15m.ma3DistPercent <= 3.0;
+            const is1hNear = bull1h && bull1h.ma3DistPercent >= 0 && bull1h.ma3DistPercent <= 3.0;
+            const isHigherTrendBull = bull4h || bull1d;
+            const isLowRiskMatch = (is15mNear || is1hNear) && isHigherTrendBull;
+            
+            // 計算短線距離 60MA 的最小正距離作為風險評分（越接近0風險越低）
+            let lowRiskScore = 999;
+            if (isLowRiskMatch) {
+                const dist15 = is15mNear ? bull15m.ma3DistPercent : 999;
+                const dist1h = is1hNear ? bull1h.ma3DistPercent : 999;
+                lowRiskScore = Math.min(dist15, dist1h);
+            }
+
             return {
                 symbol, bull15m, bull1h, bull4h, bull1d, matchCount,
+                isLowRiskMatch, lowRiskScore,
                 currentPrice: (bull15m || bull1h || bull4h || bull1d).price,
                 rawKlines: { k15m: klines15m, k1h: klines1h, k4h: klines4h, k1d: klines1d }
             };
@@ -597,7 +518,7 @@ canvas { display: block; width: 100%; height: 100%; }
 
         dom.statTotal.innerText = candidateSymbols.length;
 
-        const blob = new Blob([fullWorkerCode], { type: 'application/javascript' });
+        const blob = new Blob([workerCode], { type: 'application/javascript' });
         const worker = new Worker(URL.createObjectURL(blob));
 
         worker.postMessage({
@@ -623,6 +544,8 @@ canvas { display: block; width: 100%; height: 100%; }
                         bull4h: m.bull4h,
                         bull1d: m.bull1d,
                         matchCount: m.matchCount,
+                        isLowRiskMatch: m.isLowRiskMatch,
+                        lowRiskScore: m.lowRiskScore,
                         priceChange24h: ticker ? parseFloat(ticker.priceChangePercent) : 0,
                         quoteVolume24h: ticker ? parseFloat(ticker.quoteVolume) : 0
                     };
@@ -633,18 +556,11 @@ canvas { display: block; width: 100%; height: 100%; }
                 results4H = allMatches.filter(m => m.bull4h);
                 results1D = allMatches.filter(m => m.bull1d);
                 resultsMulti = allMatches.filter(m => m.matchCount >= 2);
-
-                // 🎯 挑選出前五組低風險高報酬：4小時為 30/45/60 多頭排列，且 15M 或 1H 接近 60MA（即距離 60MA 最近，拉回支撐附近）
-                resultsTop5 = allMatches
-                    .filter(m => m.bull4h !== null && (m.bull15m !== null || m.bull1h !== null))
-                    .map(m => {
-                        const dist15 = m.bull15m ? m.bull15m.ma3DistPercent : Infinity;
-                        const dist1h = m.bull1h ? m.bull1h.ma3DistPercent : Infinity;
-                        const minDistance = Math.min(dist15, dist1h);
-                        return { ...m, minDistance };
-                    })
-                    .sort((a, b) => a.minDistance - b.minDistance)
-                    .slice(0, 5);
+                
+                // 挑選低風險高報酬標的，依貼近 60MA 程度排序並取前 5 名
+                const lowRiskFiltered = allMatches.filter(m => m.isLowRiskMatch);
+                lowRiskFiltered.sort((a, b) => a.lowRiskScore - b.lowRiskScore);
+                resultsLowRisk = lowRiskFiltered.slice(0, 5);
 
                 const sortByChange = (a, b) => b.priceChange24h - a.priceChange24h;
                 results15M.sort(sortByChange);
@@ -658,7 +574,7 @@ canvas { display: block; width: 100%; height: 100%; }
                 dom.count4h.innerText = results4H.length;
                 dom.count1d.innerText = results1D.length;
                 dom.countMulti.innerText = resultsMulti.length;
-                dom.countTop5.innerText = resultsTop5.length;
+                dom.countLowRisk.innerText = resultsLowRisk.length;
 
                 dom.scanBtn.disabled = false;
                 dom.scanBtn.innerText = "啟動極速掃描";
@@ -674,7 +590,7 @@ canvas { display: block; width: 100%; height: 100%; }
             case '4h': return results4H;
             case '1d': return results1D;
             case 'multi': return resultsMulti;
-            case 'top5': return resultsTop5;
+            case 'lowRisk': return resultsLowRisk;
             default: return [];
         }
     }
@@ -703,18 +619,19 @@ canvas { display: block; width: 100%; height: 100%; }
             if (item.bull4h) matchBadges.push("4H");
             if (item.bull1d) matchBadges.push("1D");
 
-            let badgeHtml = item.matchCount >= 2 ?
-                `<span class="badge-multi">🔥 ${item.matchCount}週期共振 (${matchBadges.join('+')})</span>` :
-                `<span class="badge-bull">⚡ ${matchBadges.join('/')} 多頭</span>`;
-
-            if (activeTab === 'top5') {
-                badgeHtml = `<span class="badge-top5">🎯 低風險拉回 (#${index+1})</span>`;
+            let badgeHtml = '';
+            if (activeTab === 'lowRisk') {
+                badgeHtml = `<span class="badge-lowrisk">⭐ 低風險回檔 (距60MA: +${item.lowRiskScore.toFixed(2)}%)</span>`;
+            } else if (item.matchCount >= 2) {
+                badgeHtml = `<span class="badge-multi">🔥 ${item.matchCount}週期共振 (${matchBadges.join('+')})</span>`;
+            } else {
+                badgeHtml = `<span class="badge-bull">⚡ ${matchBadges.join('/')} 多頭</span>`;
             }
 
             let distText = '';
-            if (activeTab === 'top5') {
-                const nearestDist = item.minDistance !== undefined ? item.minDistance.toFixed(2) : '0.00';
-                distText = `4H多頭趨勢 | 距支撐60MA僅: <span class="val-up">+${nearestDist}%</span>`;
+            if (activeTab === 'lowRisk') {
+                const higherStr = item.bull1d ? '日K(1D)' : '4H';
+                distText = `大週期趨勢: <span class="val-up">${higherStr}多頭排列</span> | 短線緊貼支撐`;
             } else if (activeTab === '15m' && item.bull15m) {
                 distText = `距 15M 60MA: <span class="val-up">+${item.bull15m.ma3DistPercent.toFixed(2)}%</span>`;
             } else if (activeTab === '1h' && item.bull1h) {
@@ -749,6 +666,11 @@ canvas { display: block; width: 100%; height: 100%; }
             fragment.appendChild(card);
         });
         dom.symbolList.replaceChildren(fragment);
+    }
+
+    function formatVolumeText(volume) {
+        const yi = volume / 100000000;
+        return yi.toFixed(2) + '億';
     }
 
     function renderCanvasChart(canvas, wrapper, ctx, klinesRaw, showCount, periodType) {
@@ -840,7 +762,6 @@ canvas { display: block; width: 100%; height: 100%; }
         showK.forEach((k, i) => {
             const timestamp = parseInt(k[0]);
             const date = new Date(timestamp);
-            
             const utcDay = date.getUTCDay();
             const utcHour = date.getUTCHours();
             const utcMin = date.getUTCMinutes();
@@ -851,6 +772,15 @@ canvas { display: block; width: 100%; height: 100%; }
             if (periodType !== '1d' && isMondayStart) {
                 ctx.strokeStyle = 'rgba(157, 78, 221, 0.75)';
                 ctx.lineWidth = 1.5;
+                ctx.setLineDash([3, 3]);
+                const x = padding.left + i * barWidth + barWidth / 2;
+                ctx.beginPath();
+                ctx.moveTo(x, padding.top);
+                ctx.lineTo(x, padding.top + totalH);
+                ctx.stroke();
+            } else if (periodType !== '1d' && isDailyStart) {
+                ctx.strokeStyle = 'rgba(0, 240, 255, 0.45)';
+                ctx.lineWidth = 1.2;
                 ctx.setLineDash([3, 3]);
                 const x = padding.left + i * barWidth + barWidth / 2;
                 ctx.beginPath();
@@ -887,46 +817,6 @@ canvas { display: block; width: 100%; height: 100%; }
             ctx.fillStyle = isUp ? 'rgba(0, 255, 102, 0.4)' : 'rgba(255, 42, 109, 0.4)';
             const vY = getYVol(vol);
             ctx.fillRect(x - bw / 2, vY, bw, volTop + volH - vY);
-
-            const checkAboveMAs5_30_45_60 = (closes, ma5, ma30, ma45, ma60, idx) => {
-                if (idx < 0 || idx >= closes.length) return false;
-                const price = closes[idx];
-                return (ma5[idx] !== null && price >= ma5[idx]) &&
-                       (ma30[idx] !== null && price >= ma30[idx]) &&
-                       (ma45[idx] !== null && price >= ma45[idx]) &&
-                       (ma60[idx] !== null && price >= ma60[idx]);
-            };
-
-            const checkAboveMAs30_45_60 = (closes, ma30, ma45, ma60, idx) => {
-                if (idx < 0 || idx >= closes.length) return false;
-                const price = closes[idx];
-                return (ma30[idx] !== null && price >= ma30[idx]) &&
-                       (ma45[idx] !== null && price >= ma45[idx]) &&
-                       (ma60[idx] !== null && price >= ma60[idx]);
-            };
-
-            let isNowAbove = false;
-            let isPrevAbove = false;
-            if (periodType === '4h' || periodType === '1d') {
-                isNowAbove = checkAboveMAs5_30_45_60(closesAll, ma5All, ma30All, ma45All, ma60All, absoluteIdx);
-                isPrevAbove = checkAboveMAs5_30_45_60(closesAll, ma5All, ma30All, ma45All, ma60All, absoluteIdx - 1);
-            } else {
-                isNowAbove = checkAboveMAs30_45_60(closesAll, ma30All, ma45All, ma60All, absoluteIdx);
-                isPrevAbove = checkAboveMAs30_45_60(closesAll, ma30All, ma45All, ma60All, absoluteIdx - 1);
-            }
-
-            if (isNowAbove && !isPrevAbove) {
-                ctx.save();
-                ctx.font = 'bold 10px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'bottom';
-                ctx.fillStyle = '#ffea00';
-                ctx.shadowColor = '#ffea00';
-                ctx.shadowBlur = 5;
-                const highY = getYPrice(high);
-                ctx.fillText('⚡', x, highY - 2);
-                ctx.restore();
-            }
         });
 
         const drawLine = (dataArray, color, getYFunc, width = 1) => {
@@ -954,6 +844,20 @@ canvas { display: block; width: 100%; height: 100%; }
         drawLine(showMA60, '#ff007f', getYPrice);
         drawLine(showVM5, '#00f0ff', getYVol, 0.9);
         drawLine(showVM20, '#9d4edd', getYVol, 0.9);
+    }
+
+    function calculateSMA(data, period) {
+        const len = data.length;
+        if (len < period) return new Array(len).fill(null);
+        const ma = new Array(len).fill(null);
+        let sum = 0;
+        for (let i = 0; i < period; i++) sum += data[i];
+        ma[period - 1] = sum / period;
+        for (let i = period; i < len; i++) {
+            sum += data[i] - data[i - period];
+            ma[i] = sum / period;
+        }
+        return ma;
     }
 
     function loadAndDrawCharts(symbol) {
@@ -1030,7 +934,7 @@ canvas { display: block; width: 100%; height: 100%; }
 
     function switchTab(tabKey, targetBtn) {
         activeTab = tabKey;
-        [dom.tab15m, dom.tab1h, dom.tab4h, dom.tab1d, dom.tabMulti, dom.tabTop5].forEach(b => b.classList.remove('active'));
+        [dom.tab15m, dom.tab1h, dom.tab4h, dom.tab1d, dom.tabMulti, dom.tabLowRisk].forEach(b => b.classList.remove('active'));
         targetBtn.classList.add('active');
         renderList();
     }
@@ -1040,7 +944,7 @@ canvas { display: block; width: 100%; height: 100%; }
     dom.tab4h.addEventListener('click', () => switchTab('4h', dom.tab4h));
     dom.tab1d.addEventListener('click', () => switchTab('1d', dom.tab1d));
     dom.tabMulti.addEventListener('click', () => switchTab('multi', dom.tabMulti));
-    dom.tabTop5.addEventListener('click', () => switchTab('top5', dom.tabTop5));
+    dom.tabLowRisk.addEventListener('click', () => switchTab('lowRisk', dom.tabLowRisk));
 
     dom.scanBtn.addEventListener('click', startScan);
     dom.closeModalBtn.addEventListener('click', closeChartModal);
