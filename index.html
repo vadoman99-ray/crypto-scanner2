@@ -161,7 +161,7 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
 .stat-card .val { font-family: 'JetBrains Mono', monospace; font-size: 1.6rem; font-weight: 800; }
 .stat-card.entry { border-color: rgba(255, 0, 127, 0.4); }
 .stat-card.entry .val { color: var(--manga-pink); text-shadow: 0 0 10px rgba(255, 0, 127, 0.3); }
-.container { padding: 0 16px; }
+.container { padding: 0 16px; position: relative; min-height: 200px; }
 .symbol-card {
     background: var(--card-bg);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -174,11 +174,10 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
     align-items: center;
     backdrop-filter: blur(10px);
     cursor: pointer;
-    transition: border-color 0.2s, transform 0.2s, background-color 0.2s;
+    transition: border-color 0.2s, background-color 0.2s;
     will-change: transform;
 }
-.symbol-card:hover { border-color: var(--manga-cyan); background: rgba(0, 240, 255, 0.08); transform: translateY(-2px); }
-.symbol-card:active { transform: scale(0.98); }
+.symbol-card:hover { border-color: var(--manga-cyan); background: rgba(0, 240, 255, 0.08); }
 .symbol-name { font-family: 'JetBrains Mono', monospace; font-size: 1.15rem; font-weight: 800; }
 .symbol-price { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; color: var(--manga-yellow); font-weight: 700; }
 .detail-row { font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; color: #94a3b8; margin-top: 4px; }
@@ -213,7 +212,6 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
     flex-direction: column;
     box-shadow: 0 0 50px rgba(0, 240, 255, 0.2);
     position: relative;
-    transition: transform 0.15s ease-out;
 }
 .chart-header {
     padding: 6px 10px;
@@ -286,7 +284,7 @@ canvas { display: block; width: 100%; height: 100%; }
 <body>
 <div class="app-header">
     <div class="header-top">
-        <div class="header-title">⚡ 多週期多頭排列儀表板 (>1億USDT)</div>
+        <div class="header-title">⚡ 極速多週期多頭排列儀表板 (>1億USDT)</div>
         <button id="scanBtn" class="scan-btn">啟動極速掃描</button>
     </div>
 </div>
@@ -388,6 +386,60 @@ canvas { display: block; width: 100%; height: 100%; }
     let globalAllMatches = [];
     const klinesCache = new Map();
 
+    // IndexedDB 快取管理
+    let db = null;
+    function initDB() {
+        return new Promise((resolve) => {
+            const request = indexedDB.open('CryptoDashboardDB', 1);
+            request.onupgradeneeded = (e) => {
+                const database = e.target.result;
+                if (!database.objectStoreNames.contains('klines')) {
+                    database.createObjectStore('klines', { keyPath: 'symbol' });
+                }
+            };
+            request.onsuccess = (e) => {
+                db = e.target.result;
+                resolve(db);
+            };
+            request.onerror = () => resolve(null);
+        });
+    }
+
+    function getCachedKlinesFromDB(symbols) {
+        return new Promise((resolve) => {
+            if (!db) return resolve(new Map());
+            const transaction = db.transaction(['klines'], 'readonly');
+            const store = transaction.objectStore('klines');
+            const cachedMap = new Map();
+            let count = 0;
+            if (symbols.length === 0) return resolve(cachedMap);
+
+            symbols.forEach(sym => {
+                const req = store.get(sym);
+                req.onsuccess = () => {
+                    if (req.result && (Date.now() - req.result.timestamp < 15 * 60 * 1000)) { // 15分鐘內有效
+                        cachedMap.set(sym, req.result.data);
+                    }
+                    count++;
+                    if (count === symbols.length) resolve(cachedMap);
+                };
+                req.onerror = () => {
+                    count++;
+                    if (count === symbols.length) resolve(cachedMap);
+                };
+            });
+        });
+    }
+
+    function saveKlinesToDB(symbolDataMap) {
+        if (!db) return;
+        const transaction = db.transaction(['klines'], 'readwrite');
+        const store = transaction.objectStore('klines');
+        symbolDataMap.forEach((data, symbol) => {
+            store.put({ symbol, data, timestamp: Date.now() });
+        });
+    }
+
     const dom = {
         scanBtn: document.getElementById('scanBtn'),
         progress: document.getElementById('progress'),
@@ -427,20 +479,21 @@ canvas { display: block; width: 100%; height: 100%; }
         tagText1d: document.getElementById('tagText1d')
     };
 
-    const ctx15m = dom.canvas15m.getContext('2d');
-    const ctx1h = dom.canvas1h.getContext('2d');
-    const ctx4h = dom.canvas4h.getContext('2d');
-    const ctx1d = dom.canvas1d.getContext('2d');
+    const ctx15m = dom.canvas15m.getContext('2d', { alpha: false });
+    const ctx1h = dom.canvas1h.getContext('2d', { alpha: false });
+    const ctx4h = dom.canvas4h.getContext('2d', { alpha: false });
+    const ctx1d = dom.canvas1d.getContext('2d', { alpha: false });
 
-    function calculateSMA(data, period) {
-        const len = data.length;
-        if (len < period) return new Array(len).fill(null);
+    // 索引優化過的 SMA 計算
+    function calculateSMA(closes, period) {
+        const len = closes.length;
         const ma = new Array(len).fill(null);
+        if (len < period) return ma;
         let sum = 0;
-        for (let i = 0; i < period; i++) sum += data[i];
+        for (let i = 0; i < period; i++) sum += closes[i];
         ma[period - 1] = sum / period;
         for (let i = period; i < len; i++) {
-            sum += data[i] - data[i - period];
+            sum += closes[i] - closes[i - period];
             ma[i] = sum / period;
         }
         return ma;
@@ -460,15 +513,15 @@ canvas { display: block; width: 100%; height: 100%; }
     }
 
     const workerCode = `
-    function calculateSMA(data, period) {
-        const len = data.length;
-        if (len < period) return new Array(len).fill(null);
+    function calculateSMA(closes, period) {
+        const len = closes.length;
         const ma = new Array(len).fill(null);
+        if (len < period) return ma;
         let sum = 0;
-        for (let i = 0; i < period; i++) sum += data[i];
+        for (let i = 0; i < period; i++) sum += closes[i];
         ma[period - 1] = sum / period;
         for (let i = period; i < len; i++) {
-            sum += data[i] - data[i - period];
+            sum += closes[i] - closes[i - period];
             ma[i] = sum / period;
         }
         return ma;
@@ -482,7 +535,9 @@ canvas { display: block; width: 100%; height: 100%; }
     function isBullishAlignment(klinesRaw) {
         const totalLen = klinesRaw.length;
         if (totalLen < 60) return null;
-        const closes = klinesRaw.map(k => parseFloat(k[4]));
+        const closes = new Float64Array(totalLen);
+        for(let i=0; i<totalLen; i++) closes[i] = parseFloat(klinesRaw[i][4]);
+        
         const price = closes[totalLen - 1];
         const ma1Arr = calculateSMA(closes, 30);
         const ma2Arr = calculateSMA(closes, 45);
@@ -538,18 +593,48 @@ canvas { display: block; width: 100%; height: 100%; }
         }
     }
     self.onmessage = async function(e) {
-        const { symbols, apiBase, limits } = e.data;
+        const { symbols, apiBase, limits, cachedMapEntries } = e.data;
+        const cachedMap = new Map(cachedMapEntries);
         const concurrency = 25;
         let completed = 0;
         const matches = [];
-        for (let i = 0; i < symbols.length; i += concurrency) {
-            const chunk = symbols.slice(i, i + concurrency);
+        const newlyFetched = new Map();
+
+        const symbolsToFetch = [];
+        symbols.forEach(sym => {
+            if (cachedMap.has(sym)) {
+                const rawKlines = cachedMap.get(sym);
+                const bull15m = isBullishAlignment(rawKlines.k15m);
+                const bull1h = isBullishAlignment(rawKlines.k1h);
+                const bull4h = isBullishAlignment(rawKlines.k4h);
+                const bull1d = isBullishAlignment(rawKlines.k1d);
+                completed++;
+                if (bull15m || bull1h || bull4h || bull1d) {
+                    let matchCount = (bull15m ? 1 : 0) + (bull1h ? 1 : 0) + (bull4h ? 1 : 0) + (bull1d ? 1 : 0);
+                    matches.push({
+                        symbol: sym, bull15m, bull1h, bull4h, bull1d, matchCount,
+                        currentPrice: (bull15m || bull1h || bull4h || bull1d).price,
+                        rawKlines
+                    });
+                }
+            } else {
+                symbolsToFetch.push(sym);
+            }
+        });
+
+        self.postMessage({ type: 'progress', completed, total: symbols.length });
+
+        for (let i = 0; i < symbolsToFetch.length; i += concurrency) {
+            const chunk = symbolsToFetch.slice(i, i + concurrency);
             const chunkResults = await Promise.all(chunk.map(sym => fetchSymbol(sym, apiBase, limits)));
-            chunkResults.filter(Boolean).forEach(res => matches.push(res));
+            chunkResults.filter(Boolean).forEach(res => {
+                matches.push(res);
+                newlyFetched.set(res.symbol, res.rawKlines);
+            });
             completed += chunk.length;
             self.postMessage({ type: 'progress', completed, total: symbols.length });
         }
-        self.postMessage({ type: 'done', matches });
+        self.postMessage({ type: 'done', matches, newlyFetched: Array.from(newlyFetched.entries()) });
     };
     `;
 
@@ -583,6 +668,10 @@ canvas { display: block; width: 100%; height: 100%; }
 
         dom.statTotal.innerText = candidateSymbols.length;
 
+        // 讀取 IndexedDB 本地快取
+        if (!db) await initDB();
+        const cachedMap = await getCachedKlinesFromDB(candidateSymbols);
+
         const blob = new Blob([workerCode], { type: 'application/javascript' });
         const worker = new URL.createObjectURL(blob);
         const w = new Worker(worker);
@@ -590,15 +679,21 @@ canvas { display: block; width: 100%; height: 100%; }
         w.postMessage({
             symbols: candidateSymbols,
             apiBase: API_BASE,
-            limits: { l15m: FETCH_LIMIT_15M, l1h: FETCH_LIMIT_1H, l4h: FETCH_LIMIT_4H, l1d: FETCH_LIMIT_1D }
+            limits: { l15m: FETCH_LIMIT_15M, l1h: FETCH_LIMIT_1H, l4h: FETCH_LIMIT_4H, l1d: FETCH_LIMIT_1D },
+            cachedMapEntries: Array.from(cachedMap.entries())
         });
 
         w.onmessage = (e) => {
-            const { type, completed, total, matches } = e.data;
+            const { type, completed, total, matches, newlyFetched } = e.data;
             if (type === 'progress') {
                 dom.progress.style.width = `${(completed / total) * 100}%`;
             } else if (type === 'done') {
                 w.terminate();
+
+                if (newlyFetched && newlyFetched.length > 0) {
+                    saveKlinesToDB(new Map(newlyFetched));
+                }
+
                 const allMatches = matches.map(m => {
                     const ticker = tickerMap.get(m.symbol);
                     klinesCache.set(m.symbol, m.rawKlines);
@@ -777,8 +872,14 @@ canvas { display: block; width: 100%; height: 100%; }
     }
 
     function renderCanvasChart(canvas, wrapper, ctx, klinesRaw, showCount, periodType) {
-        const closesAll = klinesRaw.map(k => parseFloat(k[4]));
-        const volumesAll = klinesRaw.map(k => parseFloat(k[5]));
+        const totalLen = klinesRaw.length;
+        const closesAll = new Float64Array(totalLen);
+        const volumesAll = new Float64Array(totalLen);
+        for(let i=0; i<totalLen; i++) {
+            closesAll[i] = parseFloat(klinesRaw[i][4]);
+            volumesAll[i] = parseFloat(klinesRaw[i][5]);
+        }
+
         const ma5All = calculateSMA(closesAll, P0);
         const ma30All = calculateSMA(closesAll, P1);
         const ma45All = calculateSMA(closesAll, P2);
@@ -786,16 +887,8 @@ canvas { display: block; width: 100%; height: 100%; }
         const vm5All = calculateSMA(volumesAll, 5);
         const vm20All = calculateSMA(volumesAll, 20);
 
-        const actualShowCount = Math.min(showCount, klinesRaw.length);
-        const showStartIndex = klinesRaw.length - actualShowCount;
-
-        const showK = klinesRaw.slice(-actualShowCount);
-        const showMA5 = ma5All.slice(-actualShowCount);
-        const showMA30 = ma30All.slice(-actualShowCount);
-        const showMA45 = ma45All.slice(-actualShowCount);
-        const showMA60 = ma60All.slice(-actualShowCount);
-        const showVM5 = vm5All.slice(-actualShowCount);
-        const showVM20 = vm20All.slice(-actualShowCount);
+        const actualShowCount = Math.min(showCount, totalLen);
+        const showStartIndex = totalLen - actualShowCount;
 
         const rect = wrapper.getBoundingClientRect();
         if (rect.width === 0 || rect.height === 0) return;
@@ -815,25 +908,22 @@ canvas { display: block; width: 100%; height: 100%; }
         const volTop = padding.top + priceH + totalH * 0.10;
         const chartW = width - padding.left - padding.right;
 
-        let minP = Infinity, maxP = -Infinity;
-        showK.forEach(k => {
-            const l = parseFloat(k[3]), h = parseFloat(k[2]);
+        let minP = Infinity, maxP = -Infinity, maxVol = -Infinity;
+        for(let i = showStartIndex; i < totalLen; i++) {
+            const l = parseFloat(klinesRaw[i][3]), h = parseFloat(klinesRaw[i][2]);
             if (l < minP) minP = l;
             if (h > maxP) maxP = h;
-        });
-
-        let maxVol = -Infinity;
-        showK.forEach(k => {
-            const v = parseFloat(k[5]);
+            const v = volumesAll[i];
             if (v > maxVol) maxVol = v;
-        });
+        }
 
         const priceRange = maxP - minP || 1;
         const getYPrice = (p) => padding.top + priceH - ((p - minP) / priceRange) * priceH;
         const getYVol = (v) => volTop + volH - (v / (maxVol || 1)) * volH;
         const barWidth = chartW / actualShowCount;
 
-        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = '#060911';
+        ctx.fillRect(0, 0, width, height);
 
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
         ctx.fillStyle = '#64748b';
@@ -841,16 +931,13 @@ canvas { display: block; width: 100%; height: 100%; }
         ctx.textAlign = 'left';
         ctx.lineWidth = 1;
 
-        const gridLines = 1;
-        for (let i = 0; i <= gridLines; i++) {
-            const y = padding.top + (priceH / gridLines) * i;
-            const pVal = maxP - (priceRange / gridLines) * i;
-            ctx.beginPath();
-            ctx.moveTo(padding.left, y);
-            ctx.lineTo(width - padding.right, y);
-            ctx.stroke();
-            ctx.fillText(pVal.toFixed(1), width - padding.right + 3, y + 3);
-        }
+        const y = padding.top;
+        const pVal = maxP;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(width - padding.right, y);
+        ctx.stroke();
+        ctx.fillText(pVal.toFixed(1), width - padding.right + 3, y + 3);
 
         ctx.beginPath();
         ctx.moveTo(padding.left, volTop);
@@ -862,8 +949,9 @@ canvas { display: block; width: 100%; height: 100%; }
 
         const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
 
-        showK.forEach((k, i) => {
-            const timestamp = parseInt(k[0]);
+        for (let i = 0; i < actualShowCount; i++) {
+            const absoluteIdx = showStartIndex + i;
+            const timestamp = parseInt(klinesRaw[absoluteIdx][0]);
             const date = new Date(timestamp);
             const utcDay = date.getUTCDay();
             const utcHour = date.getUTCHours();
@@ -905,13 +993,14 @@ canvas { display: block; width: 100%; height: 100%; }
                 ctx.fillText(`週${dayNames[utcDay]}`, x, padding.top - 5);
                 ctx.restore();
             }
-        });
+        }
 
         ctx.setLineDash([]);
         ctx.lineWidth = 1;
 
-        showK.forEach((k, i) => {
+        for (let i = 0; i < actualShowCount; i++) {
             const absoluteIdx = showStartIndex + i;
+            const k = klinesRaw[absoluteIdx];
             const open = parseFloat(k[1]), high = parseFloat(k[2]), low = parseFloat(k[3]), close = parseFloat(k[4]), vol = parseFloat(k[5]);
             const x = padding.left + i * barWidth + barWidth / 2;
             const isUp = close >= open;
@@ -974,15 +1063,17 @@ canvas { display: block; width: 100%; height: 100%; }
                 ctx.fillText('⚡', x, highY - 2);
                 ctx.restore();
             }
-        });
+        }
 
         const drawLine = (dataArray, color, getYFunc, width = 1) => {
             ctx.strokeStyle = color;
             ctx.lineWidth = width;
             ctx.beginPath();
             let started = false;
-            dataArray.forEach((val, i) => {
-                if (val === null) return;
+            for (let i = 0; i < actualShowCount; i++) {
+                const absoluteIdx = showStartIndex + i;
+                const val = dataArray[absoluteIdx];
+                if (val === null || isNaN(val)) continue;
                 const x = padding.left + i * barWidth + barWidth / 2;
                 const y = getYFunc(val);
                 if (!started) {
@@ -991,16 +1082,16 @@ canvas { display: block; width: 100%; height: 100%; }
                 } else {
                     ctx.lineTo(x, y);
                 }
-            });
+            }
             ctx.stroke();
         };
 
-        drawLine(showMA5, '#00ff66', getYPrice);
-        drawLine(showMA30, '#ffea00', getYPrice);
-        drawLine(showMA45, '#ff9100', getYPrice);
-        drawLine(showMA60, '#ff007f', getYPrice);
-        drawLine(showVM5, '#00f0ff', getYVol, 0.9);
-        drawLine(showVM20, '#9d4edd', getYVol, 0.9);
+        drawLine(ma5All, '#00ff66', getYPrice);
+        drawLine(ma30All, '#ffea00', getYPrice);
+        drawLine(ma45All, '#ff9100', getYPrice);
+        drawLine(ma60All, '#ff007f', getYPrice);
+        drawLine(vm5All, '#00f0ff', getYVol, 0.9);
+        drawLine(vm20All, '#9d4edd', getYVol, 0.9);
     }
 
     function loadAndDrawCharts(symbol) {
@@ -1116,6 +1207,9 @@ canvas { display: block; width: 100%; height: 100%; }
             }
         });
     });
+
+    // 初始化 IndexedDB
+    initDB();
 })();
 </script>
 </body>
