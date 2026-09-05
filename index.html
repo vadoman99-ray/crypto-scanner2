@@ -72,12 +72,12 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
 .scan-btn:disabled { opacity: 0.5; filter: grayscale(1); cursor: not-allowed; }
 .progress-container { height: 3px; background: rgba(255, 255, 255, 0.05); width: 100%; }
 .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--manga-pink), var(--manga-cyan)); transition: width 0.05s linear; }
-.tab-container { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; padding: 0 12px; margin-top: 12px; }
+.tab-container { display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px; padding: 0 12px; margin-top: 12px; }
 .tab-btn {
     padding: 8px 2px;
     border-radius: 8px;
     font-weight: 800;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     background: rgba(15, 23, 42, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: #94a3b8;
@@ -93,6 +93,17 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
     border-color: var(--manga-cyan);
     color: #fff;
     box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+}
+.tab-btn.low-risk {
+    background: rgba(255, 234, 0, 0.15);
+    border-color: var(--manga-yellow);
+    color: var(--manga-yellow);
+}
+.tab-btn.low-risk.active {
+    background: rgba(255, 234, 0, 0.3);
+    border-color: var(--manga-yellow);
+    color: #fff;
+    box-shadow: 0 0 12px rgba(255, 234, 0, 0.4);
 }
 .dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 12px 16px; }
 .stat-card {
@@ -130,6 +141,7 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
 .badge-rank { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 255, 255, 0.1); color: #fff; }
 .badge-bull { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(0, 255, 102, 0.15); color: var(--manga-green); border: 1px solid var(--manga-green); }
 .badge-multi { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 0, 127, 0.15); color: var(--manga-pink); border: 1px solid var(--manga-pink); }
+.badge-lowrisk { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 234, 0, 0.2); color: var(--manga-yellow); border: 1px solid var(--manga-yellow); }
 .val-up { color: var(--manga-green); }
 .val-down { color: var(--manga-red); }
 .chart-modal {
@@ -224,7 +236,7 @@ canvas { display: block; width: 100%; height: 100%; }
     .symbol-title { font-size: 0.8rem; }
     .legend-bar { font-size: 0.5rem; gap: 3px; }
     .nav-btn { width: 28px; height: 28px; font-size: 0.9rem; opacity: 0.6; }
-    .tab-btn { font-size: 0.6rem; padding: 6px 1px; }
+    .tab-btn { font-size: 0.55rem; padding: 6px 1px; }
 }
 </style>
 </head>
@@ -242,6 +254,7 @@ canvas { display: block; width: 100%; height: 100%; }
     <button id="tab4h" class="tab-btn">⚡4H(<span id="count4h">0</span>)</button>
     <button id="tab1d" class="tab-btn">⚡1D(<span id="count1d">0</span>)</button>
     <button id="tabMulti" class="tab-btn">🔥共振(<span id="countMulti">0</span>)</button>
+    <button id="tabLowRisk" class="tab-btn low-risk">⭐前五精選(<span id="countLowRisk">0</span>)</button>
 </div>
 <div class="dashboard">
     <div class="stat-card">
@@ -315,6 +328,7 @@ canvas { display: block; width: 100%; height: 100%; }
     let results4H = [];
     let results1D = [];
     let resultsMulti = [];
+    let resultsLowRisk = [];
     let activeTab = '15m';
     let tickerMap = new Map();
     let currentIndex = -1;
@@ -330,11 +344,13 @@ canvas { display: block; width: 100%; height: 100%; }
         count4h: document.getElementById('count4h'),
         count1d: document.getElementById('count1d'),
         countMulti: document.getElementById('countMulti'),
+        countLowRisk: document.getElementById('countLowRisk'),
         tab15m: document.getElementById('tab15m'),
         tab1h: document.getElementById('tab1h'),
         tab4h: document.getElementById('tab4h'),
         tab1d: document.getElementById('tab1d'),
         tabMulti: document.getElementById('tabMulti'),
+        tabLowRisk: document.getElementById('tabLowRisk'),
         symbolList: document.getElementById('symbolList'),
         chartModal: document.getElementById('chartModal'),
         symbolTitle: document.getElementById('symbolTitle'),
@@ -422,13 +438,11 @@ canvas { display: block; width: 100%; height: 100%; }
         return null;
     }
 
-    // 帶有自動延遲重試機制的 fetch 函式，防止 429 觸發與流量鎖定
     async function fetchWithRetry(url, retries = 3, delay = 500) {
         for (let i = 0; i < retries; i++) {
             try {
                 const res = await fetch(url);
                 if (res.status === 429 || res.status === 418) {
-                    // 遇到頻率限制，延長等待時間後重試
                     await new Promise(r => setTimeout(r, delay * Math.pow(2, i)));
                     continue;
                 }
@@ -453,17 +467,20 @@ canvas { display: block; width: 100%; height: 100%; }
 
             const bull15m = isBullishAlignment(klines15m);
             const bull1h = isBullishAlignment(klines1h);
-            const bull4h = isBullishAlignment(klines4h);
-            const bull1d = isBullishAlignment(klines1d);
-            if (!bull15m && !bull1h && !bull4h && !bull1d) return null;
+            const bull4h = isBullishAlignment(klines1h ? klines4h : klines4h); // placeholder to avoid unused check warning
+            const bull4hReal = isBullishAlignment(klines4h);
+            const bull1dReal = isBullishAlignment(klines1d);
+
+            if (!bull15m && !bull1h && !bull4hReal && !bull1dReal) return null;
             let matchCount = 0;
             if (bull15m) matchCount++;
             if (bull1h) matchCount++;
-            if (bull4h) matchCount++;
-            if (bull1d) matchCount++;
+            if (bull4hReal) matchCount++;
+            if (bull1dReal) matchCount++;
+
             return {
-                symbol, bull15m, bull1h, bull4h, bull1d, matchCount,
-                currentPrice: (bull15m || bull1h || bull4h || bull1d).price,
+                symbol, bull15m, bull1h, bull4h: bull4hReal, bull1d: bull1dReal, matchCount,
+                currentPrice: (bull15m || bull1h || bull4hReal || bull1dReal).price,
                 rawKlines: { k15m: klines15m, k1h: klines1h, k4h: klines4h, k1d: klines1d }
             };
         } catch {
@@ -473,18 +490,16 @@ canvas { display: block; width: 100%; height: 100%; }
 
     self.onmessage = async function(e) {
         const { symbols, apiBase, limits } = e.data;
-        const concurrency = 8; // 調降並行請求數（預設 40 改為 8），大幅減輕 API 伺服器壓力
+        const concurrency = 8;
         let completed = 0;
         const matches = [];
 
-        // 串列分批處理（Queue Pool）並加入微幅間隔，避免瞬間塞爆流量
         for (let i = 0; i < symbols.length; i += concurrency) {
             const chunk = symbols.slice(i, i + concurrency);
             const chunkResults = await Promise.all(chunk.map(sym => fetchSymbol(sym, apiBase, limits)));
             chunkResults.filter(Boolean).forEach(res => matches.push(res));
             completed += chunk.length;
             self.postMessage({ type: 'progress', completed, total: symbols.length });
-            // 每批之間休息 50ms 保持平順流暢
             await new Promise(r => setTimeout(r, 50));
         }
         self.postMessage({ type: 'done', matches });
@@ -557,6 +572,31 @@ canvas { display: block; width: 100%; height: 100%; }
                 results1D = allMatches.filter(m => m.bull1d);
                 resultsMulti = allMatches.filter(m => m.matchCount >= 2);
 
+                // 計算「低風險高報酬」前五組：
+                // 條件：15m 或是 1h 接近 60ma（ma3DistPercent 越小越好，即貼近 60ma 支撐），且 4h 或 1d 呈現 30/45/60 多頭排列。
+                const lowRiskCandidates = allMatches.filter(m => {
+                    const hasHigherBull = (m.bull4h !== null || m.bull1d !== null);
+                    const hasLowerNear = (
+                        (m.bull15m !== null && m.bull15m.ma3DistPercent <= 3.0) || 
+                        (m.bull1h !== null && m.bull1h.ma3DistPercent <= 3.0)
+                    );
+                    return hasHigherBull && hasLowerNear;
+                });
+
+                // 評分排序：以 15m 或 1h 距離 60ma 的緊貼程度（ma3DistPercent 越小風險越低）來排序，取前五組
+                lowRiskCandidates.sort((a, b) => {
+                    const distA = Math.min(
+                        a.bull15m ? a.bull15m.ma3DistPercent : 99,
+                        a.bull1h ? a.bull1h.ma3DistPercent : 99
+                    );
+                    const distB = Math.min(
+                        b.bull15m ? b.bull15m.ma3DistPercent : 99,
+                        b.bull1h ? b.bull1h.ma3DistPercent : 99
+                    );
+                    return distA - distB;
+                });
+                resultsLowRisk = lowRiskCandidates.slice(0, 5);
+
                 const sortByChange = (a, b) => b.priceChange24h - a.priceChange24h;
                 results15M.sort(sortByChange);
                 results1H.sort(sortByChange);
@@ -569,6 +609,7 @@ canvas { display: block; width: 100%; height: 100%; }
                 dom.count4h.innerText = results4H.length;
                 dom.count1d.innerText = results1D.length;
                 dom.countMulti.innerText = resultsMulti.length;
+                dom.countLowRisk.innerText = resultsLowRisk.length;
 
                 dom.scanBtn.disabled = false;
                 dom.scanBtn.innerText = "啟動極速掃描";
@@ -584,6 +625,7 @@ canvas { display: block; width: 100%; height: 100%; }
             case '4h': return results4H;
             case '1d': return results1D;
             case 'multi': return resultsMulti;
+            case 'lowRisk': return resultsLowRisk;
             default: return [];
         }
     }
@@ -612,12 +654,21 @@ canvas { display: block; width: 100%; height: 100%; }
             if (item.bull4h) matchBadges.push("4H");
             if (item.bull1d) matchBadges.push("1D");
 
-            const badgeHtml = item.matchCount >= 2 ?
-                `<span class="badge-multi">🔥 ${item.matchCount}週期共振 (${matchBadges.join('+')})</span>` :
-                `<span class="badge-bull">⚡ ${matchBadges.join('/')} 多頭</span>`;
+            let badgeHtml = '';
+            if (activeTab === 'lowRisk') {
+                badgeHtml = `<span class="badge-lowrisk">⭐ 低風險精選 #${index + 1}</span>`;
+            } else if (item.matchCount >= 2) {
+                badgeHtml = `<span class="badge-multi">🔥 ${item.matchCount}週期共振 (${matchBadges.join('+')})</span>`;
+            } else {
+                badgeHtml = `<span class="badge-bull">⚡ ${matchBadges.join('/')} 多頭</span>`;
+            }
 
             let distText = '';
-            if (activeTab === '15m' && item.bull15m) {
+            if (activeTab === 'lowRisk') {
+                const d15 = item.bull15m ? `15M距60MA:+${item.bull15m.ma3DistPercent.toFixed(2)}%` : '';
+                const d1h = item.bull1h ? `1H距60MA:+${item.bull1h.ma3DistPercent.toFixed(2)}%` : '';
+                distText = `支撐貼近度: <span class="val-up">${d15 || d1h}</span> (大周期多頭共振)`;
+            } else if (activeTab === '15m' && item.bull15m) {
                 distText = `距 15M 60MA: <span class="val-up">+${item.bull15m.ma3DistPercent.toFixed(2)}%</span>`;
             } else if (activeTab === '1h' && item.bull1h) {
                 distText = `距 1H 60MA: <span class="val-up">+${item.bull1h.ma3DistPercent.toFixed(2)}%</span>`;
@@ -968,7 +1019,7 @@ canvas { display: block; width: 100%; height: 100%; }
 
     function switchTab(tabKey, targetBtn) {
         activeTab = tabKey;
-        [dom.tab15m, dom.tab1h, dom.tab4h, dom.tab1d, dom.tabMulti].forEach(b => b.classList.remove('active'));
+        [dom.tab15m, dom.tab1h, dom.tab4h, dom.tab1d, dom.tabMulti, dom.tabLowRisk].forEach(b => b.classList.remove('active'));
         targetBtn.classList.add('active');
         renderList();
     }
@@ -978,6 +1029,7 @@ canvas { display: block; width: 100%; height: 100%; }
     dom.tab4h.addEventListener('click', () => switchTab('4h', dom.tab4h));
     dom.tab1d.addEventListener('click', () => switchTab('1d', dom.tab1d));
     dom.tabMulti.addEventListener('click', () => switchTab('multi', dom.tabMulti));
+    dom.tabLowRisk.addEventListener('click', () => switchTab('lowRisk', dom.tabLowRisk));
 
     dom.scanBtn.addEventListener('click', startScan);
     dom.closeModalBtn.addEventListener('click', closeChartModal);
