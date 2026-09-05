@@ -106,31 +106,6 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
 .stat-card .val { font-family: 'JetBrains Mono', monospace; font-size: 1.6rem; font-weight: 800; }
 .stat-card.entry { border-color: rgba(255, 0, 127, 0.4); }
 .stat-card.entry .val { color: var(--manga-pink); text-shadow: 0 0 10px rgba(255, 0, 127, 0.3); }
-
-/* 最佳進場標的推薦專區卡片 */
-.best-pick-banner {
-    margin: 0 16px 12px 16px;
-    background: linear-gradient(135deg, rgba(255, 234, 0, 0.12), rgba(0, 255, 102, 0.12));
-    border: 1px solid var(--manga-yellow);
-    border-radius: 14px;
-    padding: 12px 16px;
-    backdrop-filter: blur(10px);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-    box-shadow: 0 0 20px rgba(255, 234, 0, 0.15);
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-.best-pick-banner:hover { transform: translateY(-2px); box-shadow: 0 0 25px rgba(255, 234, 0, 0.3); }
-.best-pick-left { display: flex; flex-direction: column; gap: 3px; }
-.best-pick-title { font-size: 0.75rem; font-weight: 900; color: var(--manga-yellow); display: flex; align-items: center; gap: 4px; }
-.best-pick-symbol { font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; font-weight: 900; color: #fff; }
-.best-pick-desc { font-size: 0.7rem; color: #cbd5e1; font-family: 'JetBrains Mono', monospace; }
-.best-pick-right { text-align: right; }
-.best-pick-price { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 800; color: var(--manga-green); }
-.best-pick-action { font-size: 0.65rem; color: var(--manga-cyan); font-weight: 800; margin-top: 2px; }
-
 .container { padding: 0 16px; }
 .symbol-card {
     background: var(--card-bg);
@@ -147,7 +122,6 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
     transition: border-color 0.2s, transform 0.2s, background-color 0.2s;
     will-change: transform;
 }
-.symbol-card.best-card { border-left-color: var(--manga-yellow); background: rgba(255, 234, 0, 0.04); }
 .symbol-card:hover { border-color: var(--manga-cyan); background: rgba(0, 240, 255, 0.08); transform: translateY(-2px); }
 .symbol-card:active { transform: scale(0.98); }
 .symbol-name { font-family: 'JetBrains Mono', monospace; font-size: 1.15rem; font-weight: 800; }
@@ -156,7 +130,6 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
 .badge-rank { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 255, 255, 0.1); color: #fff; }
 .badge-bull { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(0, 255, 102, 0.15); color: var(--manga-green); border: 1px solid var(--manga-green); }
 .badge-multi { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 0, 127, 0.15); color: var(--manga-pink); border: 1px solid var(--manga-pink); }
-.badge-best { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 900; background: rgba(255, 234, 0, 0.2); color: var(--manga-yellow); border: 1px solid var(--manga-yellow); box-shadow: 0 0 8px rgba(255, 234, 0, 0.3); }
 .val-up { color: var(--manga-green); }
 .val-down { color: var(--manga-red); }
 .chart-modal {
@@ -263,20 +236,6 @@ canvas { display: block; width: 100%; height: 100%; }
     </div>
 </div>
 <div class="progress-container"><div id="progress" class="progress-fill"></div></div>
-
-<!-- 最佳進場標的推薦專區 -->
-<div id="bestPickBanner" class="best-pick-banner" style="display: none;" onclick="openBestPickChart()">
-    <div class="best-pick-left">
-        <div class="best-pick-title">🔥 【低風險高報酬】最佳進場候選標的</div>
-        <div id="bestPickSymbol" class="best-pick-symbol">--</div>
-        <div id="bestPickDesc" class="best-pick-desc">貼近 60MA 支撐 ｜ 多週期共振</div>
-    </div>
-    <div class="best-pick-right">
-        <div id="bestPickPrice" class="best-pick-price">--</div>
-        <div class="best-pick-action">點擊查看圖表 📈</div>
-    </div>
-</div>
-
 <div class="tab-container">
     <button id="tab15m" class="tab-btn active">⚡15M(<span id="count15m">0</span>)</button>
     <button id="tab1h" class="tab-btn">⚡1H(<span id="count1h">0</span>)</button>
@@ -359,7 +318,6 @@ canvas { display: block; width: 100%; height: 100%; }
     let activeTab = '15m';
     let tickerMap = new Map();
     let currentIndex = -1;
-    let bestPickItem = null;
     const klinesCache = new Map();
 
     const dom = {
@@ -378,10 +336,6 @@ canvas { display: block; width: 100%; height: 100%; }
         tab1d: document.getElementById('tab1d'),
         tabMulti: document.getElementById('tabMulti'),
         symbolList: document.getElementById('symbolList'),
-        bestPickBanner: document.getElementById('bestPickBanner'),
-        bestPickSymbol: document.getElementById('bestPickSymbol'),
-        bestPickDesc: document.getElementById('bestPickDesc'),
-        bestPickPrice: document.getElementById('bestPickPrice'),
         chartModal: document.getElementById('chartModal'),
         symbolTitle: document.getElementById('symbolTitle'),
         symbolRankTag: document.getElementById('symbolRankTag'),
@@ -483,7 +437,7 @@ canvas { display: block; width: 100%; height: 100%; }
             ]);
             const bull15m = isBullishAlignment(klines15m);
             const bull1h = isBullishAlignment(klines1h);
-            const bull4h = isBullishAlignment(klines1h ? klines4h : klines4h); // safety fix
+            const bull4h = isBullishAlignment(klines4h);
             const bull1d = isBullishAlignment(klines1d);
             if (!bull15m && !bull1h && !bull4h && !bull1d) return null;
             let matchCount = 0;
@@ -521,7 +475,6 @@ canvas { display: block; width: 100%; height: 100%; }
         dom.scanBtn.innerText = "⚡ 背景極速掃描中...";
         dom.symbolList.replaceChildren();
         dom.progress.style.width = '0%';
-        dom.bestPickBanner.style.display = 'none';
         klinesCache.clear();
 
         try {
@@ -564,19 +517,6 @@ canvas { display: block; width: 100%; height: 100%; }
                 const allMatches = matches.map(m => {
                     const ticker = tickerMap.get(m.symbol);
                     klinesCache.set(m.symbol, m.rawKlines);
-                    
-                    // 計算綜合進場評分：共振週期越多越好、且貼近60MA（距離越小風險越低）
-                    let avgDist = 0;
-                    let validCount = 0;
-                    if (m.bull15m) { avgDist += m.bull15m.ma3DistPercent; validCount++; }
-                    if (m.bull1h) { avgDist += m.bull1h.ma3DistPercent; validCount++; }
-                    if (m.bull4h) { avgDist += m.bull4h.ma3DistPercent; validCount++; }
-                    if (m.bull1d) { avgDist += m.bull1d.ma3DistPercent; validCount++; }
-                    const meanDist = validCount > 0 ? avgDist / validCount : 999;
-
-                    // 風險報酬得分：分數越高代表共振多且距離支撐近
-                    const riskRewardScore = (m.matchCount * 40) - meanDist;
-
                     return {
                         symbol: m.symbol,
                         price: m.currentPrice,
@@ -585,8 +525,6 @@ canvas { display: block; width: 100%; height: 100%; }
                         bull4h: m.bull4h,
                         bull1d: m.bull1d,
                         matchCount: m.matchCount,
-                        meanDist: meanDist,
-                        riskRewardScore: riskRewardScore,
                         priceChange24h: ticker ? parseFloat(ticker.priceChangePercent) : 0,
                         quoteVolume24h: ticker ? parseFloat(ticker.quoteVolume) : 0
                     };
@@ -605,13 +543,6 @@ canvas { display: block; width: 100%; height: 100%; }
                 results1D.sort(sortByChange);
                 resultsMulti.sort(sortByChange);
 
-                // 找出全場「最佳進場標的」(綜合風險報酬得分最高者)
-                if (allMatches.length > 0) {
-                    const sortedByScore = [...allMatches].sort((a, b) => b.riskRewardScore - a.riskRewardScore);
-                    bestPickItem = sortedByScore[0];
-                    renderBestPickBanner();
-                }
-
                 dom.count15m.innerText = results15M.length;
                 dom.count1h.innerText = results1H.length;
                 dom.count4h.innerText = results4H.length;
@@ -623,38 +554,6 @@ canvas { display: block; width: 100%; height: 100%; }
                 renderList();
             }
         };
-    }
-
-    function renderBestPickBanner() {
-        if (!bestPickItem) return;
-        dom.bestPickSymbol.innerText = bestPickItem.symbol.replace('USDT', '');
-        dom.bestPickPrice.innerText = bestPickItem.price;
-        let matchBadges = [];
-        if (bestPickItem.bull15m) matchBadges.push("15M");
-        if (bestPickItem.bull1h) matchBadges.push("1H");
-        if (bestPickItem.bull4h) matchBadges.push("4H");
-        if (bestPickItem.bull1d) matchBadges.push("1D");
-        dom.bestPickDesc.innerHTML = `🔥 <span style="color:#00ff66;">${matchBadges.join('+')}共振</span> ｜ 均線支撐貼近度: <span style="color:#00f0ff;">+${bestPickItem.meanDist.toFixed(2)}%</span> (極低風險)`;
-        dom.bestPickBanner.style.display = 'flex';
-    }
-
-    function openBestPickChart() {
-        if (!bestPickItem) return;
-        // 在當前列表找尋該標的索引，找不到則直接以索引 0 開啟其所屬分類或直接開模態窗
-        const currentList = getCurrentList();
-        const idx = currentList.findIndex(item => item.symbol === bestPickItem.symbol);
-        if (idx !== -1) {
-            openChartModal(idx);
-        } else {
-            // 若目前分頁沒有，暫時切換到 Multi 或直接用快取打開
-            currentIndex = 0;
-            dom.symbolRankTag.innerText = `⭐ 最佳進場推薦`;
-            dom.symbolTitle.innerText = bestPickItem.symbol;
-            dom.chartModal.classList.add('active');
-            dom.chartModal.setAttribute('aria-hidden', 'false');
-            document.body.classList.add('modal-open');
-            loadAndDrawCharts(bestPickItem.symbol);
-        }
     }
 
     function getCurrentList() {
@@ -680,8 +579,7 @@ canvas { display: block; width: 100%; height: 100%; }
         const fragment = document.createDocumentFragment();
         currentList.forEach((item, index) => {
             const card = document.createElement('div');
-            const isBest = bestPickItem && item.symbol === bestPickItem.symbol;
-            card.className = isBest ? 'symbol-card best-card' : 'symbol-card';
+            card.className = 'symbol-card';
             card.addEventListener('click', () => openChartModal(index));
 
             const chg24Class = item.priceChange24h >= 0 ? 'val-up' : 'val-down';
@@ -693,13 +591,9 @@ canvas { display: block; width: 100%; height: 100%; }
             if (item.bull4h) matchBadges.push("4H");
             if (item.bull1d) matchBadges.push("1D");
 
-            let badgeHtml = item.matchCount >= 2 ?
+            const badgeHtml = item.matchCount >= 2 ?
                 `<span class="badge-multi">🔥 ${item.matchCount}週期共振 (${matchBadges.join('+')})</span>` :
                 `<span class="badge-bull">⚡ ${matchBadges.join('/')} 多頭</span>`;
-
-            if (isBest) {
-                badgeHtml += ` <span class="badge-best">⭐ 最佳進場</span>`;
-            }
 
             let distText = '';
             if (activeTab === '15m' && item.bull15m) {
@@ -722,7 +616,7 @@ canvas { display: block; width: 100%; height: 100%; }
                         ${badgeHtml}
                     </div>
                     <div class="detail-row">
-                        ${distText} ｜ 距支撐緊密評分: <span style="color:#00f0ff;">${item.meanDist.toFixed(2)}%</span>
+                        ${distText}
                     </div>
                     <div class="detail-row">
                         24H 漲跌幅: <span class="${chg24Class}">${chg24Sign}${item.priceChange24h.toFixed(2)}%</span> | 24H 成交額: <span style="color:#00f0ff;">$${formatVolumeText(item.quoteVolume24h)}</span>
@@ -797,6 +691,7 @@ canvas { display: block; width: 100%; height: 100%; }
 
         ctx.clearRect(0, 0, width, height);
 
+        // 水平價格格線
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
         ctx.fillStyle = '#64748b';
         ctx.font = '8px JetBrains Mono';
@@ -824,9 +719,13 @@ canvas { display: block; width: 100%; height: 100%; }
 
         const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
 
+        // 繪製垂直虛線與週別文字：
+        // 1D: 每週一 00:00 UTC 亮紫色、明顯加粗
+        // 4H、1H、15M: 每週一 00:00 UTC 亮紫色、每日 00:00 UTC 亮青色，且在 00:00 顯示對應的週別文字 (週一至週日)
         showK.forEach((k, i) => {
             const timestamp = parseInt(k[0]);
             const date = new Date(timestamp);
+            
             const utcDay = date.getUTCDay();
             const utcHour = date.getUTCHours();
             const utcMin = date.getUTCMinutes();
@@ -846,6 +745,7 @@ canvas { display: block; width: 100%; height: 100%; }
                     ctx.stroke();
                 }
             } else {
+                // 4H, 1H, 15M 顯示一到日標籤 (每日 00:00 UTC)
                 if (isMondayStart) {
                     ctx.strokeStyle = 'rgba(157, 78, 221, 0.75)';
                     ctx.lineWidth = 1.5;
@@ -856,6 +756,7 @@ canvas { display: block; width: 100%; height: 100%; }
                     ctx.lineTo(x, padding.top + totalH);
                     ctx.stroke();
 
+                    // 繪製週一標籤
                     ctx.save();
                     ctx.font = 'bold 8px JetBrains Mono';
                     ctx.fillStyle = '#9d4edd';
@@ -872,6 +773,7 @@ canvas { display: block; width: 100%; height: 100%; }
                     ctx.lineTo(x, padding.top + totalH);
                     ctx.stroke();
 
+                    // 繪製週二至週日標籤
                     ctx.save();
                     ctx.font = '7px JetBrains Mono';
                     ctx.fillStyle = '#00f0ff';
@@ -885,6 +787,7 @@ canvas { display: block; width: 100%; height: 100%; }
         ctx.setLineDash([]);
         ctx.lineWidth = 1;
 
+        // 繪製 K 線與量能柱
         showK.forEach((k, i) => {
             const absoluteIdx = showStartIndex + i;
             const open = parseFloat(k[1]), high = parseFloat(k[2]), low = parseFloat(k[3]), close = parseFloat(k[4]), vol = parseFloat(k[5]);
@@ -1091,10 +994,8 @@ canvas { display: block; width: 100%; height: 100%; }
             }
         });
     });
-
-    // 讓外部函數可直接被點擊呼叫
-    window.openBestPickChart = openBestPickChart;
 })();
 </script>
 </body>
 </html>
+
