@@ -386,7 +386,6 @@ canvas { display: block; width: 100%; height: 100%; }
     let globalAllMatches = [];
     const klinesCache = new Map();
 
-    // IndexedDB 快取管理
     let db = null;
     function initDB() {
         return new Promise((resolve) => {
@@ -417,7 +416,7 @@ canvas { display: block; width: 100%; height: 100%; }
             symbols.forEach(sym => {
                 const req = store.get(sym);
                 req.onsuccess = () => {
-                    if (req.result && (Date.now() - req.result.timestamp < 15 * 60 * 1000)) { // 15分鐘內有效
+                    if (req.result && (Date.now() - req.result.timestamp < 15 * 60 * 1000)) {
                         cachedMap.set(sym, req.result.data);
                     }
                     count++;
@@ -484,7 +483,6 @@ canvas { display: block; width: 100%; height: 100%; }
     const ctx4h = dom.canvas4h.getContext('2d', { alpha: false });
     const ctx1d = dom.canvas1d.getContext('2d', { alpha: false });
 
-    // 索引優化過的 SMA 計算
     function calculateSMA(closes, period) {
         const len = closes.length;
         const ma = new Array(len).fill(null);
@@ -553,11 +551,16 @@ canvas { display: block; width: 100%; height: 100%; }
         }
         return null;
     }
-    async function fetchWithRetry(url, retries = 2, delay = 300) {
+    async function fetchWithRetry(url, retries = 3, delay = 400) {
         for (let i = 0; i <= retries; i++) {
             try {
                 const res = await fetch(url);
                 if (res.ok) return await res.json();
+                if (res.status === 429 || res.status === 418) {
+                    // 觸發限速時拉長等待時間 (指數退避)
+                    await new Promise(r => setTimeout(r, delay * Math.pow(2, i)));
+                    continue;
+                }
             } catch (err) {
                 if (i === retries) throw err;
                 await new Promise(r => setTimeout(r, delay * (i + 1)));
@@ -595,7 +598,7 @@ canvas { display: block; width: 100%; height: 100%; }
     self.onmessage = async function(e) {
         const { symbols, apiBase, limits, cachedMapEntries } = e.data;
         const cachedMap = new Map(cachedMapEntries);
-        const concurrency = 25;
+        const concurrency = 20; // 降低同時併發數至 20 執行緒，徹底保護 API 流量
         let completed = 0;
         const matches = [];
         const newlyFetched = new Map();
@@ -633,6 +636,9 @@ canvas { display: block; width: 100%; height: 100%; }
             });
             completed += chunk.length;
             self.postMessage({ type: 'progress', completed, total: symbols.length });
+            
+            // 每批次之間加入極短暫喘息間隔 (50ms)，避免瞬間流量過載引發伺服器阻擋
+            await new Promise(r => setTimeout(r, 50));
         }
         self.postMessage({ type: 'done', matches, newlyFetched: Array.from(newlyFetched.entries()) });
     };
@@ -668,7 +674,6 @@ canvas { display: block; width: 100%; height: 100%; }
 
         dom.statTotal.innerText = candidateSymbols.length;
 
-        // 讀取 IndexedDB 本地快取
         if (!db) await initDB();
         const cachedMap = await getCachedKlinesFromDB(candidateSymbols);
 
@@ -1208,7 +1213,6 @@ canvas { display: block; width: 100%; height: 100%; }
         });
     });
 
-    // 初始化 IndexedDB
     initDB();
 })();
 </script>
