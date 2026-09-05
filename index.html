@@ -1,539 +1,1100 @@
-<!DOCTYPE html> 
-<html lang="zh-TW"> 
-<head> 
-<meta charset="UTF-8"> 
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
-<title>⚡ 1H MA 多頭排列全排行 (>1億USDT)</title> 
-<style> 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@700;800;900&display=swap'); 
-:root { 
-  --bg-dark: #060911; 
-  --card-bg: rgba(15, 23, 42, 0.75); 
-  --border-color: rgba(0, 240, 255, 0.25); 
-  --manga-pink: #ff007f; 
-  --manga-purple: #9d4edd; 
-  --manga-cyan: #00f0ff; 
-  --manga-yellow: #ffea00; 
-  --manga-orange: #ff9100; 
-  --manga-green: #00ff66; 
-  --manga-red: #ff2a6d; 
-} 
-* { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; } 
-body { 
-  font-family: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif; 
-  background-color: var(--bg-dark); 
-  background-image: radial-gradient(at 0% 0%, rgba(255, 0, 127, 0.12) 0px, transparent 50%), 
-                    radial-gradient(at 100% 100%, rgba(0, 240, 255, 0.12) 0px, transparent 50%), 
-                    radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px); 
-  background-size: 100% 100%, 100% 100%, 20px 20px; 
-  color: #fff; margin: 0; padding-bottom: 50px; min-height: 100vh; 
-} 
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>⚡ 極速多週期多頭排列儀表板 (>1億USDT)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@700;800;900&display=swap');
+:root {
+    --bg-dark: #060911;
+    --card-bg: rgba(15, 23, 42, 0.75);
+    --border-color: rgba(0, 240, 255, 0.25);
+    --manga-pink: #ff007f;
+    --manga-purple: #9d4edd;
+    --manga-cyan: #00f0ff;
+    --manga-yellow: #ffea00;
+    --manga-orange: #ff9100;
+    --manga-green: #00ff66;
+    --manga-red: #ff2a6d;
+}
+* { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+body {
+    font-family: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif;
+    background-color: var(--bg-dark);
+    background-image: radial-gradient(at 0% 0%, rgba(255, 0, 127, 0.12) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(0, 240, 255, 0.12) 0px, transparent 50%), radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 20px 20px;
+    color: #fff;
+    margin: 0;
+    padding-bottom: 50px;
+    min-height: 100vh;
+}
 body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; }
+.app-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(8, 12, 22, 0.88);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border-color);
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+}
+.header-top { display: flex; justify-content: space-between; align-items: center; }
+.header-title {
+    font-size: 1.1rem;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #fff 30%, var(--manga-cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.scan-btn {
+    background: linear-gradient(135deg, var(--manga-pink) 0%, #ff5500 100%);
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 900;
+    font-size: 0.85rem;
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(255, 0, 127, 0.4);
+    transition: transform 0.15s ease, filter 0.2s ease;
+    will-change: transform;
+}
+.scan-btn:active { transform: scale(0.95); }
+.scan-btn:disabled { opacity: 0.5; filter: grayscale(1); cursor: not-allowed; }
+.progress-container { height: 3px; background: rgba(255, 255, 255, 0.05); width: 100%; }
+.progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--manga-pink), var(--manga-cyan)); transition: width 0.05s linear; }
+.tab-container { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; padding: 0 12px; margin-top: 12px; }
+.tab-btn {
+    padding: 8px 2px;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 0.7rem;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.tab-btn.active {
+    background: rgba(0, 240, 255, 0.15);
+    border-color: var(--manga-cyan);
+    color: #fff;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+}
+.dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 12px 16px; }
+.stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 12px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+}
+.stat-card .val { font-family: 'JetBrains Mono', monospace; font-size: 1.6rem; font-weight: 800; }
+.stat-card.entry { border-color: rgba(255, 0, 127, 0.4); }
+.stat-card.entry .val { color: var(--manga-pink); text-shadow: 0 0 10px rgba(255, 0, 127, 0.3); }
 
-.app-header { 
-  position: sticky; top: 0; z-index: 100; background: rgba(8, 12, 22, 0.88); 
-  backdrop-filter: blur(14px); border-bottom: 1px solid var(--border-color); 
-  padding: 12px 16px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); 
-} 
-.header-top { display: flex; justify-content: space-between; align-items: center; } 
-.header-title { 
-  font-size: 1.1rem; font-weight: 900; letter-spacing: -0.5px; 
-  background: linear-gradient(135deg, #fff 30%, var(--manga-cyan)); 
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: flex; align-items: center; gap: 6px; 
-} 
-.scan-btn { 
-  background: linear-gradient(135deg, var(--manga-pink) 0%, #ff5500 100%); 
-  color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 900; font-size: 0.85rem; cursor: pointer; 
-  box-shadow: 0 0 15px rgba(255, 0, 127, 0.4); transition: transform 0.15s ease, filter 0.2s ease; 
-  will-change: transform;
-} 
-.scan-btn:active { transform: scale(0.95); } 
-.scan-btn:disabled { opacity: 0.5; filter: grayscale(1); cursor: not-allowed; } 
-.progress-container { height: 3px; background: rgba(255, 255, 255, 0.05); width: 100%; } 
-.progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--manga-pink), var(--manga-cyan)); transition: width 0.1s linear; } 
-.dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 16px; } 
-.stat-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; padding: 12px; text-align: center; backdrop-filter: blur(10px); } 
-.stat-card .val { font-family: 'JetBrains Mono', monospace; font-size: 1.6rem; font-weight: 800; } 
-.stat-card.entry { border-color: rgba(255, 0, 127, 0.4); } 
-.stat-card.entry .val { color: var(--manga-pink); text-shadow: 0 0 10px rgba(255, 0, 127, 0.3); } 
-.container { padding: 0 16px; } 
+/* 最佳進場標的推薦專區卡片 */
+.best-pick-banner {
+    margin: 0 16px 12px 16px;
+    background: linear-gradient(135deg, rgba(255, 234, 0, 0.12), rgba(0, 255, 102, 0.12));
+    border: 1px solid var(--manga-yellow);
+    border-radius: 14px;
+    padding: 12px 16px;
+    backdrop-filter: blur(10px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 0 20px rgba(255, 234, 0, 0.15);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.best-pick-banner:hover { transform: translateY(-2px); box-shadow: 0 0 25px rgba(255, 234, 0, 0.3); }
+.best-pick-left { display: flex; flex-direction: column; gap: 3px; }
+.best-pick-title { font-size: 0.75rem; font-weight: 900; color: var(--manga-yellow); display: flex; align-items: center; gap: 4px; }
+.best-pick-symbol { font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; font-weight: 900; color: #fff; }
+.best-pick-desc { font-size: 0.7rem; color: #cbd5e1; font-family: 'JetBrains Mono', monospace; }
+.best-pick-right { text-align: right; }
+.best-pick-price { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 800; color: var(--manga-green); }
+.best-pick-action { font-size: 0.65rem; color: var(--manga-cyan); font-weight: 800; margin-top: 2px; }
 
-.symbol-card { 
-  background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.08); border-left: 4px solid var(--manga-green); border-radius: 12px; 
-  padding: 14px 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(10px); 
-  cursor: pointer; transition: border-color 0.2s, transform 0.2s, background-color 0.2s; 
-  will-change: transform;
-} 
-.symbol-card:hover { border-color: var(--manga-cyan); background: rgba(0, 240, 255, 0.08); transform: translateY(-2px); } 
+.container { padding: 0 16px; }
+.symbol-card {
+    background: var(--card-bg);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: 4px solid var(--manga-green);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    backdrop-filter: blur(10px);
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.2s, background-color 0.2s;
+    will-change: transform;
+}
+.symbol-card.best-card { border-left-color: var(--manga-yellow); background: rgba(255, 234, 0, 0.04); }
+.symbol-card:hover { border-color: var(--manga-cyan); background: rgba(0, 240, 255, 0.08); transform: translateY(-2px); }
 .symbol-card:active { transform: scale(0.98); }
-.symbol-name { font-family: 'JetBrains Mono', monospace; font-size: 1.15rem; font-weight: 800; } 
-.symbol-price { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; color: var(--manga-yellow); font-weight: 700; } 
-.detail-row { font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; color: #94a3b8; margin-top: 4px; } 
-
-.badge-rank { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 255, 255, 0.1); color: #fff; } 
+.symbol-name { font-family: 'JetBrains Mono', monospace; font-size: 1.15rem; font-weight: 800; }
+.symbol-price { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; color: var(--manga-yellow); font-weight: 700; }
+.detail-row { font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; color: #94a3b8; margin-top: 4px; }
+.badge-rank { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 255, 255, 0.1); color: #fff; }
 .badge-bull { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(0, 255, 102, 0.15); color: var(--manga-green); border: 1px solid var(--manga-green); }
-.val-up { color: var(--manga-green); } 
-.val-down { color: var(--manga-red); } 
-
-/* Modal 區塊 - 優化適應單一視窗 */
+.badge-multi { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 0, 127, 0.15); color: var(--manga-pink); border: 1px solid var(--manga-pink); }
+.badge-best { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 900; background: rgba(255, 234, 0, 0.2); color: var(--manga-yellow); border: 1px solid var(--manga-yellow); box-shadow: 0 0 8px rgba(255, 234, 0, 0.3); }
+.val-up { color: var(--manga-green); }
+.val-down { color: var(--manga-red); }
 .chart-modal {
-  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh;
-  background: rgba(4, 6, 14, 0.95); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-  z-index: 1000; display: none; justify-content: center; align-items: center; padding: 12px;
-  overflow: hidden; touch-action: none;
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh;
+    background: rgba(4, 6, 14, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 1000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    padding: 4px;
+    overflow: hidden;
+    touch-action: pan-y;
 }
 .chart-modal.active { display: flex; }
 .chart-box {
-  width: 100%; max-width: 1050px; height: 100%; max-height: 90vh; max-height: 90dvh; background: #0b0f19;
-  border: 1px solid rgba(0, 240, 255, 0.35); border-radius: 16px; overflow: hidden;
-  display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0, 240, 255, 0.2);
+    width: 100%; max-width: 1050px;
+    height: 100%; max-height: 100vh; max-height: 100dvh;
+    background: #0b0f19;
+    border: 1px solid rgba(0, 240, 255, 0.35);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 50px rgba(0, 240, 255, 0.2);
+    position: relative;
+    transition: transform 0.15s ease-out;
 }
-
 .chart-header {
-  padding: 8px 12px; background: #111726; display: flex; justify-content: space-between; align-items: center;
-  border-bottom: 1px solid rgba(255,255,255,0.08); gap: 6px; flex-shrink: 0;
+    padding: 6px 10px;
+    background: #111726;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    gap: 4px;
+    flex-shrink: 0;
+    z-index: 2;
 }
-
 .header-title-group { display: flex; align-items: center; gap: 6px; }
-.symbol-title { font-family: 'JetBrains Mono', monospace; font-size: 1rem; font-weight: 800; color: #fff; }
-
-.ma5-status-badge {
-  font-family: 'JetBrains Mono', 'Noto Sans TC', sans-serif;
-  font-size: 0.7rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center;
-}
-.ma5-status-badge.above { background: rgba(0, 255, 102, 0.15); color: var(--manga-green); border: 1px solid var(--manga-green); }
-.ma5-status-badge.below { background: rgba(255, 42, 109, 0.15); color: var(--manga-red); border: 1px solid var(--manga-red); }
-
-.legend-bar { display: flex; gap: 6px; font-size: 0.65rem; font-family: 'JetBrains Mono', monospace; flex-wrap: wrap; }
-.legend-item { display: flex; align-items: center; gap: 3px; }
-.legend-color { width: 6px; height: 6px; border-radius: 2px; }
-
+.symbol-title { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; font-weight: 800; color: #fff; }
+.symbol-rank-tag { font-size: 0.65rem; color: var(--manga-cyan); font-weight: 800; }
+.legend-bar { display: flex; gap: 4px; font-size: 0.55rem; font-family: 'JetBrains Mono', monospace; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 2px; }
+.legend-color { width: 5px; height: 5px; border-radius: 2px; }
 .close-btn {
-  background: rgba(255,255,255,0.08); color: #a0aec0; border: 1px solid rgba(255,255,255,0.1); border-radius: 50%;
-  width: 28px; height: 28px; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: background-color 0.15s ease; flex-shrink: 0;
+    background: rgba(255,255,255,0.08);
+    color: #a0aec0;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 50%;
+    width: 24px; height: 24px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background-color 0.15s ease;
+    flex-shrink: 0;
 }
 .close-btn:hover { background: var(--manga-red); color: #fff; border-color: var(--manga-red); }
-
-.chart-container { flex: 1; width: 100%; height: 100%; position: relative; background: #060911; overflow: hidden; }
-canvas { display: block; width: 100%; height: 100%; }
-
-@media (max-width: 600px) {
-  .chart-modal { padding: 0; }
-  .chart-box { max-height: 100vh; max-height: 100dvh; border-radius: 0; border: none; }
-  .chart-header { padding: 6px 10px; }
-  .symbol-title { font-size: 0.9rem; }
-  .legend-bar { font-size: 0.6rem; gap: 4px; }
+.nav-btn {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    color: var(--manga-cyan);
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; cursor: pointer; z-index: 10;
+    backdrop-filter: blur(4px);
+    transition: all 0.2s ease;
 }
-</style> 
-</head> 
-<body> 
-
-<div class="app-header"> 
-  <div class="header-top"> 
-    <div class="header-title">⚡ 1H MA 多頭排列全排行 (>1億USDT)</div> 
-    <button id="scanBtn" class="scan-btn">啟動極速掃描</button> 
-  </div> 
-</div> 
-<div class="progress-container"><div id="progress" class="progress-fill"></div></div> 
-
-<div class="dashboard"> 
-  <div class="stat-card"> 
-    <div class="val" id="statTotal" style="color:var(--manga-cyan)">0</div> 
-    <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">掃描目標數 (>1億USDT)</div> 
-  </div> 
-  <div class="stat-card entry"> 
-    <div class="val" id="statEntry">0</div> 
-    <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">符合 1H 多頭排列標的</div> 
-  </div> 
-</div> 
-
-<div class="container" id="symbolList"></div> 
-
-<div id="chartModal" class="chart-modal" aria-hidden="true">
-  <div id="chartBox" class="chart-box" role="dialog" aria-modal="true">
-    <div class="chart-header">
-      <div class="header-title-group">
-        <div id="symbolTitle" class="symbol-title">BTCUSDT</div>
-        <span id="ma5Badge" class="ma5-status-badge above">5MA 之上</span>
-      </div>
-      <div class="legend-bar">
-        <div class="legend-item"><div class="legend-color" style="background:#00ff66"></div>5MA</div>
-        <div class="legend-item"><div class="legend-color" style="background:#ffea00"></div>30MA</div>
-        <div class="legend-item"><div class="legend-color" style="background:#ff9100"></div>45MA</div>
-        <div class="legend-item"><div class="legend-color" style="background:#ff007f"></div>60MA</div>
-        <div class="legend-item"><div class="legend-color" style="background:#00f0ff"></div>5VM</div>
-        <div class="legend-item"><div class="legend-color" style="background:#9d4edd"></div>20VM</div>
-      </div>
-      <button id="closeModalBtn" class="close-btn" aria-label="關閉">✕</button>
+.nav-btn:hover { background: var(--manga-cyan); color: #000; box-shadow: 0 0 12px var(--manga-cyan); }
+.nav-btn.prev { left: 4px; }
+.nav-btn.next { right: 4px; }
+.charts-wrapper { flex: 1; width: 100%; display: flex; flex-direction: column; background: #060911; overflow: hidden; min-height: 0; }
+.chart-panel { flex: 1; width: 100%; position: relative; border-bottom: 1px solid rgba(255, 255, 255, 0.08); min-height: 0; }
+.chart-panel:last-child { border-bottom: none; }
+.panel-tag {
+    position: absolute; top: 3px; left: 6px; z-index: 5;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.55rem; font-weight: 800;
+    padding: 1px 4px; border-radius: 3px;
+    background: rgba(0,0,0,0.6); color: var(--manga-cyan);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    pointer-events: none;
+}
+canvas { display: block; width: 100%; height: 100%; }
+@media (max-width: 600px) {
+    .chart-modal { padding: 0; }
+    .chart-box { max-height: 100vh; max-height: 100dvh; border-radius: 0; border: none; }
+    .chart-header { padding: 4px 8px; }
+    .symbol-title { font-size: 0.8rem; }
+    .legend-bar { font-size: 0.5rem; gap: 3px; }
+    .nav-btn { width: 28px; height: 28px; font-size: 0.9rem; opacity: 0.6; }
+    .tab-btn { font-size: 0.6rem; padding: 6px 1px; }
+}
+</style>
+</head>
+<body>
+<div class="app-header">
+    <div class="header-top">
+        <div class="header-title">⚡ 多週期多頭排列儀表板 (>1億USDT)</div>
+        <button id="scanBtn" class="scan-btn">啟動極速掃描</button>
     </div>
+</div>
+<div class="progress-container"><div id="progress" class="progress-fill"></div></div>
 
-    <div class="chart-container" id="canvasWrapper">
-      <canvas id="klineCanvas"></canvas>
+<!-- 最佳進場標的推薦專區 -->
+<div id="bestPickBanner" class="best-pick-banner" style="display: none;" onclick="openBestPickChart()">
+    <div class="best-pick-left">
+        <div class="best-pick-title">🔥 【低風險高報酬】最佳進場候選標的</div>
+        <div id="bestPickSymbol" class="best-pick-symbol">--</div>
+        <div id="bestPickDesc" class="best-pick-desc">貼近 60MA 支撐 ｜ 多週期共振</div>
     </div>
-  </div>
+    <div class="best-pick-right">
+        <div id="bestPickPrice" class="best-pick-price">--</div>
+        <div class="best-pick-action">點擊查看圖表 📈</div>
+    </div>
 </div>
 
-<script> 
+<div class="tab-container">
+    <button id="tab15m" class="tab-btn active">⚡15M(<span id="count15m">0</span>)</button>
+    <button id="tab1h" class="tab-btn">⚡1H(<span id="count1h">0</span>)</button>
+    <button id="tab4h" class="tab-btn">⚡4H(<span id="count4h">0</span>)</button>
+    <button id="tab1d" class="tab-btn">⚡1D(<span id="count1d">0</span>)</button>
+    <button id="tabMulti" class="tab-btn">🔥共振(<span id="countMulti">0</span>)</button>
+</div>
+<div class="dashboard">
+    <div class="stat-card">
+        <div class="val" id="statTotal" style="color:var(--manga-cyan)">0</div>
+        <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">掃描目標數 (>1億USDT)</div>
+    </div>
+    <div class="stat-card entry">
+        <div class="val" id="statEntry">0</div>
+        <div style="font-size:0.75rem; color:#64748b; margin-top:2px;" id="statLabel">當前清單符合數</div>
+    </div>
+</div>
+<div class="container" id="symbolList"></div>
+
+<div id="chartModal" class="chart-modal" aria-hidden="true">
+    <button id="prevBtn" class="nav-btn prev" aria-label="上一隻">❮</button>
+    <button id="nextBtn" class="nav-btn next" aria-label="下一隻">❯</button>
+    <div id="chartBox" class="chart-box" role="dialog" aria-modal="true">
+        <div class="chart-header">
+            <div class="header-title-group">
+                <span id="symbolRankTag" class="symbol-rank-tag">#1</span>
+                <div id="symbolTitle" class="symbol-title">BTCUSDT</div>
+            </div>
+            <div class="legend-bar">
+                <div class="legend-item"><div class="legend-color" style="background:#00ff66"></div>5MA</div>
+                <div class="legend-item"><div class="legend-color" style="background:#ffea00"></div>30MA</div>
+                <div class="legend-item"><div class="legend-color" style="background:#ff9100"></div>45MA</div>
+                <div class="legend-item"><div class="legend-color" style="background:#ff007f"></div>60MA</div>
+                <div class="legend-item"><div class="legend-color" style="background:#00f0ff"></div>5VM</div>
+                <div class="legend-item"><div class="legend-color" style="background:#9d4edd"></div>20VM</div>
+            </div>
+            <button id="closeModalBtn" class="close-btn" aria-label="關閉">✕</button>
+        </div>
+        <div class="charts-wrapper" id="chartsWrapper">
+            <div class="chart-panel" id="wrapper15m" data-period="15m">
+                <span class="panel-tag" id="tagText15m">15M</span>
+                <canvas id="klineCanvas15m"></canvas>
+            </div>
+            <div class="chart-panel" id="wrapper1h" data-period="1h">
+                <span class="panel-tag" id="tagText1h">1H</span>
+                <canvas id="klineCanvas1h"></canvas>
+            </div>
+            <div class="chart-panel" id="wrapper4h" data-period="4h">
+                <span class="panel-tag" id="tagText4h">4H</span>
+                <canvas id="klineCanvas4h"></canvas>
+            </div>
+            <div class="chart-panel" id="wrapper1d" data-period="1d">
+                <span class="panel-tag" id="tagText1d">1D</span>
+                <canvas id="klineCanvas1d"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
 (() => {
-  const API_BASE = 'https://fapi.binance.com'; 
-  const P0 = 5, P1 = 30, P2 = 45, P3 = 60; 
-  const MIN_VOLUME = 100000000;
-  const KLINE_SHOW_COUNT = 100;
-  const CONCURRENCY_LIMIT = 12; // 提升併發數至 12 降低並行請求時間
+    const API_BASE = 'https://fapi.binance.com';
+    const P0 = 5, P1 = 30, P2 = 45, P3 = 60;
+    const COUNT_15M = 240;
+    const COUNT_1H = 120;
+    const COUNT_4H = 60;
+    const COUNT_1D = 60;
+    const MAX_VM_PERIOD = 20;
 
-  let rawResults = []; 
-  let tickerMap = new Map(); 
+    const FETCH_LIMIT_15M = COUNT_15M + Math.max(P3, MAX_VM_PERIOD);
+    const FETCH_LIMIT_1H = COUNT_1H + Math.max(P3, MAX_VM_PERIOD);
+    const FETCH_LIMIT_4H = COUNT_4H + Math.max(P3, MAX_VM_PERIOD);
+    const FETCH_LIMIT_1D = COUNT_1D + Math.max(P3, MAX_VM_PERIOD);
 
-  const dom = {
-    scanBtn: document.getElementById('scanBtn'),
-    progress: document.getElementById('progress'),
-    statTotal: document.getElementById('statTotal'),
-    statEntry: document.getElementById('statEntry'),
-    symbolList: document.getElementById('symbolList'),
-    chartModal: document.getElementById('chartModal'),
-    symbolTitle: document.getElementById('symbolTitle'),
-    ma5Badge: document.getElementById('ma5Badge'),
-    closeModalBtn: document.getElementById('closeModalBtn'),
-    canvasWrapper: document.getElementById('canvasWrapper'),
-    canvas: document.getElementById('klineCanvas')
-  };
+    let results15M = [];
+    let results1H = [];
+    let results4H = [];
+    let results1D = [];
+    let resultsMulti = [];
+    let activeTab = '15m';
+    let tickerMap = new Map();
+    let currentIndex = -1;
+    let bestPickItem = null;
+    const klinesCache = new Map();
 
-  const ctx = dom.canvas.getContext('2d');
+    const dom = {
+        scanBtn: document.getElementById('scanBtn'),
+        progress: document.getElementById('progress'),
+        statTotal: document.getElementById('statTotal'),
+        statEntry: document.getElementById('statEntry'),
+        count15m: document.getElementById('count15m'),
+        count1h: document.getElementById('count1h'),
+        count4h: document.getElementById('count4h'),
+        count1d: document.getElementById('count1d'),
+        countMulti: document.getElementById('countMulti'),
+        tab15m: document.getElementById('tab15m'),
+        tab1h: document.getElementById('tab1h'),
+        tab4h: document.getElementById('tab4h'),
+        tab1d: document.getElementById('tab1d'),
+        tabMulti: document.getElementById('tabMulti'),
+        symbolList: document.getElementById('symbolList'),
+        bestPickBanner: document.getElementById('bestPickBanner'),
+        bestPickSymbol: document.getElementById('bestPickSymbol'),
+        bestPickDesc: document.getElementById('bestPickDesc'),
+        bestPickPrice: document.getElementById('bestPickPrice'),
+        chartModal: document.getElementById('chartModal'),
+        symbolTitle: document.getElementById('symbolTitle'),
+        symbolRankTag: document.getElementById('symbolRankTag'),
+        closeModalBtn: document.getElementById('closeModalBtn'),
+        prevBtn: document.getElementById('prevBtn'),
+        nextBtn: document.getElementById('nextBtn'),
+        chartsWrapper: document.getElementById('chartsWrapper'),
+        wrapper15m: document.getElementById('wrapper15m'),
+        wrapper1h: document.getElementById('wrapper1h'),
+        wrapper4h: document.getElementById('wrapper4h'),
+        wrapper1d: document.getElementById('wrapper1d'),
+        canvas15m: document.getElementById('klineCanvas15m'),
+        canvas1h: document.getElementById('klineCanvas1h'),
+        canvas4h: document.getElementById('klineCanvas4h'),
+        canvas1d: document.getElementById('klineCanvas1d'),
+        tagText15m: document.getElementById('tagText15m'),
+        tagText1h: document.getElementById('tagText1h'),
+        tagText4h: document.getElementById('tagText4h'),
+        tagText1d: document.getElementById('tagText1d')
+    };
 
-  function calculateSMA(data, period) { 
-    const len = data.length; 
-    if (len < period) return new Array(len).fill(null); 
-    const ma = new Array(len).fill(null); 
-    let sum = 0; 
-    for (let i = 0; i < period; i++) sum += data[i]; 
-    ma[period - 1] = sum / period; 
-    for (let i = period; i < len; i++) { 
-      sum += data[i] - data[i - period]; 
-      ma[i] = sum / period; 
-    } 
-    return ma; 
-  } 
+    const ctx15m = dom.canvas15m.getContext('2d');
+    const ctx1h = dom.canvas1h.getContext('2d');
+    const ctx4h = dom.canvas4h.getContext('2d');
+    const ctx1d = dom.canvas1d.getContext('2d');
 
-  async function fetchSymbolDetailsData(symbol, signal) { 
-    try {
-      const res = await fetch(`${API_BASE}/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=${P3 + 1}`, { signal }); 
-      if (!res.ok) return null; 
-      const klinesRaw = await res.json(); 
-      const totalLen = klinesRaw.length; 
-      if (totalLen < P3) return null; 
-
-      const closes = klinesRaw.map(k => parseFloat(k[4])); 
-      const price = closes[totalLen - 1]; 
-
-      const ma1 = calculateSMA(closes, P1)[totalLen - 1]; 
-      const ma2 = calculateSMA(closes, P2)[totalLen - 1]; 
-      const ma3 = calculateSMA(closes, P3)[totalLen - 1]; 
-
-      if (!(ma1 > ma2 && ma2 > ma3 && price >= ma3)) return null; 
-
-      const ma3DistPercent = ((price - ma3) / ma3) * 100; 
-      const ticker = tickerMap.get(symbol);
-      const priceChange24h = ticker ? parseFloat(ticker.priceChangePercent) : 0; 
-
-      return { symbol, price, ma3DistPercent, priceChange24h }; 
-    } catch {
-      return null;
-    }
-  } 
-
-  async function batchProcess(items, limit, fn, onProgress) {
-    const results = [];
-    let completed = 0;
-    
-    for (let i = 0; i < items.length; i += limit) {
-      const chunk = items.slice(i, i + limit);
-      const chunkResults = await Promise.all(chunk.map(item => fn(item)));
-      results.push(...chunkResults.filter(Boolean));
-      completed += chunk.length;
-      if (onProgress) onProgress(completed);
-    }
-    return results;
-  }
-
-  async function startScan() { 
-    dom.scanBtn.disabled = true; 
-    dom.scanBtn.innerText = "⚡ 掃描中..."; 
-    dom.symbolList.replaceChildren(); 
-    dom.progress.style.width = '0%';
-
-    try {
-      const res = await fetch(`${API_BASE}/fapi/v1/ticker/24hr`); 
-      if (res.ok) { 
-        const data = await res.json(); 
-        tickerMap.clear(); 
-        data.forEach(d => tickerMap.set(d.symbol, d)); 
-      } 
-    } catch {
-      alert("無法取得行情數據，請檢查網路連線。");
-      dom.scanBtn.disabled = false;
-      dom.scanBtn.innerText = "啟動極速掃描";
-      return;
+    function calculateSMA(data, period) {
+        const len = data.length;
+        if (len < period) return new Array(len).fill(null);
+        const ma = new Array(len).fill(null);
+        let sum = 0;
+        for (let i = 0; i < period; i++) sum += data[i];
+        ma[period - 1] = sum / period;
+        for (let i = period; i < len; i++) {
+            sum += data[i] - data[i - period];
+            ma[i] = sum / period;
+        }
+        return ma;
     }
 
-    const candidateSymbols = Array.from(tickerMap.keys()).filter(sym => { 
-      if (!sym.endsWith('USDT')) return false; 
-      return parseFloat(tickerMap.get(sym).quoteVolume) > MIN_VOLUME; 
-    }); 
+    function formatVolumeText(volume) {
+        const yi = volume / 100000000;
+        return yi.toFixed(2) + '億';
+    }
 
-    dom.statTotal.innerText = candidateSymbols.length; 
+    const workerCode = `
+    function calculateSMA(data, period) {
+        const len = data.length;
+        if (len < period) return new Array(len).fill(null);
+        const ma = new Array(len).fill(null);
+        let sum = 0;
+        for (let i = 0; i < period; i++) sum += data[i];
+        ma[period - 1] = sum / period;
+        for (let i = period; i < len; i++) {
+            sum += data[i] - data[i - period];
+            ma[i] = sum / period;
+        }
+        return ma;
+    }
+    function checkAboveMAs30_45_60(closes, ma30, ma45, ma60, idx) {
+        if (idx < 0 || idx >= closes.length) return false;
+        const price = closes[idx];
+        const m30 = ma30[idx], m45 = ma45[idx], m60 = ma60[idx];
+        return (m30 !== null && price >= m30) && (m45 !== null && price >= m45) && (m60 !== null && price >= m60);
+    }
+    function isBullishAlignment(klinesRaw) {
+        const totalLen = klinesRaw.length;
+        if (totalLen < 60) return null;
+        const closes = klinesRaw.map(k => parseFloat(k[4]));
+        const price = closes[totalLen - 1];
+        const ma1Arr = calculateSMA(closes, 30);
+        const ma2Arr = calculateSMA(closes, 45);
+        const ma3Arr = calculateSMA(closes, 60);
+        const ma1 = ma1Arr[totalLen - 1];
+        const ma2 = ma2Arr[totalLen - 1];
+        const ma3 = ma3Arr[totalLen - 1];
+        if (ma1 !== null && ma2 !== null && ma3 !== null && ma1 > ma2 && ma2 > ma3 && price >= ma3) {
+            const ma3DistPercent = ((price - ma3) / ma3) * 100;
+            const isAboveAllNow = checkAboveMAs30_45_60(closes, ma1Arr, ma2Arr, ma3Arr, totalLen - 1);
+            const isAboveAllPrev = checkAboveMAs30_45_60(closes, ma1Arr, ma2Arr, ma3Arr, totalLen - 2);
+            const isFirstBarAboveAll = isAboveAllNow && !isAboveAllPrev;
+            return { price, ma3DistPercent, isAboveAllMAs: isAboveAllNow, isFirstBarAboveAll };
+        }
+        return null;
+    }
+    async function fetchSymbol(symbol, apiBase, limits) {
+        try {
+            const promises = [
+                fetch(\`\${apiBase}/fapi/v1/klines?symbol=\${symbol}&interval=15m&limit=\${limits.l15m}\`),
+                fetch(\`\${apiBase}/fapi/v1/klines?symbol=\${symbol}&interval=1h&limit=\${limits.l1h}\`),
+                fetch(\`\${apiBase}/fapi/v1/klines?symbol=\${symbol}&interval=4h&limit=\${limits.l4h}\`),
+                fetch(\`\${apiBase}/fapi/v1/klines?symbol=\${symbol}&interval=1d&limit=\${limits.l1d}\`)
+            ];
+            const results = await Promise.allSettled(promises);
+            if (results.some(r => r.status === 'rejected' || !r.value.ok)) return null;
+            const [res15m, res1h, res4h, res1d] = results.map(r => r.value);
+            const [klines15m, klines1h, klines4h, klines1d] = await Promise.all([
+                res15m.json(), res1h.json(), res4h.json(), res1d.json()
+            ]);
+            const bull15m = isBullishAlignment(klines15m);
+            const bull1h = isBullishAlignment(klines1h);
+            const bull4h = isBullishAlignment(klines1h ? klines4h : klines4h); // safety fix
+            const bull1d = isBullishAlignment(klines1d);
+            if (!bull15m && !bull1h && !bull4h && !bull1d) return null;
+            let matchCount = 0;
+            if (bull15m) matchCount++;
+            if (bull1h) matchCount++;
+            if (bull4h) matchCount++;
+            if (bull1d) matchCount++;
+            return {
+                symbol, bull15m, bull1h, bull4h, bull1d, matchCount,
+                currentPrice: (bull15m || bull1h || bull4h || bull1d).price,
+                rawKlines: { k15m: klines15m, k1h: klines1h, k4h: klines4h, k1d: klines1d }
+            };
+        } catch {
+            return null;
+        }
+    }
+    self.onmessage = async function(e) {
+        const { symbols, apiBase, limits } = e.data;
+        const concurrency = 40;
+        let completed = 0;
+        const matches = [];
+        for (let i = 0; i < symbols.length; i += concurrency) {
+            const chunk = symbols.slice(i, i + concurrency);
+            const chunkResults = await Promise.all(chunk.map(sym => fetchSymbol(sym, apiBase, limits)));
+            chunkResults.filter(Boolean).forEach(res => matches.push(res));
+            completed += chunk.length;
+            self.postMessage({ type: 'progress', completed, total: symbols.length });
+        }
+        self.postMessage({ type: 'done', matches });
+    };
+    `;
 
-    rawResults = await batchProcess(candidateSymbols, CONCURRENCY_LIMIT, (sym) => fetchSymbolDetailsData(sym), (completed) => {
-      dom.progress.style.width = `${(completed / candidateSymbols.length) * 100}%`; 
+    async function startScan() {
+        dom.scanBtn.disabled = true;
+        dom.scanBtn.innerText = "⚡ 背景極速掃描中...";
+        dom.symbolList.replaceChildren();
+        dom.progress.style.width = '0%';
+        dom.bestPickBanner.style.display = 'none';
+        klinesCache.clear();
+
+        try {
+            const res = await fetch(`${API_BASE}/fapi/v1/ticker/24hr`);
+            if (res.ok) {
+                const data = await res.json();
+                tickerMap.clear();
+                data.forEach(d => tickerMap.set(d.symbol, d));
+            }
+        } catch {
+            alert("無法取得行情數據，請檢查網路連線。");
+            dom.scanBtn.disabled = false;
+            dom.scanBtn.innerText = "啟動極速掃描";
+            return;
+        }
+
+        const MIN_VOLUME = 100000000;
+        const candidateSymbols = Array.from(tickerMap.keys()).filter(sym => {
+            if (!sym.endsWith('USDT')) return false;
+            return parseFloat(tickerMap.get(sym).quoteVolume) > MIN_VOLUME;
+        });
+
+        dom.statTotal.innerText = candidateSymbols.length;
+
+        const blob = new Blob([workerCode], { type: 'application/javascript' });
+        const worker = new Worker(URL.createObjectURL(blob));
+
+        worker.postMessage({
+            symbols: candidateSymbols,
+            apiBase: API_BASE,
+            limits: { l15m: FETCH_LIMIT_15M, l1h: FETCH_LIMIT_1H, l4h: FETCH_LIMIT_4H, l1d: FETCH_LIMIT_1D }
+        });
+
+        worker.onmessage = (e) => {
+            const { type, completed, total, matches } = e.data;
+            if (type === 'progress') {
+                dom.progress.style.width = `${(completed / total) * 100}%`;
+            } else if (type === 'done') {
+                worker.terminate();
+                const allMatches = matches.map(m => {
+                    const ticker = tickerMap.get(m.symbol);
+                    klinesCache.set(m.symbol, m.rawKlines);
+                    
+                    // 計算綜合進場評分：共振週期越多越好、且貼近60MA（距離越小風險越低）
+                    let avgDist = 0;
+                    let validCount = 0;
+                    if (m.bull15m) { avgDist += m.bull15m.ma3DistPercent; validCount++; }
+                    if (m.bull1h) { avgDist += m.bull1h.ma3DistPercent; validCount++; }
+                    if (m.bull4h) { avgDist += m.bull4h.ma3DistPercent; validCount++; }
+                    if (m.bull1d) { avgDist += m.bull1d.ma3DistPercent; validCount++; }
+                    const meanDist = validCount > 0 ? avgDist / validCount : 999;
+
+                    // 風險報酬得分：分數越高代表共振多且距離支撐近
+                    const riskRewardScore = (m.matchCount * 40) - meanDist;
+
+                    return {
+                        symbol: m.symbol,
+                        price: m.currentPrice,
+                        bull15m: m.bull15m,
+                        bull1h: m.bull1h,
+                        bull4h: m.bull4h,
+                        bull1d: m.bull1d,
+                        matchCount: m.matchCount,
+                        meanDist: meanDist,
+                        riskRewardScore: riskRewardScore,
+                        priceChange24h: ticker ? parseFloat(ticker.priceChangePercent) : 0,
+                        quoteVolume24h: ticker ? parseFloat(ticker.quoteVolume) : 0
+                    };
+                });
+
+                results15M = allMatches.filter(m => m.bull15m);
+                results1H = allMatches.filter(m => m.bull1h);
+                results4H = allMatches.filter(m => m.bull4h);
+                results1D = allMatches.filter(m => m.bull1d);
+                resultsMulti = allMatches.filter(m => m.matchCount >= 2);
+
+                const sortByChange = (a, b) => b.priceChange24h - a.priceChange24h;
+                results15M.sort(sortByChange);
+                results1H.sort(sortByChange);
+                results4H.sort(sortByChange);
+                results1D.sort(sortByChange);
+                resultsMulti.sort(sortByChange);
+
+                // 找出全場「最佳進場標的」(綜合風險報酬得分最高者)
+                if (allMatches.length > 0) {
+                    const sortedByScore = [...allMatches].sort((a, b) => b.riskRewardScore - a.riskRewardScore);
+                    bestPickItem = sortedByScore[0];
+                    renderBestPickBanner();
+                }
+
+                dom.count15m.innerText = results15M.length;
+                dom.count1h.innerText = results1H.length;
+                dom.count4h.innerText = results4H.length;
+                dom.count1d.innerText = results1D.length;
+                dom.countMulti.innerText = resultsMulti.length;
+
+                dom.scanBtn.disabled = false;
+                dom.scanBtn.innerText = "啟動極速掃描";
+                renderList();
+            }
+        };
+    }
+
+    function renderBestPickBanner() {
+        if (!bestPickItem) return;
+        dom.bestPickSymbol.innerText = bestPickItem.symbol.replace('USDT', '');
+        dom.bestPickPrice.innerText = bestPickItem.price;
+        let matchBadges = [];
+        if (bestPickItem.bull15m) matchBadges.push("15M");
+        if (bestPickItem.bull1h) matchBadges.push("1H");
+        if (bestPickItem.bull4h) matchBadges.push("4H");
+        if (bestPickItem.bull1d) matchBadges.push("1D");
+        dom.bestPickDesc.innerHTML = `🔥 <span style="color:#00ff66;">${matchBadges.join('+')}共振</span> ｜ 均線支撐貼近度: <span style="color:#00f0ff;">+${bestPickItem.meanDist.toFixed(2)}%</span> (極低風險)`;
+        dom.bestPickBanner.style.display = 'flex';
+    }
+
+    function openBestPickChart() {
+        if (!bestPickItem) return;
+        // 在當前列表找尋該標的索引，找不到則直接以索引 0 開啟其所屬分類或直接開模態窗
+        const currentList = getCurrentList();
+        const idx = currentList.findIndex(item => item.symbol === bestPickItem.symbol);
+        if (idx !== -1) {
+            openChartModal(idx);
+        } else {
+            // 若目前分頁沒有，暫時切換到 Multi 或直接用快取打開
+            currentIndex = 0;
+            dom.symbolRankTag.innerText = `⭐ 最佳進場推薦`;
+            dom.symbolTitle.innerText = bestPickItem.symbol;
+            dom.chartModal.classList.add('active');
+            dom.chartModal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+            loadAndDrawCharts(bestPickItem.symbol);
+        }
+    }
+
+    function getCurrentList() {
+        switch (activeTab) {
+            case '15m': return results15M;
+            case '1h': return results1H;
+            case '4h': return results4H;
+            case '1d': return results1D;
+            case 'multi': return resultsMulti;
+            default: return [];
+        }
+    }
+
+    function renderList() {
+        const currentList = getCurrentList();
+        dom.statEntry.innerText = currentList.length;
+
+        if (currentList.length === 0) {
+            dom.symbolList.innerHTML = `<div style="text-align:center; padding:40px; color:#64748b; font-weight:800;">目前無符合該條件之標的</div>`;
+            return;
+        }
+
+        const fragment = document.createDocumentFragment();
+        currentList.forEach((item, index) => {
+            const card = document.createElement('div');
+            const isBest = bestPickItem && item.symbol === bestPickItem.symbol;
+            card.className = isBest ? 'symbol-card best-card' : 'symbol-card';
+            card.addEventListener('click', () => openChartModal(index));
+
+            const chg24Class = item.priceChange24h >= 0 ? 'val-up' : 'val-down';
+            const chg24Sign = item.priceChange24h >= 0 ? '+' : '';
+
+            let matchBadges = [];
+            if (item.bull15m) matchBadges.push("15M");
+            if (item.bull1h) matchBadges.push("1H");
+            if (item.bull4h) matchBadges.push("4H");
+            if (item.bull1d) matchBadges.push("1D");
+
+            let badgeHtml = item.matchCount >= 2 ?
+                `<span class="badge-multi">🔥 ${item.matchCount}週期共振 (${matchBadges.join('+')})</span>` :
+                `<span class="badge-bull">⚡ ${matchBadges.join('/')} 多頭</span>`;
+
+            if (isBest) {
+                badgeHtml += ` <span class="badge-best">⭐ 最佳進場</span>`;
+            }
+
+            let distText = '';
+            if (activeTab === '15m' && item.bull15m) {
+                distText = `距 15M 60MA: <span class="val-up">+${item.bull15m.ma3DistPercent.toFixed(2)}%</span>`;
+            } else if (activeTab === '1h' && item.bull1h) {
+                distText = `距 1H 60MA: <span class="val-up">+${item.bull1h.ma3DistPercent.toFixed(2)}%</span>`;
+            } else if (activeTab === '4h' && item.bull4h) {
+                distText = `距 4H 60MA: <span class="val-up">+${item.bull4h.ma3DistPercent.toFixed(2)}%</span>`;
+            } else if (activeTab === '1d' && item.bull1d) {
+                distText = `距 1D 60MA: <span class="val-up">+${item.bull1d.ma3DistPercent.toFixed(2)}%</span>`;
+            } else {
+                distText = `滿足週期: <span class="val-up">${matchBadges.join(', ')}</span>`;
+            }
+
+            card.innerHTML = `
+                <div style="flex: 1;">
+                    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                        <span class="badge-rank">#${index + 1}</span>
+                        <span class="symbol-name">${item.symbol.replace('USDT','')}</span>
+                        ${badgeHtml}
+                    </div>
+                    <div class="detail-row">
+                        ${distText} ｜ 距支撐緊密評分: <span style="color:#00f0ff;">${item.meanDist.toFixed(2)}%</span>
+                    </div>
+                    <div class="detail-row">
+                        24H 漲跌幅: <span class="${chg24Class}">${chg24Sign}${item.priceChange24h.toFixed(2)}%</span> | 24H 成交額: <span style="color:#00f0ff;">$${formatVolumeText(item.quoteVolume24h)}</span>
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                    <div class="symbol-price">${item.price}</div>
+                    <div style="font-size:0.7rem; color:var(--manga-cyan); margin-top:4px;">點擊看 4 圖表 📈</div>
+                </div>
+            `;
+            fragment.appendChild(card);
+        });
+        dom.symbolList.replaceChildren(fragment);
+    }
+
+    function renderCanvasChart(canvas, wrapper, ctx, klinesRaw, showCount, periodType) {
+        const closesAll = klinesRaw.map(k => parseFloat(k[4]));
+        const volumesAll = klinesRaw.map(k => parseFloat(k[5]));
+        const ma5All = calculateSMA(closesAll, P0);
+        const ma30All = calculateSMA(closesAll, P1);
+        const ma45All = calculateSMA(closesAll, P2);
+        const ma60All = calculateSMA(closesAll, P3);
+        const vm5All = calculateSMA(volumesAll, 5);
+        const vm20All = calculateSMA(volumesAll, 20);
+
+        const actualShowCount = Math.min(showCount, klinesRaw.length);
+        const showStartIndex = klinesRaw.length - actualShowCount;
+
+        const showK = klinesRaw.slice(-actualShowCount);
+        const showMA5 = ma5All.slice(-actualShowCount);
+        const showMA30 = ma30All.slice(-actualShowCount);
+        const showMA45 = ma45All.slice(-actualShowCount);
+        const showMA60 = ma60All.slice(-actualShowCount);
+        const showVM5 = vm5All.slice(-actualShowCount);
+        const showVM20 = vm20All.slice(-actualShowCount);
+
+        const rect = wrapper.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return;
+
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        ctx.scale(dpr, dpr);
+
+        const width = rect.width;
+        const height = rect.height;
+
+        const padding = { top: 18, bottom: 4, left: 6, right: 55 };
+        const totalH = height - padding.top - padding.bottom;
+        const priceH = totalH * 0.65;
+        const volH = totalH * 0.25;
+        const volTop = padding.top + priceH + totalH * 0.10;
+        const chartW = width - padding.left - padding.right;
+
+        let minP = Infinity, maxP = -Infinity;
+        showK.forEach(k => {
+            const l = parseFloat(k[3]), h = parseFloat(k[2]);
+            if (l < minP) minP = l;
+            if (h > maxP) maxP = h;
+        });
+
+        let maxVol = -Infinity;
+        showK.forEach(k => {
+            const v = parseFloat(k[5]);
+            if (v > maxVol) maxVol = v;
+        });
+
+        const priceRange = maxP - minP || 1;
+        const getYPrice = (p) => padding.top + priceH - ((p - minP) / priceRange) * priceH;
+        const getYVol = (v) => volTop + volH - (v / (maxVol || 1)) * volH;
+        const barWidth = chartW / actualShowCount;
+
+        ctx.clearRect(0, 0, width, height);
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+        ctx.fillStyle = '#64748b';
+        ctx.font = '8px JetBrains Mono';
+        ctx.textAlign = 'left';
+        ctx.lineWidth = 1;
+
+        const gridLines = 1;
+        for (let i = 0; i <= gridLines; i++) {
+            const y = padding.top + (priceH / gridLines) * i;
+            const pVal = maxP - (priceRange / gridLines) * i;
+            ctx.beginPath();
+            ctx.moveTo(padding.left, y);
+            ctx.lineTo(width - padding.right, y);
+            ctx.stroke();
+            ctx.fillText(pVal.toFixed(1), width - padding.right + 3, y + 3);
+        }
+
+        ctx.beginPath();
+        ctx.moveTo(padding.left, volTop);
+        ctx.lineTo(width - padding.right, volTop);
+        ctx.stroke();
+
+        const formatVol = (v) => v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : (v / 1e3).toFixed(0) + 'K';
+        ctx.fillText(formatVol(maxVol), width - padding.right + 3, volTop + 6);
+
+        const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
+
+        showK.forEach((k, i) => {
+            const timestamp = parseInt(k[0]);
+            const date = new Date(timestamp);
+            const utcDay = date.getUTCDay();
+            const utcHour = date.getUTCHours();
+            const utcMin = date.getUTCMinutes();
+
+            const isMondayStart = (utcDay === 1 && utcHour === 0);
+            const isDailyStart = (utcHour === 0 && utcMin === 0);
+
+            if (periodType === '1d') {
+                if (isMondayStart) {
+                    ctx.strokeStyle = 'rgba(157, 78, 221, 0.9)';
+                    ctx.lineWidth = 1.6;
+                    ctx.setLineDash([3, 3]);
+                    const x = padding.left + i * barWidth + barWidth / 2;
+                    ctx.beginPath();
+                    ctx.moveTo(x, padding.top);
+                    ctx.lineTo(x, padding.top + totalH);
+                    ctx.stroke();
+                }
+            } else {
+                if (isMondayStart) {
+                    ctx.strokeStyle = 'rgba(157, 78, 221, 0.75)';
+                    ctx.lineWidth = 1.5;
+                    ctx.setLineDash([3, 3]);
+                    const x = padding.left + i * barWidth + barWidth / 2;
+                    ctx.beginPath();
+                    ctx.moveTo(x, padding.top);
+                    ctx.lineTo(x, padding.top + totalH);
+                    ctx.stroke();
+
+                    ctx.save();
+                    ctx.font = 'bold 8px JetBrains Mono';
+                    ctx.fillStyle = '#9d4edd';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('週一', x, padding.top - 5);
+                    ctx.restore();
+                } else if (isDailyStart) {
+                    ctx.strokeStyle = 'rgba(0, 240, 255, 0.45)';
+                    ctx.lineWidth = 1.2;
+                    ctx.setLineDash([3, 3]);
+                    const x = padding.left + i * barWidth + barWidth / 2;
+                    ctx.beginPath();
+                    ctx.moveTo(x, padding.top);
+                    ctx.lineTo(x, padding.top + totalH);
+                    ctx.stroke();
+
+                    ctx.save();
+                    ctx.font = '7px JetBrains Mono';
+                    ctx.fillStyle = '#00f0ff';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`週${dayNames[utcDay]}`, x, padding.top - 5);
+                    ctx.restore();
+                }
+            }
+        });
+
+        ctx.setLineDash([]);
+        ctx.lineWidth = 1;
+
+        showK.forEach((k, i) => {
+            const absoluteIdx = showStartIndex + i;
+            const open = parseFloat(k[1]), high = parseFloat(k[2]), low = parseFloat(k[3]), close = parseFloat(k[4]), vol = parseFloat(k[5]);
+            const x = padding.left + i * barWidth + barWidth / 2;
+            const isUp = close >= open;
+            const color = isUp ? '#00ff66' : '#ff2a6d';
+
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(x, getYPrice(high));
+            ctx.lineTo(x, getYPrice(low));
+            ctx.stroke();
+
+            const yOpen = getYPrice(open);
+            const yClose = getYPrice(close);
+            const bodyTop = Math.min(yOpen, yClose);
+            const bodyH = Math.max(Math.abs(yOpen - yClose), 1);
+            const bw = Math.max(barWidth * 0.7, 1);
+            ctx.fillRect(x - bw / 2, bodyTop, bw, bodyH);
+
+            ctx.fillStyle = isUp ? 'rgba(0, 255, 102, 0.4)' : 'rgba(255, 42, 109, 0.4)';
+            const vY = getYVol(vol);
+            ctx.fillRect(x - bw / 2, vY, bw, volTop + volH - vY);
+
+            const checkAboveMAs5_30_45_60 = (closes, ma5, ma30, ma45, ma60, idx) => {
+                if (idx < 0 || idx >= closes.length) return false;
+                const price = closes[idx];
+                return (ma5[idx] !== null && price >= ma5[idx]) &&
+                       (ma30[idx] !== null && price >= ma30[idx]) &&
+                       (ma45[idx] !== null && price >= ma45[idx]) &&
+                       (ma60[idx] !== null && price >= ma60[idx]);
+            };
+
+            const checkAboveMAs30_45_60 = (closes, ma30, ma45, ma60, idx) => {
+                if (idx < 0 || idx >= closes.length) return false;
+                const price = closes[idx];
+                return (ma30[idx] !== null && price >= ma30[idx]) &&
+                       (ma45[idx] !== null && price >= ma45[idx]) &&
+                       (ma60[idx] !== null && price >= ma60[idx]);
+            };
+
+            let isNowAbove = false;
+            let isPrevAbove = false;
+            if (periodType === '4h' || periodType === '1d') {
+                isNowAbove = checkAboveMAs5_30_45_60(closesAll, ma5All, ma30All, ma45All, ma60All, absoluteIdx);
+                isPrevAbove = checkAboveMAs5_30_45_60(closesAll, ma5All, ma30All, ma45All, ma60All, absoluteIdx - 1);
+            } else {
+                isNowAbove = checkAboveMAs30_45_60(closesAll, ma30All, ma45All, ma60All, absoluteIdx);
+                isPrevAbove = checkAboveMAs30_45_60(closesAll, ma30All, ma45All, ma60All, absoluteIdx - 1);
+            }
+
+            if (isNowAbove && !isPrevAbove) {
+                ctx.save();
+                ctx.font = 'bold 10px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.fillStyle = '#ffea00';
+                ctx.shadowColor = '#ffea00';
+                ctx.shadowBlur = 5;
+                const highY = getYPrice(high);
+                ctx.fillText('⚡', x, highY - 2);
+                ctx.restore();
+            }
+        });
+
+        const drawLine = (dataArray, color, getYFunc, width = 1) => {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.beginPath();
+            let started = false;
+            dataArray.forEach((val, i) => {
+                if (val === null) return;
+                const x = padding.left + i * barWidth + barWidth / 2;
+                const y = getYFunc(val);
+                if (!started) {
+                    ctx.moveTo(x, y);
+                    started = true;
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+            ctx.stroke();
+        };
+
+        drawLine(showMA5, '#00ff66', getYPrice);
+        drawLine(showMA30, '#ffea00', getYPrice);
+        drawLine(showMA45, '#ff9100', getYPrice);
+        drawLine(showMA60, '#ff007f', getYPrice);
+        drawLine(showVM5, '#00f0ff', getYVol, 0.9);
+        drawLine(showVM20, '#9d4edd', getYVol, 0.9);
+    }
+
+    function loadAndDrawCharts(symbol) {
+        updatePanelTags();
+        const cached = klinesCache.get(symbol);
+        if (cached) {
+            renderCanvasChart(dom.canvas15m, dom.wrapper15m, ctx15m, cached.k15m, COUNT_15M, '15m');
+            renderCanvasChart(dom.canvas1h, dom.wrapper1h, ctx1h, cached.k1h, COUNT_1H, '1h');
+            renderCanvasChart(dom.canvas4h, dom.wrapper4h, ctx4h, cached.k4h, COUNT_4H, '4h');
+            renderCanvasChart(dom.canvas1d, dom.wrapper1d, ctx1d, cached.k1d, COUNT_1D, '1d');
+        }
+    }
+
+    function updatePanelTags() {
+        dom.tagText15m.innerText = `15M (${COUNT_15M})`;
+        dom.tagText1h.innerText = `1H (${COUNT_1H})`;
+        dom.tagText4h.innerText = `4H (${COUNT_4H})`;
+        dom.tagText1d.innerText = `1D (${COUNT_1D})`;
+    }
+
+    function openChartModal(index) {
+        const currentList = getCurrentList();
+        if (index < 0 || index >= currentList.length) return;
+        currentIndex = index;
+        const item = currentList[currentIndex];
+
+        dom.symbolRankTag.innerText = `#${currentIndex + 1}`;
+        dom.symbolTitle.innerText = item.symbol;
+        dom.chartModal.classList.add('active');
+        dom.chartModal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+
+        loadAndDrawCharts(item.symbol);
+    }
+
+    function closeChartModal() {
+        dom.chartModal.classList.remove('active');
+        dom.chartModal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+        currentIndex = -1;
+    }
+
+    function navigateSymbol(direction) {
+        const currentList = getCurrentList();
+        if (currentIndex === -1 || currentList.length === 0) return;
+        let newIndex = currentIndex + direction;
+        if (newIndex < 0) newIndex = currentList.length - 1;
+        if (newIndex >= currentList.length) newIndex = 0;
+        openChartModal(newIndex);
+    }
+
+    let touchStartX = 0, touchStartY = 0;
+    let touchEndX = 0, touchEndY = 0;
+
+    dom.chartModal.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+    }, { passive: true });
+
+    dom.chartModal.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        touchEndY = e.changedTouches[0].screenY;
+        handleSwipe();
+    }, { passive: true });
+
+    function handleSwipe() {
+        const deltaX = touchEndX - touchStartX;
+        const deltaY = touchEndY - touchStartY;
+        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 40) {
+            if (deltaX < 0) navigateSymbol(1);
+            else navigateSymbol(-1);
+        }
+    }
+
+    function switchTab(tabKey, targetBtn) {
+        activeTab = tabKey;
+        [dom.tab15m, dom.tab1h, dom.tab4h, dom.tab1d, dom.tabMulti].forEach(b => b.classList.remove('active'));
+        targetBtn.classList.add('active');
+        renderList();
+    }
+
+    dom.tab15m.addEventListener('click', () => switchTab('15m', dom.tab15m));
+    dom.tab1h.addEventListener('click', () => switchTab('1h', dom.tab1h));
+    dom.tab4h.addEventListener('click', () => switchTab('4h', dom.tab4h));
+    dom.tab1d.addEventListener('click', () => switchTab('1d', dom.tab1d));
+    dom.tabMulti.addEventListener('click', () => switchTab('multi', dom.tabMulti));
+
+    dom.scanBtn.addEventListener('click', startScan);
+    dom.closeModalBtn.addEventListener('click', closeChartModal);
+    dom.prevBtn.addEventListener('click', (e) => { e.stopPropagation(); navigateSymbol(-1); });
+    dom.nextBtn.addEventListener('click', (e) => { e.stopPropagation(); navigateSymbol(1); });
+
+    dom.chartModal.addEventListener('click', (e) => {
+        if (e.target === dom.chartModal) closeChartModal();
     });
 
-    // 優先排列最靠近 60MA 的標的 (距離比例小到大)
-    rawResults.sort((a, b) => a.ma3DistPercent - b.ma3DistPercent); 
+    window.addEventListener('keydown', (e) => {
+        if (!dom.chartModal.classList.contains('active')) return;
+        if (e.key === 'Escape') closeChartModal();
+        else if (e.key === 'ArrowLeft') navigateSymbol(-1);
+        else if (e.key === 'ArrowRight') navigateSymbol(1);
+    });
 
-    dom.statEntry.innerText = rawResults.length; 
-    dom.scanBtn.disabled = false; 
-    dom.scanBtn.innerText = "啟動極速掃描"; 
-    renderList(); 
-  } 
-
-  function renderList() { 
-    if (rawResults.length === 0) { 
-      dom.symbolList.innerHTML = `<div style="text-align:center; padding:40px; color:#64748b; font-weight:800;">目前無符合條件之標的</div>`; 
-      return; 
-    } 
-    const fragment = document.createDocumentFragment(); 
-    rawResults.forEach((item, index) => { 
-      const card = document.createElement('div'); 
-      card.className = 'symbol-card'; 
-      card.addEventListener('click', () => openChartModal(item.symbol)); 
-
-      const chg24Class = item.priceChange24h >= 0 ? 'val-up' : 'val-down'; 
-      const chg24Sign = item.priceChange24h >= 0 ? '+' : ''; 
-
-      card.innerHTML = ` 
-        <div style="flex: 1;"> 
-          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;"> 
-            <span class="badge-rank">#${index + 1}</span> 
-            <span class="symbol-name">${item.symbol.replace('USDT','')}</span> 
-            <span class="badge-bull">🚀 1H 多頭排列</span> 
-          </div> 
-          <div class="detail-row"> 
-            距慢線 (60MA): <span class="val-up">+${item.ma3DistPercent.toFixed(2)}%</span> 
-          </div> 
-          <div class="detail-row"> 
-            24H 漲跌幅: <span class="${chg24Class}">${chg24Sign}${item.priceChange24h.toFixed(2)}%</span> 
-          </div> 
-        </div> 
-        <div style="text-align:right;"> 
-          <div class="symbol-price">${item.price}</div> 
-          <div style="font-size:0.7rem; color:var(--manga-cyan); margin-top:4px;">點擊看 K 線 📈</div>
-        </div> 
-      `; 
-      fragment.appendChild(card); 
-    }); 
-    dom.symbolList.replaceChildren(fragment); 
-  } 
-
-  let activeChartController = null;
-  let currentSymbol = null;
-
-  async function drawKlineChart(symbol) {
-    if (activeChartController) activeChartController.abort();
-    activeChartController = new AbortController();
-
-    try {
-      const res = await fetch(`${API_BASE}/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=${KLINE_SHOW_COUNT + P3}`, { signal: activeChartController.signal });
-      if (!res.ok) return;
-      const klines = await res.json();
-
-      const closes = klines.map(k => parseFloat(k[4]));
-      const volumes = klines.map(k => parseFloat(k[5]));
-
-      const ma5 = calculateSMA(closes, P0);
-      const ma30 = calculateSMA(closes, P1);
-      const ma45 = calculateSMA(closes, P2);
-      const ma60 = calculateSMA(closes, P3);
-
-      const vm5 = calculateSMA(volumes, 5);
-      const vm20 = calculateSMA(volumes, 20);
-
-      const lastPrice = closes[closes.length - 1];
-      const lastMA5 = ma5[ma5.length - 1];
-      const isAboveMA5 = lastPrice >= lastMA5;
-
-      if (lastPrice !== undefined && lastMA5 !== null) {
-        if (isAboveMA5) {
-          dom.ma5Badge.className = 'ma5-status-badge above';
-          dom.ma5Badge.innerText = '🟢 5MA 之上';
-        } else {
-          dom.ma5Badge.className = 'ma5-status-badge below';
-          dom.ma5Badge.innerText = '🔴 5MA 之下';
-        }
-      }
-
-      const showK = klines.slice(-KLINE_SHOW_COUNT);
-      const showMA5 = ma5.slice(-KLINE_SHOW_COUNT);
-      const showMA30 = ma30.slice(-KLINE_SHOW_COUNT);
-      const showMA45 = ma45.slice(-KLINE_SHOW_COUNT);
-      const showMA60 = ma60.slice(-KLINE_SHOW_COUNT);
-      const showVM5 = vm5.slice(-KLINE_SHOW_COUNT);
-      const showVM20 = vm20.slice(-KLINE_SHOW_COUNT);
-
-      const rect = dom.canvasWrapper.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-      dom.canvas.width = rect.width * dpr;
-      dom.canvas.height = rect.height * dpr;
-      ctx.scale(dpr, dpr);
-
-      const width = rect.width;
-      const height = rect.height;
-
-      const padding = { top: 20, bottom: 15, left: 10, right: 60 };
-      const totalH = height - padding.top - padding.bottom;
-      
-      const priceH = totalH * 0.65;
-      const volH = totalH * 0.25;
-      const volTop = padding.top + priceH + totalH * 0.08;
-
-      const chartW = width - padding.left - padding.right;
-
-      let minP = Infinity, maxP = -Infinity;
-      showK.forEach(k => {
-        const l = parseFloat(k[3]), h = parseFloat(k[2]);
-        if (l < minP) minP = l;
-        if (h > maxP) maxP = h;
-      });
-
-      let maxVol = -Infinity;
-      showK.forEach(k => {
-        const v = parseFloat(k[5]);
-        if (v > maxVol) maxVol = v;
-      });
-
-      const priceRange = maxP - minP || 1;
-      const getYPrice = (p) => padding.top + priceH - ((p - minP) / priceRange) * priceH;
-      const getYVol = (v) => volTop + volH - (v / (maxVol || 1)) * volH;
-      const barWidth = chartW / KLINE_SHOW_COUNT;
-
-      ctx.clearRect(0, 0, width, height);
-
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-      ctx.fillStyle = '#64748b';
-      ctx.font = '10px JetBrains Mono';
-      ctx.textAlign = 'left';
-      ctx.lineWidth = 1;
-
-      const gridLines = 4;
-      for (let i = 0; i <= gridLines; i++) {
-        const y = padding.top + (priceH / gridLines) * i;
-        const pVal = maxP - (priceRange / gridLines) * i;
-        ctx.beginPath();
-        ctx.moveTo(padding.left, y);
-        ctx.lineTo(width - padding.right, y);
-        ctx.stroke();
-        ctx.fillText(pVal.toFixed(2), width - padding.right + 6, y + 3);
-      }
-
-      ctx.beginPath();
-      ctx.moveTo(padding.left, volTop);
-      ctx.lineTo(width - padding.right, volTop);
-      ctx.stroke();
-      
-      const formatVol = (v) => v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : (v / 1e3).toFixed(0) + 'K';
-      ctx.fillText(formatVol(maxVol), width - padding.right + 6, volTop + 10);
-
-      showK.forEach((k, i) => {
-        const open = parseFloat(k[1]), high = parseFloat(k[2]), low = parseFloat(k[3]), close = parseFloat(k[4]), vol = parseFloat(k[5]);
-        const x = padding.left + i * barWidth + barWidth / 2;
-        const isUp = close >= open;
-        const color = isUp ? '#00ff66' : '#ff2a6d';
-
-        ctx.strokeStyle = color;
-        ctx.fillStyle = color;
-
-        ctx.beginPath();
-        ctx.moveTo(x, getYPrice(high));
-        ctx.lineTo(x, getYPrice(low));
-        ctx.stroke();
-
-        const yOpen = getYPrice(open);
-        const yClose = getYPrice(close);
-        const bodyTop = Math.min(yOpen, yClose);
-        const bodyH = Math.max(Math.abs(yOpen - yClose), 1.5);
-        const bw = Math.max(barWidth * 0.7, 1);
-
-        ctx.fillRect(x - bw / 2, bodyTop, bw, bodyH);
-
-        ctx.fillStyle = isUp ? 'rgba(0, 255, 102, 0.4)' : 'rgba(255, 42, 109, 0.4)';
-        const vY = getYVol(vol);
-        ctx.fillRect(x - bw / 2, vY, bw, volTop + volH - vY);
-      });
-
-      const drawLine = (dataArray, color, getYFunc, width = 1.5) => {
-        ctx.strokeStyle = color;
-        ctx.lineWidth = width;
-        ctx.beginPath();
-        let started = false;
-        dataArray.forEach((val, i) => {
-          if (val === null) return;
-          const x = padding.left + i * barWidth + barWidth / 2;
-          const y = getYFunc(val);
-          if (!started) { ctx.moveTo(x, y); started = true; } 
-          else { ctx.lineTo(x, y); }
+    let resizeRaf = null;
+    window.addEventListener('resize', () => {
+        if (resizeRaf) cancelAnimationFrame(resizeRaf);
+        resizeRaf = requestAnimationFrame(() => {
+            if (dom.chartModal.classList.contains('active') && currentIndex !== -1) {
+                const currentList = getCurrentList();
+                if (currentList[currentIndex]) {
+                    loadAndDrawCharts(currentList[currentIndex].symbol);
+                }
+            }
         });
-        ctx.stroke();
-      };
+    });
 
-      drawLine(showMA5, '#00ff66', getYPrice);
-      drawLine(showMA30, '#ffea00', getYPrice);
-      drawLine(showMA45, '#ff9100', getYPrice);
-      drawLine(showMA60, '#ff007f', getYPrice);
-
-      drawLine(showVM5, '#00f0ff', getYVol, 1.2);
-      drawLine(showVM20, '#9d4edd', getYVol, 1.2);
-
-    } catch (err) {
-      if (err.name !== 'AbortError') console.error(err);
-    }
-  }
-
-  function openChartModal(symbol) {
-    currentSymbol = symbol;
-    dom.symbolTitle.innerText = symbol;
-    dom.chartModal.classList.add('active');
-    dom.chartModal.setAttribute('aria-hidden', 'false');
-    document.body.classList.add('modal-open');
-
-    drawKlineChart(symbol);
-  }
-
-  function closeChartModal() {
-    if (activeChartController) activeChartController.abort();
-    dom.chartModal.classList.remove('active');
-    dom.chartModal.setAttribute('aria-hidden', 'true');
-    document.body.classList.remove('modal-open');
-    currentSymbol = null;
-  }
-
-  dom.scanBtn.addEventListener('click', startScan);
-  dom.closeModalBtn.addEventListener('click', closeChartModal);
-  
-  dom.chartModal.addEventListener('click', (e) => {
-    if (e.target === dom.chartModal) closeChartModal();
-  });
-  
-  window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && dom.chartModal.classList.contains('active')) {
-      closeChartModal();
-    }
-  });
-
-  window.addEventListener('resize', () => {
-    if (dom.chartModal.classList.contains('active') && currentSymbol) {
-      drawKlineChart(currentSymbol);
-    }
-  });
+    // 讓外部函數可直接被點擊呼叫
+    window.openBestPickChart = openBestPickChart;
 })();
-</script> 
-</body> 
+</script>
+</body>
 </html>
