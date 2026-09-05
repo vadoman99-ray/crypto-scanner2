@@ -72,61 +72,6 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
 .scan-btn:disabled { opacity: 0.5; filter: grayscale(1); cursor: not-allowed; }
 .progress-container { height: 3px; background: rgba(255, 255, 255, 0.05); width: 100%; }
 .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--manga-pink), var(--manga-cyan)); transition: width 0.05s linear; }
-
-.top-pick-section { padding: 12px 16px 0 16px; }
-.top-pick-card {
-    background: linear-gradient(135deg, rgba(0, 255, 102, 0.08) 0%, rgba(0, 240, 255, 0.08) 100%);
-    border: 1px solid rgba(0, 255, 102, 0.35);
-    border-radius: 14px;
-    padding: 14px;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 0 25px rgba(0, 255, 102, 0.1);
-}
-.top-pick-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-}
-.top-pick-title {
-    font-size: 0.95rem;
-    font-weight: 900;
-    color: var(--manga-green);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-.top-pick-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 8px;
-}
-.top-pick-item {
-    background: rgba(15, 23, 42, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    padding: 8px 10px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-.top-pick-item:hover {
-    border-color: var(--manga-cyan);
-    background: rgba(0, 240, 255, 0.12);
-    transform: translateY(-2px);
-}
-.top-pick-symbol {
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 900;
-    font-size: 0.95rem;
-    color: #fff;
-}
-.top-pick-score {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.75rem;
-    color: var(--manga-green);
-    margin-top: 2px;
-}
-
 .tab-container { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; padding: 0 12px; margin-top: 12px; }
 .tab-btn {
     padding: 8px 2px;
@@ -161,7 +106,7 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
 .stat-card .val { font-family: 'JetBrains Mono', monospace; font-size: 1.6rem; font-weight: 800; }
 .stat-card.entry { border-color: rgba(255, 0, 127, 0.4); }
 .stat-card.entry .val { color: var(--manga-pink); text-shadow: 0 0 10px rgba(255, 0, 127, 0.3); }
-.container { padding: 0 16px; position: relative; min-height: 200px; }
+.container { padding: 0 16px; }
 .symbol-card {
     background: var(--card-bg);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -174,10 +119,11 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
     align-items: center;
     backdrop-filter: blur(10px);
     cursor: pointer;
-    transition: border-color 0.2s, background-color 0.2s;
+    transition: border-color 0.2s, transform 0.2s, background-color 0.2s;
     will-change: transform;
 }
-.symbol-card:hover { border-color: var(--manga-cyan); background: rgba(0, 240, 255, 0.08); }
+.symbol-card:hover { border-color: var(--manga-cyan); background: rgba(0, 240, 255, 0.08); transform: translateY(-2px); }
+.symbol-card:active { transform: scale(0.98); }
 .symbol-name { font-family: 'JetBrains Mono', monospace; font-size: 1.15rem; font-weight: 800; }
 .symbol-price { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; color: var(--manga-yellow); font-weight: 700; }
 .detail-row { font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; color: #94a3b8; margin-top: 4px; }
@@ -212,6 +158,7 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
     flex-direction: column;
     box-shadow: 0 0 50px rgba(0, 240, 255, 0.2);
     position: relative;
+    transition: transform 0.15s ease-out;
 }
 .chart-header {
     padding: 6px 10px;
@@ -284,22 +231,11 @@ canvas { display: block; width: 100%; height: 100%; }
 <body>
 <div class="app-header">
     <div class="header-top">
-        <div class="header-title">⚡ 極速多週期多頭排列儀表板 (>1億USDT)</div>
+        <div class="header-title">⚡ 多週期多頭排列儀表板 (>1億USDT)</div>
         <button id="scanBtn" class="scan-btn">啟動極速掃描</button>
     </div>
 </div>
 <div class="progress-container"><div id="progress" class="progress-fill"></div></div>
-
-<div id="topPickSection" class="top-pick-section" style="display: none;">
-    <div class="top-pick-card">
-        <div class="top-pick-header">
-            <div class="top-pick-title">🔥 最佳進場標的推薦 (Top 5 貼近 60MA 支撐)</div>
-            <div style="font-size:0.7rem; color:#94a3b8;">低風險高報酬評分</div>
-        </div>
-        <div id="topPickList" class="top-pick-list"></div>
-    </div>
-</div>
-
 <div class="tab-container">
     <button id="tab15m" class="tab-btn active">⚡15M(<span id="count15m">0</span>)</button>
     <button id="tab1h" class="tab-btn">⚡1H(<span id="count1h">0</span>)</button>
@@ -379,65 +315,10 @@ canvas { display: block; width: 100%; height: 100%; }
     let results4H = [];
     let results1D = [];
     let resultsMulti = [];
-    let topPickSymbols = [];
     let activeTab = '15m';
     let tickerMap = new Map();
     let currentIndex = -1;
-    let globalAllMatches = [];
     const klinesCache = new Map();
-
-    let db = null;
-    function initDB() {
-        return new Promise((resolve) => {
-            const request = indexedDB.open('CryptoDashboardDB', 1);
-            request.onupgradeneeded = (e) => {
-                const database = e.target.result;
-                if (!database.objectStoreNames.contains('klines')) {
-                    database.createObjectStore('klines', { keyPath: 'symbol' });
-                }
-            };
-            request.onsuccess = (e) => {
-                db = e.target.result;
-                resolve(db);
-            };
-            request.onerror = () => resolve(null);
-        });
-    }
-
-    function getCachedKlinesFromDB(symbols) {
-        return new Promise((resolve) => {
-            if (!db) return resolve(new Map());
-            const transaction = db.transaction(['klines'], 'readonly');
-            const store = transaction.objectStore('klines');
-            const cachedMap = new Map();
-            let count = 0;
-            if (symbols.length === 0) return resolve(cachedMap);
-
-            symbols.forEach(sym => {
-                const req = store.get(sym);
-                req.onsuccess = () => {
-                    if (req.result && (Date.now() - req.result.timestamp < 15 * 60 * 1000)) {
-                        cachedMap.set(sym, req.result.data);
-                    }
-                    count++;
-                    if (count === symbols.length) resolve(cachedMap);
-                };
-                req.onerror = () => {
-                    count++;
-                    if (count === symbols.length) resolve(cachedMap);
-                };
-            });
-        });
-    }
-
-    function saveKlinesToDB(symbolDataMap) {
-        if (!db) return;
-        const transaction = db.transaction(['klines'], 'readwrite');
-        const store = transaction.objectStore('klines');
-        symbolDataMap.forEach((data, symbol) => {
-            store.put({ symbol, data, timestamp: Date.now() });
-        });
-    }
 
     const dom = {
         scanBtn: document.getElementById('scanBtn'),
@@ -455,8 +336,6 @@ canvas { display: block; width: 100%; height: 100%; }
         tab1d: document.getElementById('tab1d'),
         tabMulti: document.getElementById('tabMulti'),
         symbolList: document.getElementById('symbolList'),
-        topPickSection: document.getElementById('topPickSection'),
-        topPickList: document.getElementById('topPickList'),
         chartModal: document.getElementById('chartModal'),
         symbolTitle: document.getElementById('symbolTitle'),
         symbolRankTag: document.getElementById('symbolRankTag'),
@@ -478,20 +357,20 @@ canvas { display: block; width: 100%; height: 100%; }
         tagText1d: document.getElementById('tagText1d')
     };
 
-    const ctx15m = dom.canvas15m.getContext('2d', { alpha: false });
-    const ctx1h = dom.canvas1h.getContext('2d', { alpha: false });
-    const ctx4h = dom.canvas4h.getContext('2d', { alpha: false });
-    const ctx1d = dom.canvas1d.getContext('2d', { alpha: false });
+    const ctx15m = dom.canvas15m.getContext('2d');
+    const ctx1h = dom.canvas1h.getContext('2d');
+    const ctx4h = dom.canvas4h.getContext('2d');
+    const ctx1d = dom.canvas1d.getContext('2d');
 
-    function calculateSMA(closes, period) {
-        const len = closes.length;
+    function calculateSMA(data, period) {
+        const len = data.length;
+        if (len < period) return new Array(len).fill(null);
         const ma = new Array(len).fill(null);
-        if (len < period) return ma;
         let sum = 0;
-        for (let i = 0; i < period; i++) sum += closes[i];
+        for (let i = 0; i < period; i++) sum += data[i];
         ma[period - 1] = sum / period;
         for (let i = period; i < len; i++) {
-            sum += closes[i] - closes[i - period];
+            sum += data[i] - data[i - period];
             ma[i] = sum / period;
         }
         return ma;
@@ -502,24 +381,16 @@ canvas { display: block; width: 100%; height: 100%; }
         return yi.toFixed(2) + '億';
     }
 
-    function calculateRiskRewardScore(distancePct) {
-        if (distancePct >= 0 && distancePct <= 2) return 100;
-        if (distancePct > 2 && distancePct <= 5) return 80;
-        if (distancePct > 5 && distancePct <= 10) return 50;
-        if (distancePct > 10) return 20;
-        return 30;
-    }
-
     const workerCode = `
-    function calculateSMA(closes, period) {
-        const len = closes.length;
+    function calculateSMA(data, period) {
+        const len = data.length;
+        if (len < period) return new Array(len).fill(null);
         const ma = new Array(len).fill(null);
-        if (len < period) return ma;
         let sum = 0;
-        for (let i = 0; i < period; i++) sum += closes[i];
+        for (let i = 0; i < period; i++) sum += data[i];
         ma[period - 1] = sum / period;
         for (let i = period; i < len; i++) {
-            sum += closes[i] - closes[i - period];
+            sum += data[i] - data[i - period];
             ma[i] = sum / period;
         }
         return ma;
@@ -533,9 +404,7 @@ canvas { display: block; width: 100%; height: 100%; }
     function isBullishAlignment(klinesRaw) {
         const totalLen = klinesRaw.length;
         if (totalLen < 60) return null;
-        const closes = new Float64Array(totalLen);
-        for(let i=0; i<totalLen; i++) closes[i] = parseFloat(klinesRaw[i][4]);
-        
+        const closes = klinesRaw.map(k => parseFloat(k[4]));
         const price = closes[totalLen - 1];
         const ma1Arr = calculateSMA(closes, 30);
         const ma2Arr = calculateSMA(closes, 45);
@@ -547,100 +416,78 @@ canvas { display: block; width: 100%; height: 100%; }
             const ma3DistPercent = ((price - ma3) / ma3) * 100;
             const isAboveAllNow = checkAboveMAs30_45_60(closes, ma1Arr, ma2Arr, ma3Arr, totalLen - 1);
             const isAboveAllPrev = checkAboveMAs30_45_60(closes, ma1Arr, ma2Arr, ma3Arr, totalLen - 2);
-            return { price, ma3DistPercent, isAboveAllMAs: isAboveAllNow, isFirstBarAboveAll: isAboveAllNow && !isAboveAllPrev };
+            const isFirstBarAboveAll = isAboveAllNow && !isAboveAllPrev;
+            return { price, ma3DistPercent, isAboveAllMAs: isAboveAllNow, isFirstBarAboveAll };
         }
         return null;
     }
-    async function fetchWithRetry(url, retries = 3, delay = 400) {
-        for (let i = 0; i <= retries; i++) {
+
+    // 帶有自動延遲重試機制的 fetch 函式，防止 429 觸發與流量鎖定
+    async function fetchWithRetry(url, retries = 3, delay = 500) {
+        for (let i = 0; i < retries; i++) {
             try {
                 const res = await fetch(url);
-                if (res.ok) return await res.json();
                 if (res.status === 429 || res.status === 418) {
-                    // 觸發限速時拉長等待時間 (指數退避)
+                    // 遇到頻率限制，延長等待時間後重試
                     await new Promise(r => setTimeout(r, delay * Math.pow(2, i)));
                     continue;
                 }
+                if (!res.ok) throw new Error(\`HTTP \${res.status}\`);
+                return await res.json();
             } catch (err) {
-                if (i === retries) throw err;
-                await new Promise(r => setTimeout(r, delay * (i + 1)));
+                if (i === retries - 1) throw err;
+                await new Promise(r => setTimeout(r, delay));
             }
         }
-        return null;
+        throw new Error('Max retries exceeded');
     }
+
     async function fetchSymbol(symbol, apiBase, limits) {
         try {
-            const [k15m, k1h, k4h, k1d] = await Promise.all([
+            const [klines15m, klines1h, klines4h, klines1d] = await Promise.all([
                 fetchWithRetry(\`\${apiBase}/fapi/v1/klines?symbol=\${symbol}&interval=15m&limit=\${limits.l15m}\`),
                 fetchWithRetry(\`\${apiBase}/fapi/v1/klines?symbol=\${symbol}&interval=1h&limit=\${limits.l1h}\`),
                 fetchWithRetry(\`\${apiBase}/fapi/v1/klines?symbol=\${symbol}&interval=4h&limit=\${limits.l4h}\`),
                 fetchWithRetry(\`\${apiBase}/fapi/v1/klines?symbol=\${symbol}&interval=1d&limit=\${limits.l1d}\`)
             ]);
-            if (!k15m || !k1h || !k4h || !k1d) return null;
 
-            const bull15m = isBullishAlignment(k15m);
-            const bull1h = isBullishAlignment(k1h);
-            const bull4h = isBullishAlignment(k4h);
-            const bull1d = isBullishAlignment(k1d);
-
+            const bull15m = isBullishAlignment(klines15m);
+            const bull1h = isBullishAlignment(klines1h);
+            const bull4h = isBullishAlignment(klines4h);
+            const bull1d = isBullishAlignment(klines1d);
             if (!bull15m && !bull1h && !bull4h && !bull1d) return null;
-            let matchCount = (bull15m ? 1 : 0) + (bull1h ? 1 : 0) + (bull4h ? 1 : 0) + (bull1d ? 1 : 0);
-
+            let matchCount = 0;
+            if (bull15m) matchCount++;
+            if (bull1h) matchCount++;
+            if (bull4h) matchCount++;
+            if (bull1d) matchCount++;
             return {
                 symbol, bull15m, bull1h, bull4h, bull1d, matchCount,
                 currentPrice: (bull15m || bull1h || bull4h || bull1d).price,
-                rawKlines: { k15m, k1h, k4h, k1d }
+                rawKlines: { k15m: klines15m, k1h: klines1h, k4h: klines4h, k1d: klines1d }
             };
         } catch {
             return null;
         }
     }
+
     self.onmessage = async function(e) {
-        const { symbols, apiBase, limits, cachedMapEntries } = e.data;
-        const cachedMap = new Map(cachedMapEntries);
-        const concurrency = 20; // 降低同時併發數至 20 執行緒，徹底保護 API 流量
+        const { symbols, apiBase, limits } = e.data;
+        const concurrency = 8; // 調降並行請求數（預設 40 改為 8），大幅減輕 API 伺服器壓力
         let completed = 0;
         const matches = [];
-        const newlyFetched = new Map();
 
-        const symbolsToFetch = [];
-        symbols.forEach(sym => {
-            if (cachedMap.has(sym)) {
-                const rawKlines = cachedMap.get(sym);
-                const bull15m = isBullishAlignment(rawKlines.k15m);
-                const bull1h = isBullishAlignment(rawKlines.k1h);
-                const bull4h = isBullishAlignment(rawKlines.k4h);
-                const bull1d = isBullishAlignment(rawKlines.k1d);
-                completed++;
-                if (bull15m || bull1h || bull4h || bull1d) {
-                    let matchCount = (bull15m ? 1 : 0) + (bull1h ? 1 : 0) + (bull4h ? 1 : 0) + (bull1d ? 1 : 0);
-                    matches.push({
-                        symbol: sym, bull15m, bull1h, bull4h, bull1d, matchCount,
-                        currentPrice: (bull15m || bull1h || bull4h || bull1d).price,
-                        rawKlines
-                    });
-                }
-            } else {
-                symbolsToFetch.push(sym);
-            }
-        });
-
-        self.postMessage({ type: 'progress', completed, total: symbols.length });
-
-        for (let i = 0; i < symbolsToFetch.length; i += concurrency) {
-            const chunk = symbolsToFetch.slice(i, i + concurrency);
+        // 串列分批處理（Queue Pool）並加入微幅間隔，避免瞬間塞爆流量
+        for (let i = 0; i < symbols.length; i += concurrency) {
+            const chunk = symbols.slice(i, i + concurrency);
             const chunkResults = await Promise.all(chunk.map(sym => fetchSymbol(sym, apiBase, limits)));
-            chunkResults.filter(Boolean).forEach(res => {
-                matches.push(res);
-                newlyFetched.set(res.symbol, res.rawKlines);
-            });
+            chunkResults.filter(Boolean).forEach(res => matches.push(res));
             completed += chunk.length;
             self.postMessage({ type: 'progress', completed, total: symbols.length });
-            
-            // 每批次之間加入極短暫喘息間隔 (50ms)，避免瞬間流量過載引發伺服器阻擋
+            // 每批之間休息 50ms 保持平順流暢
             await new Promise(r => setTimeout(r, 50));
         }
-        self.postMessage({ type: 'done', matches, newlyFetched: Array.from(newlyFetched.entries()) });
+        self.postMessage({ type: 'done', matches });
     };
     `;
 
@@ -648,7 +495,6 @@ canvas { display: block; width: 100%; height: 100%; }
         dom.scanBtn.disabled = true;
         dom.scanBtn.innerText = "⚡ 背景極速掃描中...";
         dom.symbolList.replaceChildren();
-        dom.topPickSection.style.display = 'none';
         dom.progress.style.width = '0%';
         klinesCache.clear();
 
@@ -674,48 +520,24 @@ canvas { display: block; width: 100%; height: 100%; }
 
         dom.statTotal.innerText = candidateSymbols.length;
 
-        if (!db) await initDB();
-        const cachedMap = await getCachedKlinesFromDB(candidateSymbols);
-
         const blob = new Blob([workerCode], { type: 'application/javascript' });
-        const worker = new URL.createObjectURL(blob);
-        const w = new Worker(worker);
+        const worker = new Worker(URL.createObjectURL(blob));
 
-        w.postMessage({
+        worker.postMessage({
             symbols: candidateSymbols,
             apiBase: API_BASE,
-            limits: { l15m: FETCH_LIMIT_15M, l1h: FETCH_LIMIT_1H, l4h: FETCH_LIMIT_4H, l1d: FETCH_LIMIT_1D },
-            cachedMapEntries: Array.from(cachedMap.entries())
+            limits: { l15m: FETCH_LIMIT_15M, l1h: FETCH_LIMIT_1H, l4h: FETCH_LIMIT_4H, l1d: FETCH_LIMIT_1D }
         });
 
-        w.onmessage = (e) => {
-            const { type, completed, total, matches, newlyFetched } = e.data;
+        worker.onmessage = (e) => {
+            const { type, completed, total, matches } = e.data;
             if (type === 'progress') {
                 dom.progress.style.width = `${(completed / total) * 100}%`;
             } else if (type === 'done') {
-                w.terminate();
-
-                if (newlyFetched && newlyFetched.length > 0) {
-                    saveKlinesToDB(new Map(newlyFetched));
-                }
-
+                worker.terminate();
                 const allMatches = matches.map(m => {
                     const ticker = tickerMap.get(m.symbol);
                     klinesCache.set(m.symbol, m.rawKlines);
-                    
-                    let maxScore = 0;
-                    let bestDist = 999;
-                    ['bull15m', 'bull1h', 'bull4h', 'bull1d'].forEach(p => {
-                        if (m[p]) {
-                            const d = m[p].ma3DistPercent;
-                            const score = calculateRiskRewardScore(d);
-                            if (score > maxScore) {
-                                maxScore = score;
-                                bestDist = d;
-                            }
-                        }
-                    });
-
                     return {
                         symbol: m.symbol,
                         price: m.currentPrice,
@@ -725,13 +547,9 @@ canvas { display: block; width: 100%; height: 100%; }
                         bull1d: m.bull1d,
                         matchCount: m.matchCount,
                         priceChange24h: ticker ? parseFloat(ticker.priceChangePercent) : 0,
-                        quoteVolume24h: ticker ? parseFloat(ticker.quoteVolume) : 0,
-                        entryScore: maxScore,
-                        bestDist: bestDist
+                        quoteVolume24h: ticker ? parseFloat(ticker.quoteVolume) : 0
                     };
                 });
-
-                globalAllMatches = allMatches;
 
                 results15M = allMatches.filter(m => m.bull15m);
                 results1H = allMatches.filter(m => m.bull1h);
@@ -754,50 +572,9 @@ canvas { display: block; width: 100%; height: 100%; }
 
                 dom.scanBtn.disabled = false;
                 dom.scanBtn.innerText = "啟動極速掃描";
-                
-                generateTopPicks(allMatches);
                 renderList();
             }
         };
-    }
-
-    function generateTopPicks(allMatches) {
-        const sorted = [...allMatches].sort((a, b) => {
-            if (b.entryScore !== a.entryScore) return b.entryScore - a.entryScore;
-            return Math.abs(a.bestDist) - Math.abs(b.bestDist);
-        });
-
-        topPickSymbols = sorted.slice(0, 5);
-        if (topPickSymbols.length === 0) {
-            dom.topPickSection.style.display = 'none';
-            return;
-        }
-
-        dom.topPickList.innerHTML = '';
-        topPickSymbols.forEach((item) => {
-            const el = document.createElement('div');
-            el.className = 'top-pick-item';
-            el.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span class="top-pick-symbol">${item.symbol.replace('USDT','')}</span>
-                    <span style="font-size:0.65rem; background:rgba(0,255,102,0.2); color:#00ff66; padding:1px 4px; border-radius:3px; font-weight:800;">${item.entryScore}分</span>
-                </div>
-                <div class="top-pick-score">距支撐 +${item.bestDist.toFixed(2)}%</div>
-            `;
-            el.addEventListener('click', () => {
-                const currentList = getCurrentList();
-                let idx = currentList.findIndex(s => s.symbol === item.symbol);
-                if (idx !== -1) {
-                    openChartModal(idx);
-                } else {
-                    results15M.unshift(item);
-                    switchTab('15m', dom.tab15m);
-                    openChartModal(0);
-                }
-            });
-            dom.topPickList.appendChild(el);
-        });
-        dom.topPickSection.style.display = 'block';
     }
 
     function getCurrentList() {
@@ -860,7 +637,7 @@ canvas { display: block; width: 100%; height: 100%; }
                         ${badgeHtml}
                     </div>
                     <div class="detail-row">
-                        ${distText} | 進場評分: <span style="color:var(--manga-green); font-weight:800;">${item.entryScore}分</span>
+                        ${distText}
                     </div>
                     <div class="detail-row">
                         24H 漲跌幅: <span class="${chg24Class}">${chg24Sign}${item.priceChange24h.toFixed(2)}%</span> | 24H 成交額: <span style="color:#00f0ff;">$${formatVolumeText(item.quoteVolume24h)}</span>
@@ -877,14 +654,8 @@ canvas { display: block; width: 100%; height: 100%; }
     }
 
     function renderCanvasChart(canvas, wrapper, ctx, klinesRaw, showCount, periodType) {
-        const totalLen = klinesRaw.length;
-        const closesAll = new Float64Array(totalLen);
-        const volumesAll = new Float64Array(totalLen);
-        for(let i=0; i<totalLen; i++) {
-            closesAll[i] = parseFloat(klinesRaw[i][4]);
-            volumesAll[i] = parseFloat(klinesRaw[i][5]);
-        }
-
+        const closesAll = klinesRaw.map(k => parseFloat(k[4]));
+        const volumesAll = klinesRaw.map(k => parseFloat(k[5]));
         const ma5All = calculateSMA(closesAll, P0);
         const ma30All = calculateSMA(closesAll, P1);
         const ma45All = calculateSMA(closesAll, P2);
@@ -892,8 +663,16 @@ canvas { display: block; width: 100%; height: 100%; }
         const vm5All = calculateSMA(volumesAll, 5);
         const vm20All = calculateSMA(volumesAll, 20);
 
-        const actualShowCount = Math.min(showCount, totalLen);
-        const showStartIndex = totalLen - actualShowCount;
+        const actualShowCount = Math.min(showCount, klinesRaw.length);
+        const showStartIndex = klinesRaw.length - actualShowCount;
+
+        const showK = klinesRaw.slice(-actualShowCount);
+        const showMA5 = ma5All.slice(-actualShowCount);
+        const showMA30 = ma30All.slice(-actualShowCount);
+        const showMA45 = ma45All.slice(-actualShowCount);
+        const showMA60 = ma60All.slice(-actualShowCount);
+        const showVM5 = vm5All.slice(-actualShowCount);
+        const showVM20 = vm20All.slice(-actualShowCount);
 
         const rect = wrapper.getBoundingClientRect();
         if (rect.width === 0 || rect.height === 0) return;
@@ -913,22 +692,25 @@ canvas { display: block; width: 100%; height: 100%; }
         const volTop = padding.top + priceH + totalH * 0.10;
         const chartW = width - padding.left - padding.right;
 
-        let minP = Infinity, maxP = -Infinity, maxVol = -Infinity;
-        for(let i = showStartIndex; i < totalLen; i++) {
-            const l = parseFloat(klinesRaw[i][3]), h = parseFloat(klinesRaw[i][2]);
+        let minP = Infinity, maxP = -Infinity;
+        showK.forEach(k => {
+            const l = parseFloat(k[3]), h = parseFloat(k[2]);
             if (l < minP) minP = l;
             if (h > maxP) maxP = h;
-            const v = volumesAll[i];
+        });
+
+        let maxVol = -Infinity;
+        showK.forEach(k => {
+            const v = parseFloat(k[5]);
             if (v > maxVol) maxVol = v;
-        }
+        });
 
         const priceRange = maxP - minP || 1;
         const getYPrice = (p) => padding.top + priceH - ((p - minP) / priceRange) * priceH;
         const getYVol = (v) => volTop + volH - (v / (maxVol || 1)) * volH;
         const barWidth = chartW / actualShowCount;
 
-        ctx.fillStyle = '#060911';
-        ctx.fillRect(0, 0, width, height);
+        ctx.clearRect(0, 0, width, height);
 
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
         ctx.fillStyle = '#64748b';
@@ -936,13 +718,16 @@ canvas { display: block; width: 100%; height: 100%; }
         ctx.textAlign = 'left';
         ctx.lineWidth = 1;
 
-        const y = padding.top;
-        const pVal = maxP;
-        ctx.beginPath();
-        ctx.moveTo(padding.left, y);
-        ctx.lineTo(width - padding.right, y);
-        ctx.stroke();
-        ctx.fillText(pVal.toFixed(1), width - padding.right + 3, y + 3);
+        const gridLines = 1;
+        for (let i = 0; i <= gridLines; i++) {
+            const y = padding.top + (priceH / gridLines) * i;
+            const pVal = maxP - (priceRange / gridLines) * i;
+            ctx.beginPath();
+            ctx.moveTo(padding.left, y);
+            ctx.lineTo(width - padding.right, y);
+            ctx.stroke();
+            ctx.fillText(pVal.toFixed(1), width - padding.right + 3, y + 3);
+        }
 
         ctx.beginPath();
         ctx.moveTo(padding.left, volTop);
@@ -954,10 +739,10 @@ canvas { display: block; width: 100%; height: 100%; }
 
         const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
 
-        for (let i = 0; i < actualShowCount; i++) {
-            const absoluteIdx = showStartIndex + i;
-            const timestamp = parseInt(klinesRaw[absoluteIdx][0]);
+        showK.forEach((k, i) => {
+            const timestamp = parseInt(k[0]);
             const date = new Date(timestamp);
+            
             const utcDay = date.getUTCDay();
             const utcHour = date.getUTCHours();
             const utcMin = date.getUTCMinutes();
@@ -965,47 +750,59 @@ canvas { display: block; width: 100%; height: 100%; }
             const isMondayStart = (utcDay === 1 && utcHour === 0);
             const isDailyStart = (utcHour === 0 && utcMin === 0);
 
-            if (periodType !== '1d' && isMondayStart) {
-                const x = padding.left + i * barWidth + barWidth / 2;
-                ctx.strokeStyle = 'rgba(157, 78, 221, 0.75)';
-                ctx.lineWidth = 1.5;
-                ctx.setLineDash([3, 3]);
-                ctx.beginPath();
-                ctx.moveTo(x, padding.top);
-                ctx.lineTo(x, padding.top + totalH);
-                ctx.stroke();
+            if (periodType === '1d') {
+                if (isMondayStart) {
+                    ctx.strokeStyle = 'rgba(157, 78, 221, 0.9)';
+                    ctx.lineWidth = 1.6;
+                    ctx.setLineDash([3, 3]);
+                    const x = padding.left + i * barWidth + barWidth / 2;
+                    ctx.beginPath();
+                    ctx.moveTo(x, padding.top);
+                    ctx.lineTo(x, padding.top + totalH);
+                    ctx.stroke();
+                }
+            } else {
+                if (isMondayStart) {
+                    ctx.strokeStyle = 'rgba(157, 78, 221, 0.75)';
+                    ctx.lineWidth = 1.5;
+                    ctx.setLineDash([3, 3]);
+                    const x = padding.left + i * barWidth + barWidth / 2;
+                    ctx.beginPath();
+                    ctx.moveTo(x, padding.top);
+                    ctx.lineTo(x, padding.top + totalH);
+                    ctx.stroke();
 
-                ctx.save();
-                ctx.font = 'bold 8px JetBrains Mono';
-                ctx.fillStyle = '#9d4edd';
-                ctx.textAlign = 'center';
-                ctx.fillText('週一', x, padding.top - 5);
-                ctx.restore();
-            } else if (periodType !== '1d' && isDailyStart) {
-                const x = padding.left + i * barWidth + barWidth / 2;
-                ctx.strokeStyle = 'rgba(0, 240, 255, 0.45)';
-                ctx.lineWidth = 1.2;
-                ctx.setLineDash([3, 3]);
-                ctx.beginPath();
-                ctx.moveTo(x, padding.top);
-                ctx.lineTo(x, padding.top + totalH);
-                ctx.stroke();
+                    ctx.save();
+                    ctx.font = 'bold 8px JetBrains Mono';
+                    ctx.fillStyle = '#9d4edd';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('週一', x, padding.top - 5);
+                    ctx.restore();
+                } else if (isDailyStart) {
+                    ctx.strokeStyle = 'rgba(0, 240, 255, 0.45)';
+                    ctx.lineWidth = 1.2;
+                    ctx.setLineDash([3, 3]);
+                    const x = padding.left + i * barWidth + barWidth / 2;
+                    ctx.beginPath();
+                    ctx.moveTo(x, padding.top);
+                    ctx.lineTo(x, padding.top + totalH);
+                    ctx.stroke();
 
-                ctx.save();
-                ctx.font = '7px JetBrains Mono';
-                ctx.fillStyle = '#00f0ff';
-                ctx.textAlign = 'center';
-                ctx.fillText(`週${dayNames[utcDay]}`, x, padding.top - 5);
-                ctx.restore();
+                    ctx.save();
+                    ctx.font = '7px JetBrains Mono';
+                    ctx.fillStyle = '#00f0ff';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`週${dayNames[utcDay]}`, x, padding.top - 5);
+                    ctx.restore();
+                }
             }
-        }
+        });
 
         ctx.setLineDash([]);
         ctx.lineWidth = 1;
 
-        for (let i = 0; i < actualShowCount; i++) {
+        showK.forEach((k, i) => {
             const absoluteIdx = showStartIndex + i;
-            const k = klinesRaw[absoluteIdx];
             const open = parseFloat(k[1]), high = parseFloat(k[2]), low = parseFloat(k[3]), close = parseFloat(k[4]), vol = parseFloat(k[5]);
             const x = padding.left + i * barWidth + barWidth / 2;
             const isUp = close >= open;
@@ -1068,17 +865,15 @@ canvas { display: block; width: 100%; height: 100%; }
                 ctx.fillText('⚡', x, highY - 2);
                 ctx.restore();
             }
-        }
+        });
 
         const drawLine = (dataArray, color, getYFunc, width = 1) => {
             ctx.strokeStyle = color;
             ctx.lineWidth = width;
             ctx.beginPath();
             let started = false;
-            for (let i = 0; i < actualShowCount; i++) {
-                const absoluteIdx = showStartIndex + i;
-                const val = dataArray[absoluteIdx];
-                if (val === null || isNaN(val)) continue;
+            dataArray.forEach((val, i) => {
+                if (val === null) return;
                 const x = padding.left + i * barWidth + barWidth / 2;
                 const y = getYFunc(val);
                 if (!started) {
@@ -1087,16 +882,16 @@ canvas { display: block; width: 100%; height: 100%; }
                 } else {
                     ctx.lineTo(x, y);
                 }
-            }
+            });
             ctx.stroke();
         };
 
-        drawLine(ma5All, '#00ff66', getYPrice);
-        drawLine(ma30All, '#ffea00', getYPrice);
-        drawLine(ma45All, '#ff9100', getYPrice);
-        drawLine(ma60All, '#ff007f', getYPrice);
-        drawLine(vm5All, '#00f0ff', getYVol, 0.9);
-        drawLine(vm20All, '#9d4edd', getYVol, 0.9);
+        drawLine(showMA5, '#00ff66', getYPrice);
+        drawLine(showMA30, '#ffea00', getYPrice);
+        drawLine(showMA45, '#ff9100', getYPrice);
+        drawLine(showMA60, '#ff007f', getYPrice);
+        drawLine(showVM5, '#00f0ff', getYVol, 0.9);
+        drawLine(showVM20, '#9d4edd', getYVol, 0.9);
     }
 
     function loadAndDrawCharts(symbol) {
@@ -1212,8 +1007,6 @@ canvas { display: block; width: 100%; height: 100%; }
             }
         });
     });
-
-    initDB();
 })();
 </script>
 </body>
