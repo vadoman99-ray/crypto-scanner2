@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>⚡ 9／6極速多週期多頭排列儀表板 (>1億USDT)</title>
+<title>⚡ 極速多週期多頭排列儀表板 (>1億USDT)</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@700;800;900&display=swap');
 :root {
@@ -572,23 +572,14 @@ canvas { display: block; width: 100%; height: 100%; }
                 resultsMulti = allMatches.filter(m => m.matchCount >= 2);
 
                 const lowRiskCandidates = allMatches.filter(m => {
-                    const hasHigherBull = (m.bull4h !== null || m.bull1d !== null);
-                    const hasLowerNear = (
-                        (m.bull15m !== null && m.bull15m.ma3DistPercent <= 3.0) || 
-                        (m.bull1h !== null && m.bull1h.ma3DistPercent <= 3.0)
-                    );
-                    return hasHigherBull && hasLowerNear;
+                    const has4hFlash = m.bull4h !== null && m.bull4h.isFirstBarAboveAll;
+                    const has1hNear = m.bull1h !== null && m.bull1h.ma3DistPercent <= 3.0;
+                    return has4hFlash && has1hNear;
                 });
 
                 lowRiskCandidates.sort((a, b) => {
-                    const distA = Math.min(
-                        a.bull15m ? a.bull15m.ma3DistPercent : 99,
-                        a.bull1h ? a.bull1h.ma3DistPercent : 99
-                    );
-                    const distB = Math.min(
-                        b.bull15m ? b.bull15m.ma3DistPercent : 99,
-                        b.bull1h ? b.bull1h.ma3DistPercent : 99
-                    );
+                    const distA = a.bull1h ? a.bull1h.ma3DistPercent : 99;
+                    const distB = b.bull1h ? b.bull1h.ma3DistPercent : 99;
                     return distA - distB;
                 });
                 resultsLowRisk = lowRiskCandidates.slice(0, 5);
@@ -661,9 +652,8 @@ canvas { display: block; width: 100%; height: 100%; }
 
             let distText = '';
             if (activeTab === 'lowRisk') {
-                const d15 = item.bull15m ? `15M距60MA:+${item.bull15m.ma3DistPercent.toFixed(2)}%` : '';
                 const d1h = item.bull1h ? `1H距60MA:+${item.bull1h.ma3DistPercent.toFixed(2)}%` : '';
-                distText = `支撐貼近度: <span class="val-up">${d15 || d1h}</span> (大周期多頭共振)`;
+                distText = `4H閃電出現 | 1H貼近度: <span class="val-up">${d1h}</span>`;
             } else if (activeTab === '15m' && item.bull15m) {
                 distText = `距 15M 60MA: <span class="val-up">+${item.bull15m.ma3DistPercent.toFixed(2)}%</span>`;
             } else if (activeTab === '1h' && item.bull1h) {
@@ -791,7 +781,7 @@ canvas { display: block; width: 100%; height: 100%; }
             const date = new Date(timestamp);
             
             const utcDay = date.getUTCDay();
-            const utcHour = date.getUTCDours ? date.getUTCHours() : date.getUTCHours();
+            const utcHour = date.getUTCHours();
             const utcMin = date.getUTCMinutes();
 
             const isMondayStart = (utcDay === 1 && utcHour === 0);
@@ -873,7 +863,6 @@ canvas { display: block; width: 100%; height: 100%; }
             const vY = getYVol(vol);
             ctx.fillRect(x - bw / 2, vY, bw, volTop + volH - vY);
 
-            // 量能增溫判定：5vm > 20vm 且前一根未達（黃金量能突破/增溫小圖示）
             const vm5Val = vm5All[absoluteIdx];
             const vm20Val = vm20All[absoluteIdx];
             const vm5Prev = vm5All[absoluteIdx - 1];
@@ -891,7 +880,6 @@ canvas { display: block; width: 100%; height: 100%; }
                 ctx.fillStyle = '#00f0ff';
                 ctx.shadowColor = '#00f0ff';
                 ctx.shadowBlur = 6;
-                // 在成交量長條圖上方顯示亮麗小圖示（如 🔥 或 💧/🚀 等，此處採用 🔥 象徵量能增溫爆發）
                 ctx.fillText('🔥', x, volTop - 11);
                 ctx.restore();
             }
@@ -1082,4 +1070,3 @@ canvas { display: block; width: 100%; height: 100%; }
 </script>
 </body>
 </html>
-
