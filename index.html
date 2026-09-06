@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>⚡9/6_2極速多週期多頭排列儀表板 (>1億USDT)</title>
+<title>⚡ 極速多週期多頭排列儀表板 (>1億USDT)</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@700;800;900&display=swap');
 :root {
@@ -417,11 +417,20 @@ canvas { display: block; width: 100%; height: 100%; }
         const m30 = ma30[idx], m45 = ma45[idx], m60 = ma60[idx];
         return (m30 !== null && price >= m30) && (m45 !== null && price >= m45) && (m60 !== null && price >= m60);
     }
-    function isBullishAlignment(klinesRaw) {
+    function checkAboveMAs5_30_45_60(closes, ma5, ma30, ma45, ma60, idx) {
+        if (idx < 0 || idx >= closes.length) return false;
+        const price = closes[idx];
+        return (ma5[idx] !== null && price >= ma5[idx]) &&
+               (ma30[idx] !== null && price >= ma30[idx]) &&
+               (ma45[idx] !== null && price >= ma45[idx]) &&
+               (ma60[idx] !== null && price >= ma60[idx]);
+    }
+    function isBullishAlignment(klinesRaw, is4hOr1d = false) {
         const totalLen = klinesRaw.length;
         if (totalLen < 60) return null;
         const closes = klinesRaw.map(k => parseFloat(k[4]));
         const price = closes[totalLen - 1];
+        const ma0Arr = calculateSMA(closes, 5);
         const ma1Arr = calculateSMA(closes, 30);
         const ma2Arr = calculateSMA(closes, 45);
         const ma3Arr = calculateSMA(closes, 60);
@@ -430,8 +439,12 @@ canvas { display: block; width: 100%; height: 100%; }
         const ma3 = ma3Arr[totalLen - 1];
         if (ma1 !== null && ma2 !== null && ma3 !== null && ma1 > ma2 && ma2 > ma3 && price >= ma3) {
             const ma3DistPercent = ((price - ma3) / ma3) * 100;
-            const isAboveAllNow = checkAboveMAs30_45_60(closes, ma1Arr, ma2Arr, ma3Arr, totalLen - 1);
-            const isAboveAllPrev = checkAboveMAs30_45_60(closes, ma1Arr, ma2Arr, ma3Arr, totalLen - 2);
+            const isAboveAllNow = is4hOr1d ? 
+                checkAboveMAs5_30_45_60(closes, ma0Arr, ma1Arr, ma2Arr, ma3Arr, totalLen - 1) :
+                checkAboveMAs30_45_60(closes, ma1Arr, ma2Arr, ma3Arr, totalLen - 1);
+            const isAboveAllPrev = is4hOr1d ? 
+                checkAboveMAs5_30_45_60(closes, ma0Arr, ma1Arr, ma2Arr, ma3Arr, totalLen - 2) :
+                checkAboveMAs30_45_60(closes, ma1Arr, ma2Arr, ma3Arr, totalLen - 2);
             const isFirstBarAboveAll = isAboveAllNow && !isAboveAllPrev;
             return { price, ma3DistPercent, isAboveAllMAs: isAboveAllNow, isFirstBarAboveAll };
         }
@@ -465,10 +478,10 @@ canvas { display: block; width: 100%; height: 100%; }
                 fetchWithRetry(\`\${apiBase}/fapi/v1/klines?symbol=\${symbol}&interval=1d&limit=\${limits.l1d}\`)
             ]);
 
-            const bull15m = isBullishAlignment(klines15m);
-            const bull1h = isBullishAlignment(klines1h);
-            const bull4hReal = isBullishAlignment(klines4h);
-            const bull1dReal = isBullishAlignment(klines1d);
+            const bull15m = isBullishAlignment(klines15m, false);
+            const bull1h = isBullishAlignment(klines1h, false);
+            const bull4hReal = isBullishAlignment(klines4h, true);
+            const bull1dReal = isBullishAlignment(klines1d, true);
 
             if (!bull15m && !bull1h && !bull4hReal && !bull1dReal) return null;
             let matchCount = 0;
@@ -561,7 +574,8 @@ canvas { display: block; width: 100%; height: 100%; }
                         bull1d: m.bull1d,
                         matchCount: m.matchCount,
                         priceChange24h: ticker ? parseFloat(ticker.priceChangePercent) : 0,
-                        quoteVolume24h: ticker ? parseFloat(ticker.quoteVolume) : 0
+                        quoteVolume24h: ticker ? parseFloat(ticker.quoteVolume) : 0,
+                        rawKlines: m.rawKlines
                     };
                 });
 
@@ -572,15 +586,72 @@ canvas { display: block; width: 100%; height: 100%; }
                 resultsMulti = allMatches.filter(m => m.matchCount >= 2);
 
                 const lowRiskCandidates = allMatches.filter(m => {
-                    const has4hFlash = m.bull4h !== null && m.bull4h.isFirstBarAboveAll;
-                    const has1hNear = m.bull1h !== null && m.bull1h.ma3DistPercent <= 3.0;
-                    return has4hFlash && has1hNear;
+                    // 1. 檢查 4H 是否在最近 1~3 根 K 棒內出現閃電 (isFirstBarAboveAll 為當前根，我們需要往前檢查過去 3 根)
+                    const k4h = m.rawKlines.k4h;
+                    let has4hRecentFlash = false;
+                    if (k4h && k4h.length >= 60) {
+                        const closes4h = k4h.map(k => parseFloat(k[4]));
+                        const ma0_4h = calculateSMA(closes4h, 5);
+                        const ma1_4h = calculateSMA(closes4h, 30);
+                        const ma2_4h = calculateSMA(closes4h, 45);
+                        const ma3_4h = calculateSMA(closes4h, 60);
+                        
+                        // 檢查倒數第 1、2、3 根 (index: len-1, len-2, len-3)
+                        for (let offset = 1; offset <= 3; offset++) {
+                            const idx = k4h.length - offset;
+                            const prevIdx = idx - 1;
+                            if (idx >= 1 && idx < closes4h.length) {
+                                const isAboveNow = (
+                                    ma0_4h[idx] !== null && closes4h[idx] >= ma0_4h[idx] &&
+                                    ma1_4h[idx] !== null && closes4h[idx] >= ma1_4h[idx] &&
+                                    ma2_4h[idx] !== null && closes4h[idx] >= ma2_4h[idx] &&
+                                    ma3_4h[idx] !== null && closes4h[idx] >= ma3_4h[idx]
+                                );
+                                const isAbovePrev = (
+                                    ma0_4h[prevIdx] !== null && closes4h[prevIdx] >= ma0_4h[prevIdx] &&
+                                    ma1_4h[prevIdx] !== null && closes4h[prevIdx] >= ma1_4h[prevIdx] &&
+                                    ma2_4h[prevIdx] !== null && closes4h[prevIdx] >= ma2_4h[prevIdx] &&
+                                    ma3_4h[prevIdx] !== null && closes4h[prevIdx] >= ma3_4h[prevIdx]
+                                );
+                                if (isAboveNow && !isAbovePrev) {
+                                    has4hRecentFlash = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    // 2. 檢查 1H 接近 60MA (距離 60MA <= 3.0%)
+                    let is1hNear60MA = false;
+                    const k1h = m.rawKlines.k1h;
+                    if (k1h && k1h.length >= 60) {
+                        const closes1h = k1h.map(k => parseFloat(k[4]));
+                        const ma3_1h = calculateSMA(closes1h, 60);
+                        const lastIdx = k1h.length - 1;
+                        const price = closes1h[lastIdx];
+                        const m60 = ma3_1h[lastIdx];
+                        if (m60 !== null && price >= m60) {
+                            const dist = ((price - m60) / m60) * 100;
+                            if (dist <= 3.0) {
+                                is1hNear60MA = true;
+                            }
+                        }
+                    }
+
+                    return has4hRecentFlash && is1hNear60MA;
                 });
 
                 lowRiskCandidates.sort((a, b) => {
-                    const distA = a.bull1h ? a.bull1h.ma3DistPercent : 99;
-                    const distB = b.bull1h ? b.bull1h.ma3DistPercent : 99;
-                    return distA - distB;
+                    // 依照 1H 距離 60MA 的近度排序
+                    const getDist = (item) => {
+                        const k1h = item.rawKlines.k1h;
+                        const closes1h = k1h.map(k => parseFloat(k[4]));
+                        const ma3_1h = calculateSMA(closes1h, 60);
+                        const price = closes1h[k1h.length - 1];
+                        const m60 = ma3_1h[k1h.length - 1];
+                        return m60 !== null ? ((price - m60) / m60) * 100 : 99;
+                    };
+                    return getDist(a) - getDist(b);
                 });
                 resultsLowRisk = lowRiskCandidates.slice(0, 5);
 
@@ -652,8 +723,13 @@ canvas { display: block; width: 100%; height: 100%; }
 
             let distText = '';
             if (activeTab === 'lowRisk') {
-                const d1h = item.bull1h ? `1H距60MA:+${item.bull1h.ma3DistPercent.toFixed(2)}%` : '';
-                distText = `4H閃電出現 | 1H貼近度: <span class="val-up">${d1h}</span>`;
+                const k1h = item.rawKlines.k1h;
+                const closes1h = k1h.map(k => parseFloat(k[4]));
+                const ma3_1h = calculateSMA(closes1h, 60);
+                const price = closes1h[k1h.length - 1];
+                const m60 = ma3_1h[k1h.length - 1];
+                const dist = m60 !== null ? ((price - m60) / m60) * 100 : 0;
+                distText = `4H近期閃電 | 1H距60MA: <span class="val-up">+${dist.toFixed(2)}%</span>`;
             } else if (activeTab === '15m' && item.bull15m) {
                 distText = `距 15M 60MA: <span class="val-up">+${item.bull15m.ma3DistPercent.toFixed(2)}%</span>`;
             } else if (activeTab === '1h' && item.bull1h) {
