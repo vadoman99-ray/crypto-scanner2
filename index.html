@@ -467,7 +467,6 @@ canvas { display: block; width: 100%; height: 100%; }
 
             const bull15m = isBullishAlignment(klines15m);
             const bull1h = isBullishAlignment(klines1h);
-            const bull4h = isBullishAlignment(klines1h ? klines4h : klines4h); // placeholder to avoid unused check warning
             const bull4hReal = isBullishAlignment(klines4h);
             const bull1dReal = isBullishAlignment(klines1d);
 
@@ -572,8 +571,6 @@ canvas { display: block; width: 100%; height: 100%; }
                 results1D = allMatches.filter(m => m.bull1d);
                 resultsMulti = allMatches.filter(m => m.matchCount >= 2);
 
-                // 計算「低風險高報酬」前五組：
-                // 條件：15m 或是 1h 接近 60ma（ma3DistPercent 越小越好，即貼近 60ma 支撐），且 4h 或 1d 呈現 30/45/60 多頭排列。
                 const lowRiskCandidates = allMatches.filter(m => {
                     const hasHigherBull = (m.bull4h !== null || m.bull1d !== null);
                     const hasLowerNear = (
@@ -583,7 +580,6 @@ canvas { display: block; width: 100%; height: 100%; }
                     return hasHigherBull && hasLowerNear;
                 });
 
-                // 評分排序：以 15m 或 1h 距離 60ma 的緊貼程度（ma3DistPercent 越小風險越低）來排序，取前五組
                 lowRiskCandidates.sort((a, b) => {
                     const distA = Math.min(
                         a.bull15m ? a.bull15m.ma3DistPercent : 99,
@@ -795,7 +791,7 @@ canvas { display: block; width: 100%; height: 100%; }
             const date = new Date(timestamp);
             
             const utcDay = date.getUTCDay();
-            const utcHour = date.getUTCHours();
+            const utcHour = date.getUTCDours ? date.getUTCHours() : date.getUTCHours();
             const utcMin = date.getUTCMinutes();
 
             const isMondayStart = (utcDay === 1 && utcHour === 0);
@@ -876,6 +872,29 @@ canvas { display: block; width: 100%; height: 100%; }
             ctx.fillStyle = isUp ? 'rgba(0, 255, 102, 0.4)' : 'rgba(255, 42, 109, 0.4)';
             const vY = getYVol(vol);
             ctx.fillRect(x - bw / 2, vY, bw, volTop + volH - vY);
+
+            // 量能增溫判定：5vm > 20vm 且前一根未達（黃金量能突破/增溫小圖示）
+            const vm5Val = vm5All[absoluteIdx];
+            const vm20Val = vm20All[absoluteIdx];
+            const vm5Prev = vm5All[absoluteIdx - 1];
+            const vm20Prev = vm20All[absoluteIdx - 1];
+
+            const isVolWarmingNow = (vm5Val !== null && vm20Val !== null && vm5Val > vm20Val);
+            const isVolWarmingPrev = (vm5Prev !== null && vm20Prev !== null && vm5Prev > vm20Prev);
+            const isFirstBarVolWarming = isVolWarmingNow && !isVolWarmingPrev;
+
+            if (isFirstBarVolWarming) {
+                ctx.save();
+                ctx.font = 'bold 9px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                ctx.fillStyle = '#00f0ff';
+                ctx.shadowColor = '#00f0ff';
+                ctx.shadowBlur = 6;
+                // 在成交量長條圖上方顯示亮麗小圖示（如 🔥 或 💧/🚀 等，此處採用 🔥 象徵量能增溫爆發）
+                ctx.fillText('🔥', x, volTop - 11);
+                ctx.restore();
+            }
 
             const checkAboveMAs5_30_45_60 = (closes, ma5, ma30, ma45, ma60, idx) => {
                 if (idx < 0 || idx >= closes.length) return false;
@@ -1063,3 +1082,4 @@ canvas { display: block; width: 100%; height: 100%; }
 </script>
 </body>
 </html>
+
