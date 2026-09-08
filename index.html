@@ -254,7 +254,7 @@ canvas { display: block; width: 100%; height: 100%; }
     <button id="tab4h" class="tab-btn">⚡4H(<span id="count4h">0</span>)</button>
     <button id="tab1d" class="tab-btn">⚡1D(<span id="count1d">0</span>)</button>
     <button id="tabMulti" class="tab-btn">🔥共振(<span id="countMulti">0</span>)</button>
-    <button id="tabLowRisk" class="tab-btn low-risk">⭐前五精選(<span id="countLowRisk">0</span>)</button>
+    <button id="tabLowRisk" class="tab-btn low-risk">⭐閃電精選(<span id="countLowRisk">0</span>)</button>
 </div>
 <div class="dashboard">
     <div class="stat-card">
@@ -411,12 +411,46 @@ canvas { display: block; width: 100%; height: 100%; }
         }
         return ma;
     }
+    function checkAboveMAs5_30_45_60(closes, ma5, ma30, ma45, ma60, idx) {
+        if (idx < 0 || idx >= closes.length) return false;
+        const price = closes[idx];
+        return (ma5[idx] !== null && price >= ma5[idx]) &&
+               (ma30[idx] !== null && price >= ma30[idx]) &&
+               (ma45[idx] !== null && price >= ma45[idx]) &&
+               (ma60[idx] !== null && price >= ma60[idx]);
+    }
     function checkAboveMAs30_45_60(closes, ma30, ma45, ma60, idx) {
         if (idx < 0 || idx >= closes.length) return false;
         const price = closes[idx];
         const m30 = ma30[idx], m45 = ma45[idx], m60 = ma60[idx];
         return (m30 !== null && price >= m30) && (m45 !== null && price >= m45) && (m60 !== null && price >= m60);
     }
+    function checkIsFirstBarLightning(klinesRaw, is4hOr1d) {
+        const totalLen = klinesRaw.length;
+        if (totalLen < 60) return false;
+        const closes = klinesRaw.map(k => parseFloat(k[4]));
+        const ma1Arr = calculateSMA(closes, 30);
+        const ma2Arr = calculateSMA(closes, 45);
+        const ma3Arr = calculateSMA(closes, 60);
+        const ma5Arr = calculateSMA(closes, 5);
+
+        const nowIdx = totalLen - 1;
+        const prevIdx = totalLen - 2;
+
+        let isNowAbove = false;
+        let isPrevAbove = false;
+
+        if (is4hOr1d) {
+            isNowAbove = checkAboveMAs5_30_45_60(closes, ma5Arr, ma1Arr, ma2Arr, ma3Arr, nowIdx);
+            isPrevAbove = checkAboveMAs5_30_45_60(closes, ma5Arr, ma1Arr, ma2Arr, ma3Arr, prevIdx);
+        } else {
+            isNowAbove = checkAboveMAs30_45_60(closes, ma1Arr, ma2Arr, ma3Arr, nowIdx);
+            isPrevAbove = checkAboveMAs30_45_60(closes, ma1Arr, ma2Arr, ma3Arr, prevIdx);
+        }
+
+        return isNowAbove && !isPrevAbove;
+    }
+
     function isBullishAlignment(klinesRaw) {
         const totalLen = klinesRaw.length;
         if (totalLen < 60) return null;
@@ -477,8 +511,20 @@ canvas { display: block; width: 100%; height: 100%; }
             if (bull4hReal) matchCount++;
             if (bull1dReal) matchCount++;
 
+            const lightning1h = checkIsFirstBarLightning(klines1h, false);
+            const lightning4h = checkIsFirstBarLightning(klines4h, true);
+            const lightning1d = checkIsFirstBarLightning(klines1d, true);
+
+            const isLightningMatch = lightning1h || lightning4h || lightning1d;
+
+            let lightningType = '';
+            if (lightning1d) lightningType = '1D';
+            else if (lightning4h) lightningType = '4H';
+            else if (lightning1h) lightningType = '1H';
+
             return {
                 symbol, bull15m, bull1h, bull4h: bull4hReal, bull1d: bull1dReal, matchCount,
+                isLightningMatch, lightningType,
                 currentPrice: (bull15m || bull1h || bull4hReal || bull1dReal).price,
                 rawKlines: { k15m: klines15m, k1h: klines1h, k4h: klines4h, k1d: klines1d }
             };
@@ -560,6 +606,8 @@ canvas { display: block; width: 100%; height: 100%; }
                         bull4h: m.bull4h,
                         bull1d: m.bull1d,
                         matchCount: m.matchCount,
+                        isLightningMatch: m.isLightningMatch,
+                        lightningType: m.lightningType,
                         priceChange24h: ticker ? parseFloat(ticker.priceChangePercent) : 0,
                         quoteVolume24h: ticker ? parseFloat(ticker.quoteVolume) : 0
                     };
@@ -570,31 +618,7 @@ canvas { display: block; width: 100%; height: 100%; }
                 results4H = allMatches.filter(m => m.bull4h);
                 results1D = allMatches.filter(m => m.bull1d);
                 resultsMulti = allMatches.filter(m => m.matchCount >= 2);
-
-                const lowRiskCandidates = allMatches.filter(m => {
-                    const hasHigherBull = (m.bull1d !== null);
-                    const hasLowerNear = (
-                        (m.bull4h !== null && m.bull4h.ma3DistPercent <= 3.0) || 
-                        (m.bull1h !== null && m.bull1h.ma3DistPercent <= 3.0) ||
-                        (m.bull1d !== null && m.bull1d.ma3DistPercent <= 3.0)
-                    );
-                    return hasHigherBull && hasLowerNear;
-                });
-
-                lowRiskCandidates.sort((a, b) => {
-                    const distA = Math.min(
-                        a.bull4h ? a.bull4h.ma3DistPercent : 99,
-                        a.bull1h ? a.bull1h.ma3DistPercent : 99,
-                        a.bull1d ? a.bull1d.ma3DistPercent : 99
-                    );
-                    const distB = Math.min(
-                        b.bull4h ? b.bull4h.ma3DistPercent : 99,
-                        b.bull1h ? b.bull1h.ma3DistPercent : 99,
-                        b.bull1d ? b.bull1d.ma3DistPercent : 99
-                    );
-                    return distA - distB;
-                });
-                resultsLowRisk = lowRiskCandidates.slice(0, 5);
+                resultsLowRisk = allMatches.filter(m => m.isLightningMatch);
 
                 const sortByChange = (a, b) => b.priceChange24h - a.priceChange24h;
                 results15M.sort(sortByChange);
@@ -602,6 +626,7 @@ canvas { display: block; width: 100%; height: 100%; }
                 results4H.sort(sortByChange);
                 results1D.sort(sortByChange);
                 resultsMulti.sort(sortByChange);
+                resultsLowRisk.sort(sortByChange);
 
                 dom.count15m.innerText = results15M.length;
                 dom.count1h.innerText = results1H.length;
@@ -655,7 +680,7 @@ canvas { display: block; width: 100%; height: 100%; }
 
             let badgeHtml = '';
             if (activeTab === 'lowRisk') {
-                badgeHtml = `<span class="badge-lowrisk">⭐ 低風險精選 #${index + 1}</span>`;
+                badgeHtml = `<span class="badge-lowrisk">⚡ ${item.lightningType} 閃電第一根</span>`;
             } else if (item.matchCount >= 2) {
                 badgeHtml = `<span class="badge-multi">🔥 ${item.matchCount}週期共振 (${matchBadges.join('+')})</span>`;
             } else {
@@ -664,10 +689,7 @@ canvas { display: block; width: 100%; height: 100%; }
 
             let distText = '';
             if (activeTab === 'lowRisk') {
-                const d4h = item.bull4h ? `4H距60MA:+${item.bull4h.ma3DistPercent.toFixed(2)}%` : '';
-                const d1h = item.bull1h ? `1H距60MA:+${item.bull1h.ma3DistPercent.toFixed(2)}%` : '';
-                const d1d = item.bull1d ? `1D距60MA:+${item.bull1d.ma3DistPercent.toFixed(2)}%` : '';
-                distText = `支撐貼近度: <span class="val-up">${d4h || d1h || d1d}</span> (日線多頭共振)`;
+                distText = `觸發週期: <span class="val-up">${item.lightningType} 週期出現閃電突破訊號</span>`;
             } else if (activeTab === '15m' && item.bull15m) {
                 distText = `距 15M 60MA: <span class="val-up">+${item.bull15m.ma3DistPercent.toFixed(2)}%</span>`;
             } else if (activeTab === '1h' && item.bull1h) {
