@@ -247,7 +247,7 @@ canvas { display: block; width: 100%; height: 100%; }
         <button id="scanBtn" class="scan-btn">啟動極速掃描</button>
     </div>
 </div>
-<div class="progress-container"><div id="progress" class="progress-fill"></div></div>
+<div class="progress-parameter"><div id="progress" class="progress-fill"></div></div>
 <div class="tab-container">
     <button id="tab15m" class="tab-btn active">⚡15M(<span id="count15m">0</span>)</button>
     <button id="tab1h" class="tab-btn">⚡1H(<span id="count1h">0</span>)</button>
@@ -282,6 +282,7 @@ canvas { display: block; width: 100%; height: 100%; }
                 <div class="legend-item"><div class="legend-color" style="background:#ffea00"></div>30MA</div>
                 <div class="legend-item"><div class="legend-color" style="background:#ff9100"></div>45MA</div>
                 <div class="legend-item"><div class="legend-color" style="background:#ff007f"></div>60MA</div>
+                <div class="legend-item"><div class="legend-color" style="background:rgba(255,0,127,0.5)"></div>60布林軌</div>
                 <div class="legend-item"><div class="legend-color" style="background:#00f0ff"></div>5VM</div>
                 <div class="legend-item"><div class="legend-color" style="background:#9d4edd"></div>20VM</div>
             </div>
@@ -311,17 +312,17 @@ canvas { display: block; width: 100%; height: 100%; }
 <script>
 (() => {
     const API_BASE = 'https://fapi.binance.com';
-    const P0 = 5, P1 = 30, P2 = 45, P3 = 60;
+    const P0 = 5, P1 = 30, P2 = 45, P3 = 60, P_BOLL = 60;
     const COUNT_15M = 240;
     const COUNT_1H = 120;
     const COUNT_4H = 60;
     const COUNT_1D = 60;
     const MAX_VM_PERIOD = 20;
 
-    const FETCH_LIMIT_15M = COUNT_15M + Math.max(P3, MAX_VM_PERIOD);
-    const FETCH_LIMIT_1H = COUNT_1H + Math.max(P3, MAX_VM_PERIOD);
-    const FETCH_LIMIT_4H = COUNT_4H + Math.max(P3, MAX_VM_PERIOD);
-    const FETCH_LIMIT_1D = COUNT_1D + Math.max(P3, MAX_VM_PERIOD);
+    const FETCH_LIMIT_15M = COUNT_15M + Math.max(P3, P_BOLL, MAX_VM_PERIOD);
+    const FETCH_LIMIT_1H = COUNT_1H + Math.max(P3, P_BOLL, MAX_VM_PERIOD);
+    const FETCH_LIMIT_4H = COUNT_4H + Math.max(P3, P_BOLL, MAX_VM_PERIOD);
+    const FETCH_LIMIT_1D = COUNT_1D + Math.max(P3, P_BOLL, MAX_VM_PERIOD);
 
     let results15M = [];
     let results1H = [];
@@ -390,6 +391,26 @@ canvas { display: block; width: 100%; height: 100%; }
             ma[i] = sum / period;
         }
         return ma;
+    }
+
+    function calculateBollingerBands(data, period, multiplier = 2) {
+        const len = data.length;
+        const sma = calculateSMA(data, period);
+        const upper = new Array(len).fill(null);
+        const lower = new Array(len).fill(null);
+
+        for (let i = period - 1; i < len; i++) {
+            const mean = sma[i];
+            if (mean === null) continue;
+            let varianceSum = 0;
+            for (let j = i - period + 1; j <= i; j++) {
+                varianceSum += Math.pow(data[j] - mean, 2);
+            }
+            const stdDev = Math.sqrt(varianceSum / period);
+            upper[i] = mean + multiplier * stdDev;
+            lower[i] = mean - multiplier * stdDev;
+        }
+        return { middle: sma, upper, lower };
     }
 
     function formatVolumeText(volume) {
@@ -733,6 +754,7 @@ canvas { display: block; width: 100%; height: 100%; }
         const ma30All = calculateSMA(closesAll, P1);
         const ma45All = calculateSMA(closesAll, P2);
         const ma60All = calculateSMA(closesAll, P3);
+        const boll60 = calculateBollingerBands(closesAll, P_BOLL, 2);
         const vm5All = calculateSMA(volumesAll, 5);
         const vm20All = calculateSMA(volumesAll, 20);
 
@@ -744,6 +766,8 @@ canvas { display: block; width: 100%; height: 100%; }
         const showMA30 = ma30All.slice(-actualShowCount);
         const showMA45 = ma45All.slice(-actualShowCount);
         const showMA60 = ma60All.slice(-actualShowCount);
+        const showBollUpper = boll60.upper.slice(-actualShowCount);
+        const showBollLower = boll60.lower.slice(-actualShowCount);
         const showVM5 = vm5All.slice(-actualShowCount);
         const showVM20 = vm20All.slice(-actualShowCount);
 
@@ -766,10 +790,14 @@ canvas { display: block; width: 100%; height: 100%; }
         const chartW = width - padding.left - padding.right;
 
         let minP = Infinity, maxP = -Infinity;
-        showK.forEach(k => {
+        showK.forEach((k, i) => {
             const l = parseFloat(k[3]), h = parseFloat(k[2]);
             if (l < minP) minP = l;
             if (h > maxP) maxP = h;
+            const bUp = showBollUpper[i];
+            const bLow = showBollLower[i];
+            if (bUp !== null && bUp > maxP) maxP = bUp;
+            if (bLow !== null && bLow < minP) minP = bLow;
         });
 
         let maxVol = -Infinity;
@@ -961,9 +989,11 @@ canvas { display: block; width: 100%; height: 100%; }
             }
         });
 
-        const drawLine = (dataArray, color, getYFunc, width = 1) => {
+        const drawLine = (dataArray, color, getYFunc, width = 1, isDashed = false) => {
             ctx.strokeStyle = color;
             ctx.lineWidth = width;
+            if (isDashed) ctx.setLineDash([2, 2]);
+            else ctx.setLineDash([]);
             ctx.beginPath();
             let started = false;
             dataArray.forEach((val, i) => {
@@ -978,8 +1008,11 @@ canvas { display: block; width: 100%; height: 100%; }
                 }
             });
             ctx.stroke();
+            ctx.setLineDash([]);
         };
 
+        drawLine(showBollUpper, 'rgba(255, 0, 127, 0.5)', getYPrice, 1, true);
+        drawLine(showBollLower, 'rgba(255, 0, 127, 0.5)', getYPrice, 1, true);
         drawLine(showMA5, '#00ff66', getYPrice);
         drawLine(showMA30, '#ffea00', getYPrice);
         drawLine(showMA45, '#ff9100', getYPrice);
