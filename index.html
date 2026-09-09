@@ -282,7 +282,7 @@ canvas { display: block; width: 100%; height: 100%; }
                 <div class="legend-item"><div class="legend-color" style="background:#ffea00"></div>30MA</div>
                 <div class="legend-item"><div class="legend-color" style="background:#ff9100"></div>45MA</div>
                 <div class="legend-item"><div class="legend-color" style="background:#ff007f"></div>60MA</div>
-                <div class="legend-item"><div class="legend-color" style="background:rgba(255,0,127,0.5)"></div>60布林軌</div>
+                <div class="legend-item"><div class="legend-color" style="background:#ff007f"></div>60布林軌</div>
                 <div class="legend-item"><div class="legend-color" style="background:#00f0ff"></div>5VM</div>
                 <div class="legend-item"><div class="legend-color" style="background:#9d4edd"></div>20VM</div>
             </div>
@@ -902,6 +902,47 @@ canvas { display: block; width: 100%; height: 100%; }
         ctx.setLineDash([]);
         ctx.lineWidth = 1;
 
+        // 優先繪製布林軌道：增強線寬與螢光發光效果，使其非常明顯與亮眼
+        const drawLine = (dataArray, color, getYFunc, width = 1, isDashed = false, glowColor = null, glowBlur = 0) => {
+            ctx.save();
+            if (glowBlur > 0) {
+                ctx.shadowColor = glowColor || color;
+                ctx.shadowBlur = glowBlur;
+            }
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            if (isDashed) ctx.setLineDash([3, 2]);
+            else ctx.setLineDash([]);
+            ctx.beginPath();
+            let started = false;
+            dataArray.forEach((val, i) => {
+                if (val === null) return;
+                const x = padding.left + i * barWidth + barWidth / 2;
+                const y = getYFunc(val);
+                if (!started) {
+                    ctx.moveTo(x, y);
+                    started = true;
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+            ctx.stroke();
+            ctx.restore();
+        };
+
+        // 60布林軌道上下軌：改用高亮度螢光桃紅 (#ff007f)、加粗線寬 (1.6px)、加入強烈霓虹光暈 (blur 6)
+        drawLine(showBollUpper, '#ff007f', getYPrice, 1.6, false, '#ff007f', 6);
+        drawLine(showBollLower, '#ff007f', getYPrice, 1.6, false, '#ff007f', 6);
+
+        // 繪製其他均線與成交量均線
+        drawLine(showMA5, '#00ff66', getYPrice);
+        drawLine(showMA30, '#ffea00', getYPrice);
+        drawLine(showMA45, '#ff9100', getYPrice);
+        drawLine(showMA60, '#ff007f', getYPrice);
+        drawLine(showVM5, '#00f0ff', getYVol, 0.9);
+        drawLine(showVM20, '#9d4edd', getYVol, 0.9);
+
+        // 繪製 K 線與成交量長條
         showK.forEach((k, i) => {
             const absoluteIdx = showStartIndex + i;
             const open = parseFloat(k[1]), high = parseFloat(k[2]), low = parseFloat(k[3]), close = parseFloat(k[4]), vol = parseFloat(k[5]);
@@ -988,37 +1029,6 @@ canvas { display: block; width: 100%; height: 100%; }
                 ctx.restore();
             }
         });
-
-        const drawLine = (dataArray, color, getYFunc, width = 1, isDashed = false) => {
-            ctx.strokeStyle = color;
-            ctx.lineWidth = width;
-            if (isDashed) ctx.setLineDash([2, 2]);
-            else ctx.setLineDash([]);
-            ctx.beginPath();
-            let started = false;
-            dataArray.forEach((val, i) => {
-                if (val === null) return;
-                const x = padding.left + i * barWidth + barWidth / 2;
-                const y = getYFunc(val);
-                if (!started) {
-                    ctx.moveTo(x, y);
-                    started = true;
-                } else {
-                    ctx.lineTo(x, y);
-                }
-            });
-            ctx.stroke();
-            ctx.setLineDash([]);
-        };
-
-        drawLine(showBollUpper, 'rgba(255, 0, 127, 0.5)', getYPrice, 1, true);
-        drawLine(showBollLower, 'rgba(255, 0, 127, 0.5)', getYPrice, 1, true);
-        drawLine(showMA5, '#00ff66', getYPrice);
-        drawLine(showMA30, '#ffea00', getYPrice);
-        drawLine(showMA45, '#ff9100', getYPrice);
-        drawLine(showMA60, '#ff007f', getYPrice);
-        drawLine(showVM5, '#00f0ff', getYVol, 0.9);
-        drawLine(showVM20, '#9d4edd', getYVol, 0.9);
     }
 
     function loadAndDrawCharts(symbol) {
