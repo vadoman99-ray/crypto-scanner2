@@ -313,10 +313,10 @@ canvas { display: block; width: 100%; height: 100%; }
 (() => {
     const API_BASE = 'https://fapi.binance.com';
     const P0 = 5, P1 = 30, P2 = 45, P3 = 60, P_BOLL = 60;
-    const COUNT_15M = 240;
-    const COUNT_1H = 120;
-    const COUNT_4H = 60;
-    const COUNT_1D = 60;
+    const COUNT_15M = 150;
+    const COUNT_1H = 80;
+    const COUNT_4H = 48;
+    const COUNT_1D = 28;
     const MAX_VM_PERIOD = 20;
 
     const FETCH_LIMIT_15M = COUNT_15M + Math.max(P3, P_BOLL, MAX_VM_PERIOD);
@@ -902,7 +902,6 @@ canvas { display: block; width: 100%; height: 100%; }
         ctx.setLineDash([]);
         ctx.lineWidth = 1;
 
-        // 優先繪製布林軌道：增強線寬與螢光發光效果，使其非常明顯與亮眼
         const drawLine = (dataArray, color, getYFunc, width = 1, isDashed = false, glowColor = null, glowBlur = 0) => {
             ctx.save();
             if (glowBlur > 0) {
@@ -930,11 +929,9 @@ canvas { display: block; width: 100%; height: 100%; }
             ctx.restore();
         };
 
-        // 60布林軌道上下軌：改用高亮度螢光桃紅 (#ff007f)、加粗線寬 (1.6px)、加入強烈霓虹光暈 (blur 6)
         drawLine(showBollUpper, '#ff007f', getYPrice, 1.6, false, '#ff007f', 6);
         drawLine(showBollLower, '#ff007f', getYPrice, 1.6, false, '#ff007f', 6);
 
-        // 繪製其他均線與成交量均線
         drawLine(showMA5, '#00ff66', getYPrice);
         drawLine(showMA30, '#ffea00', getYPrice);
         drawLine(showMA45, '#ff9100', getYPrice);
@@ -942,7 +939,6 @@ canvas { display: block; width: 100%; height: 100%; }
         drawLine(showVM5, '#00f0ff', getYVol, 0.9);
         drawLine(showVM20, '#9d4edd', getYVol, 0.9);
 
-        // 繪製 K 線與成交量長條
         showK.forEach((k, i) => {
             const absoluteIdx = showStartIndex + i;
             const open = parseFloat(k[1]), high = parseFloat(k[2]), low = parseFloat(k[3]), close = parseFloat(k[4]), vol = parseFloat(k[5]);
