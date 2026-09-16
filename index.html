@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>⚡ 極速多週期多頭排列儀表板 (>1億USDT)</title>
+<title>⚡ 極速多週期多頭排列儀表板 (漲幅排行前100)</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@700;800;900&display=swap');
 :root {
@@ -243,7 +243,7 @@ canvas { display: block; width: 100%; height: 100%; }
 <body>
 <div class="app-header">
     <div class="header-top">
-        <div class="header-title">⚡ 多週期多頭排列儀表板 (>1億USDT)</div>
+        <div class="header-title">⚡ 多週期多頭排列儀表板 (漲幅排行前100)</div>
         <button id="scanBtn" class="scan-btn">啟動極速掃描</button>
     </div>
 </div>
@@ -259,7 +259,7 @@ canvas { display: block; width: 100%; height: 100%; }
 <div class="dashboard">
     <div class="stat-card">
         <div class="val" id="statTotal" style="color:var(--manga-cyan)">0</div>
-        <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">掃描目標數 (>1億USDT)</div>
+        <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">掃描目標數 (漲幅前100)</div>
     </div>
     <div class="stat-card entry">
         <div class="val" id="statEntry">0</div>
@@ -579,12 +579,14 @@ canvas { display: block; width: 100%; height: 100%; }
         dom.progress.style.width = '0%';
         klinesCache.clear();
 
+        let allTickers = [];
         try {
             const res = await fetch(`${API_BASE}/fapi/v1/ticker/24hr`);
             if (res.ok) {
                 const data = await res.json();
                 tickerMap.clear();
                 data.forEach(d => tickerMap.set(d.symbol, d));
+                allTickers = data;
             }
         } catch {
             alert("無法取得行情數據，請檢查網路連線。");
@@ -593,11 +595,12 @@ canvas { display: block; width: 100%; height: 100%; }
             return;
         }
 
-        const MIN_VOLUME = 100000000;
-        const candidateSymbols = Array.from(tickerMap.keys()).filter(sym => {
-            if (!sym.endsWith('USDT')) return false;
-            return parseFloat(tickerMap.get(sym).quoteVolume) > MIN_VOLUME;
-        });
+        // 過濾 USDT 合約，並依 24H 漲幅由高到低排序，取前 100 名
+        const candidateSymbols = allTickers
+            .filter(d => d.symbol.endsWith('USDT'))
+            .sort((a, b) => parseFloat(b.priceChangePercent) - parseFloat(a.priceChangePercent))
+            .slice(0, 100)
+            .map(d => d.symbol);
 
         dom.statTotal.innerText = candidateSymbols.length;
 
