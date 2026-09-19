@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>⚡ 極速多週期多頭排列儀表板 (漲幅排行前100)</title>
+<title>⚡ 極速多週期多頭排列儀表板 (交易量前100)</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@700;800;900&display=swap');
 :root {
@@ -144,6 +144,8 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
 .badge-lowrisk { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 234, 0, 0.2); color: var(--manga-yellow); border: 1px solid var(--manga-yellow); }
 .val-up { color: var(--manga-green); }
 .val-down { color: var(--manga-red); }
+
+/* 彈跳視窗與 2x2 網格樣式修改 */
 .chart-modal {
     position: fixed;
     top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh;
@@ -160,7 +162,7 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
 }
 .chart-modal.active { display: flex; }
 .chart-box {
-    width: 100%; max-width: 1050px;
+    width: 100%; max-width: 1200px;
     height: 100%; max-height: 100vh; max-height: 100dvh;
     background: #0b0f19;
     border: 1px solid rgba(0, 240, 255, 0.35);
@@ -186,7 +188,7 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
 .header-title-group { display: flex; align-items: center; gap: 6px; }
 .symbol-title { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; font-weight: 800; color: #fff; }
 .symbol-rank-tag { font-size: 0.65rem; color: var(--manga-cyan); font-weight: 800; }
-.legend-bar { display: flex; gap: 4px; font-size: 0.55rem; font-family: 'JetBrains Mono', monospace; flex-wrap: wrap; }
+.legend-bar { display: flex; gap: 6px; font-size: 0.55rem; font-family: 'JetBrains Mono', monospace; flex-wrap: wrap; }
 .legend-item { display: flex; align-items: center; gap: 2px; }
 .legend-color { width: 5px; height: 5px; border-radius: 2px; }
 .close-btn {
@@ -217,9 +219,28 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
 .nav-btn:hover { background: var(--manga-cyan); color: #000; box-shadow: 0 0 12px var(--manga-cyan); }
 .nav-btn.prev { left: 4px; }
 .nav-btn.next { right: 4px; }
-.charts-wrapper { flex: 1; width: 100%; display: flex; flex-direction: column; background: #060911; overflow: hidden; min-height: 0; }
-.chart-panel { flex: 1; width: 100%; position: relative; border-bottom: 1px solid rgba(255, 255, 255, 0.08); min-height: 0; }
-.chart-panel:last-child { border-bottom: none; }
+
+/* 左右上下 2x2 網格排版 */
+.charts-wrapper {
+    flex: 1;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    background: #060911;
+    overflow: hidden;
+    min-height: 0;
+}
+.chart-panel {
+    position: relative;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    min-height: 0;
+}
+.chart-panel:nth-child(2) { border-right: none; }
+.chart-panel:nth-child(4) { border-right: none; }
+.chart-panel:nth-child(3), .chart-panel:nth-child(4) { border-bottom: none; }
+
 .panel-tag {
     position: absolute; top: 3px; left: 6px; z-index: 5;
     font-family: 'JetBrains Mono', monospace; font-size: 0.55rem; font-weight: 800;
@@ -229,12 +250,13 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
     pointer-events: none;
 }
 canvas { display: block; width: 100%; height: 100%; }
+
 @media (max-width: 600px) {
     .chart-modal { padding: 0; }
     .chart-box { max-height: 100vh; max-height: 100dvh; border-radius: 0; border: none; }
     .chart-header { padding: 4px 8px; }
     .symbol-title { font-size: 0.8rem; }
-    .legend-bar { font-size: 0.5rem; gap: 3px; }
+    .legend-bar { font-size: 0.5rem; gap: 4px; }
     .nav-btn { width: 28px; height: 28px; font-size: 0.9rem; opacity: 0.6; }
     .tab-btn { font-size: 0.55rem; padding: 6px 1px; }
 }
@@ -243,7 +265,7 @@ canvas { display: block; width: 100%; height: 100%; }
 <body>
 <div class="app-header">
     <div class="header-top">
-        <div class="header-title">⚡ 多週期多頭排列儀表板 (漲幅排行前100)</div>
+        <div class="header-title">⚡ 多週期多頭排列儀表板 (交易量前100)</div>
         <button id="scanBtn" class="scan-btn">啟動極速掃描</button>
     </div>
 </div>
@@ -259,7 +281,7 @@ canvas { display: block; width: 100%; height: 100%; }
 <div class="dashboard">
     <div class="stat-card">
         <div class="val" id="statTotal" style="color:var(--manga-cyan)">0</div>
-        <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">掃描目標數 (漲幅前100)</div>
+        <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">掃描目標數 (交易量前100)</div>
     </div>
     <div class="stat-card entry">
         <div class="val" id="statEntry">0</div>
@@ -282,12 +304,10 @@ canvas { display: block; width: 100%; height: 100%; }
                 <div class="legend-item"><div class="legend-color" style="background:#ffea00"></div>30MA</div>
                 <div class="legend-item"><div class="legend-color" style="background:#ff9100"></div>45MA</div>
                 <div class="legend-item"><div class="legend-color" style="background:#ff007f"></div>60MA</div>
-                <div class="legend-item"><div class="legend-color" style="background:#ff007f"></div>60布林軌</div>
-                <div class="legend-item"><div class="legend-color" style="background:#00f0ff"></div>5VM</div>
-                <div class="legend-item"><div class="legend-color" style="background:#9d4edd"></div>20VM</div>
             </div>
             <button id="closeModalBtn" class="close-btn" aria-label="關閉">✕</button>
         </div>
+        <!-- 左右上下 2x2 網格圖表區塊 -->
         <div class="charts-wrapper" id="chartsWrapper">
             <div class="chart-panel" id="wrapper15m" data-period="15m">
                 <span class="panel-tag" id="tagText15m">15M</span>
@@ -312,17 +332,16 @@ canvas { display: block; width: 100%; height: 100%; }
 <script>
 (() => {
     const API_BASE = 'https://fapi.binance.com';
-    const P0 = 5, P1 = 30, P2 = 45, P3 = 60, P_BOLL = 60;
+    const P0 = 5, P1 = 30, P2 = 45, P3 = 60;
     const COUNT_15M = 150;
     const COUNT_1H = 80;
     const COUNT_4H = 48;
     const COUNT_1D = 28;
-    const MAX_VM_PERIOD = 20;
 
-    const FETCH_LIMIT_15M = COUNT_15M + Math.max(P3, P_BOLL, MAX_VM_PERIOD);
-    const FETCH_LIMIT_1H = COUNT_1H + Math.max(P3, P_BOLL, MAX_VM_PERIOD);
-    const FETCH_LIMIT_4H = COUNT_4H + Math.max(P3, P_BOLL, MAX_VM_PERIOD);
-    const FETCH_LIMIT_1D = COUNT_1D + Math.max(P3, P_BOLL, MAX_VM_PERIOD);
+    const FETCH_LIMIT_15M = COUNT_15M + P3;
+    const FETCH_LIMIT_1H = COUNT_1H + P3;
+    const FETCH_LIMIT_4H = COUNT_4H + P3;
+    const FETCH_LIMIT_1D = COUNT_1D + P3;
 
     let results15M = [];
     let results1H = [];
@@ -391,26 +410,6 @@ canvas { display: block; width: 100%; height: 100%; }
             ma[i] = sum / period;
         }
         return ma;
-    }
-
-    function calculateBollingerBands(data, period, multiplier = 2) {
-        const len = data.length;
-        const sma = calculateSMA(data, period);
-        const upper = new Array(len).fill(null);
-        const lower = new Array(len).fill(null);
-
-        for (let i = period - 1; i < len; i++) {
-            const mean = sma[i];
-            if (mean === null) continue;
-            let varianceSum = 0;
-            for (let j = i - period + 1; j <= i; j++) {
-                varianceSum += Math.pow(data[j] - mean, 2);
-            }
-            const stdDev = Math.sqrt(varianceSum / period);
-            upper[i] = mean + multiplier * stdDev;
-            lower[i] = mean - multiplier * stdDev;
-        }
-        return { middle: sma, upper, lower };
     }
 
     function formatVolumeText(volume) {
@@ -595,10 +594,10 @@ canvas { display: block; width: 100%; height: 100%; }
             return;
         }
 
-        // 過濾 USDT 合約，並依 24H 漲幅由高到低排序，取前 100 名
+        // 修改處：從 50 改為 100
         const candidateSymbols = allTickers
             .filter(d => d.symbol.endsWith('USDT'))
-            .sort((a, b) => parseFloat(b.priceChangePercent) - parseFloat(a.priceChangePercent))
+            .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
             .slice(0, 100)
             .map(d => d.symbol);
 
@@ -644,13 +643,13 @@ canvas { display: block; width: 100%; height: 100%; }
                 resultsMulti = allMatches.filter(m => m.matchCount >= 2);
                 resultsLowRisk = allMatches.filter(m => m.isLightningMatch);
 
-                const sortByChange = (a, b) => b.priceChange24h - a.priceChange24h;
-                results15M.sort(sortByChange);
-                results1H.sort(sortByChange);
-                results4H.sort(sortByChange);
-                results1D.sort(sortByChange);
-                resultsMulti.sort(sortByChange);
-                resultsLowRisk.sort(sortByChange);
+                const sortByVolume = (a, b) => b.quoteVolume24h - a.quoteVolume24h;
+                results15M.sort(sortByVolume);
+                results1H.sort(sortByVolume);
+                results4H.sort(sortByVolume);
+                results1D.sort(sortByVolume);
+                resultsMulti.sort(sortByVolume);
+                resultsLowRisk.sort(sortByVolume);
 
                 dom.count15m.innerText = results15M.length;
                 dom.count1h.innerText = results1H.length;
@@ -752,14 +751,10 @@ canvas { display: block; width: 100%; height: 100%; }
 
     function renderCanvasChart(canvas, wrapper, ctx, klinesRaw, showCount, periodType) {
         const closesAll = klinesRaw.map(k => parseFloat(k[4]));
-        const volumesAll = klinesRaw.map(k => parseFloat(k[5]));
         const ma5All = calculateSMA(closesAll, P0);
         const ma30All = calculateSMA(closesAll, P1);
         const ma45All = calculateSMA(closesAll, P2);
         const ma60All = calculateSMA(closesAll, P3);
-        const boll60 = calculateBollingerBands(closesAll, P_BOLL, 2);
-        const vm5All = calculateSMA(volumesAll, 5);
-        const vm20All = calculateSMA(volumesAll, 20);
 
         const actualShowCount = Math.min(showCount, klinesRaw.length);
         const showStartIndex = klinesRaw.length - actualShowCount;
@@ -769,10 +764,6 @@ canvas { display: block; width: 100%; height: 100%; }
         const showMA30 = ma30All.slice(-actualShowCount);
         const showMA45 = ma45All.slice(-actualShowCount);
         const showMA60 = ma60All.slice(-actualShowCount);
-        const showBollUpper = boll60.upper.slice(-actualShowCount);
-        const showBollLower = boll60.lower.slice(-actualShowCount);
-        const showVM5 = vm5All.slice(-actualShowCount);
-        const showVM20 = vm20All.slice(-actualShowCount);
 
         const rect = wrapper.getBoundingClientRect();
         if (rect.width === 0 || rect.height === 0) return;
@@ -785,33 +776,19 @@ canvas { display: block; width: 100%; height: 100%; }
         const width = rect.width;
         const height = rect.height;
 
-        const padding = { top: 18, bottom: 4, left: 6, right: 55 };
-        const totalH = height - padding.top - padding.bottom;
-        const priceH = totalH * 0.65;
-        const volH = totalH * 0.25;
-        const volTop = padding.top + priceH + totalH * 0.10;
+        const padding = { top: 18, bottom: 6, left: 6, right: 55 };
+        const chartH = height - padding.top - padding.bottom;
         const chartW = width - padding.left - padding.right;
 
         let minP = Infinity, maxP = -Infinity;
-        showK.forEach((k, i) => {
+        showK.forEach((k) => {
             const l = parseFloat(k[3]), h = parseFloat(k[2]);
             if (l < minP) minP = l;
             if (h > maxP) maxP = h;
-            const bUp = showBollUpper[i];
-            const bLow = showBollLower[i];
-            if (bUp !== null && bUp > maxP) maxP = bUp;
-            if (bLow !== null && bLow < minP) minP = bLow;
-        });
-
-        let maxVol = -Infinity;
-        showK.forEach(k => {
-            const v = parseFloat(k[5]);
-            if (v > maxVol) maxVol = v;
         });
 
         const priceRange = maxP - minP || 1;
-        const getYPrice = (p) => padding.top + priceH - ((p - minP) / priceRange) * priceH;
-        const getYVol = (v) => volTop + volH - (v / (maxVol || 1)) * volH;
+        const getYPrice = (p) => padding.top + chartH - ((p - minP) / priceRange) * chartH;
         const barWidth = chartW / actualShowCount;
 
         ctx.clearRect(0, 0, width, height);
@@ -822,9 +799,9 @@ canvas { display: block; width: 100%; height: 100%; }
         ctx.textAlign = 'left';
         ctx.lineWidth = 1;
 
-        const gridLines = 1;
+        const gridLines = 3;
         for (let i = 0; i <= gridLines; i++) {
-            const y = padding.top + (priceH / gridLines) * i;
+            const y = padding.top + (chartH / gridLines) * i;
             const pVal = maxP - (priceRange / gridLines) * i;
             ctx.beginPath();
             ctx.moveTo(padding.left, y);
@@ -832,14 +809,6 @@ canvas { display: block; width: 100%; height: 100%; }
             ctx.stroke();
             ctx.fillText(pVal.toFixed(1), width - padding.right + 3, y + 3);
         }
-
-        ctx.beginPath();
-        ctx.moveTo(padding.left, volTop);
-        ctx.lineTo(width - padding.right, volTop);
-        ctx.stroke();
-
-        const formatVol = (v) => v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : (v / 1e3).toFixed(0) + 'K';
-        ctx.fillText(formatVol(maxVol), width - padding.right + 3, volTop + 6);
 
         const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
 
@@ -862,7 +831,7 @@ canvas { display: block; width: 100%; height: 100%; }
                     const x = padding.left + i * barWidth + barWidth / 2;
                     ctx.beginPath();
                     ctx.moveTo(x, padding.top);
-                    ctx.lineTo(x, padding.top + totalH);
+                    ctx.lineTo(x, padding.top + chartH);
                     ctx.stroke();
                 }
             } else {
@@ -873,7 +842,7 @@ canvas { display: block; width: 100%; height: 100%; }
                     const x = padding.left + i * barWidth + barWidth / 2;
                     ctx.beginPath();
                     ctx.moveTo(x, padding.top);
-                    ctx.lineTo(x, padding.top + totalH);
+                    ctx.lineTo(x, padding.top + chartH);
                     ctx.stroke();
 
                     ctx.save();
@@ -889,7 +858,7 @@ canvas { display: block; width: 100%; height: 100%; }
                     const x = padding.left + i * barWidth + barWidth / 2;
                     ctx.beginPath();
                     ctx.moveTo(x, padding.top);
-                    ctx.lineTo(x, padding.top + totalH);
+                    ctx.lineTo(x, padding.top + chartH);
                     ctx.stroke();
 
                     ctx.save();
@@ -905,12 +874,8 @@ canvas { display: block; width: 100%; height: 100%; }
         ctx.setLineDash([]);
         ctx.lineWidth = 1;
 
-        const drawLine = (dataArray, color, getYFunc, width = 1, isDashed = false, glowColor = null, glowBlur = 0) => {
+        const drawLine = (dataArray, color, width = 1, isDashed = false) => {
             ctx.save();
-            if (glowBlur > 0) {
-                ctx.shadowColor = glowColor || color;
-                ctx.shadowBlur = glowBlur;
-            }
             ctx.strokeStyle = color;
             ctx.lineWidth = width;
             if (isDashed) ctx.setLineDash([3, 2]);
@@ -920,7 +885,7 @@ canvas { display: block; width: 100%; height: 100%; }
             dataArray.forEach((val, i) => {
                 if (val === null) return;
                 const x = padding.left + i * barWidth + barWidth / 2;
-                const y = getYFunc(val);
+                const y = getYPrice(val);
                 if (!started) {
                     ctx.moveTo(x, y);
                     started = true;
@@ -932,19 +897,14 @@ canvas { display: block; width: 100%; height: 100%; }
             ctx.restore();
         };
 
-        drawLine(showBollUpper, '#ff007f', getYPrice, 1.6, false, '#ff007f', 6);
-        drawLine(showBollLower, '#ff007f', getYPrice, 1.6, false, '#ff007f', 6);
-
-        drawLine(showMA5, '#00ff66', getYPrice);
-        drawLine(showMA30, '#ffea00', getYPrice);
-        drawLine(showMA45, '#ff9100', getYPrice);
-        drawLine(showMA60, '#ff007f', getYPrice);
-        drawLine(showVM5, '#00f0ff', getYVol, 0.9);
-        drawLine(showVM20, '#9d4edd', getYVol, 0.9);
+        drawLine(showMA5, '#00ff66', 1);
+        drawLine(showMA30, '#ffea00', 1);
+        drawLine(showMA45, '#ff9100', 1);
+        drawLine(showMA60, '#ff007f', 1.2);
 
         showK.forEach((k, i) => {
             const absoluteIdx = showStartIndex + i;
-            const open = parseFloat(k[1]), high = parseFloat(k[2]), low = parseFloat(k[3]), close = parseFloat(k[4]), vol = parseFloat(k[5]);
+            const open = parseFloat(k[1]), high = parseFloat(k[2]), low = parseFloat(k[3]), close = parseFloat(k[4]);
             const x = padding.left + i * barWidth + barWidth / 2;
             const isUp = close >= open;
             const color = isUp ? '#00ff66' : '#ff2a6d';
@@ -962,31 +922,6 @@ canvas { display: block; width: 100%; height: 100%; }
             const bodyH = Math.max(Math.abs(yOpen - yClose), 1);
             const bw = Math.max(barWidth * 0.7, 1);
             ctx.fillRect(x - bw / 2, bodyTop, bw, bodyH);
-
-            ctx.fillStyle = isUp ? 'rgba(0, 255, 102, 0.4)' : 'rgba(255, 42, 109, 0.4)';
-            const vY = getYVol(vol);
-            ctx.fillRect(x - bw / 2, vY, bw, volTop + volH - vY);
-
-            const vm5Val = vm5All[absoluteIdx];
-            const vm20Val = vm20All[absoluteIdx];
-            const vm5Prev = vm5All[absoluteIdx - 1];
-            const vm20Prev = vm20All[absoluteIdx - 1];
-
-            const isVolWarmingNow = (vm5Val !== null && vm20Val !== null && vm5Val > vm20Val);
-            const isVolWarmingPrev = (vm5Prev !== null && vm20Prev !== null && vm5Prev > vm20Prev);
-            const isFirstBarVolWarming = isVolWarmingNow && !isVolWarmingPrev;
-
-            if (isFirstBarVolWarming) {
-                ctx.save();
-                ctx.font = 'bold 9px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'top';
-                ctx.fillStyle = '#00f0ff';
-                ctx.shadowColor = '#00f0ff';
-                ctx.shadowBlur = 6;
-                ctx.fillText('🔥', x, volTop - 11);
-                ctx.restore();
-            }
 
             const checkAboveMAs5_30_45_60 = (closes, ma5, ma30, ma45, ma60, idx) => {
                 if (idx < 0 || idx >= closes.length) return false;
