@@ -145,7 +145,6 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
 .val-up { color: var(--manga-green); }
 .val-down { color: var(--manga-red); }
 
-/* 彈跳視窗與 2x2 網格樣式修改 */
 .chart-modal {
     position: fixed;
     top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh;
@@ -220,7 +219,6 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
 .nav-btn.prev { left: 4px; }
 .nav-btn.next { right: 4px; }
 
-/* 左右上下 2x2 網格排版 */
 .charts-wrapper {
     flex: 1;
     width: 100%;
@@ -307,7 +305,6 @@ canvas { display: block; width: 100%; height: 100%; }
             </div>
             <button id="closeModalBtn" class="close-btn" aria-label="關閉">✕</button>
         </div>
-        <!-- 左右上下 2x2 網格圖表區塊 -->
         <div class="charts-wrapper" id="chartsWrapper">
             <div class="chart-panel" id="wrapper15m" data-period="15m">
                 <span class="panel-tag" id="tagText15m">15M</span>
@@ -333,10 +330,12 @@ canvas { display: block; width: 100%; height: 100%; }
 (() => {
     const API_BASE = 'https://fapi.binance.com';
     const P0 = 5, P1 = 30, P2 = 45, P3 = 60;
+    
+    // 依照要求調整：1D 18根、4H 30根、1H 50根
     const COUNT_15M = 150;
-    const COUNT_1H = 80;
-    const COUNT_4H = 48;
-    const COUNT_1D = 28;
+    const COUNT_1H = 50;
+    const COUNT_4H = 30;
+    const COUNT_1D = 18;
 
     const FETCH_LIMIT_15M = COUNT_15M + P3;
     const FETCH_LIMIT_1H = COUNT_1H + P3;
@@ -594,7 +593,6 @@ canvas { display: block; width: 100%; height: 100%; }
             return;
         }
 
-        // 修改處：從 50 改為 100
         const candidateSymbols = allTickers
             .filter(d => d.symbol.endsWith('USDT'))
             .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
@@ -776,7 +774,8 @@ canvas { display: block; width: 100%; height: 100%; }
         const width = rect.width;
         const height = rect.height;
 
-        const padding = { top: 18, bottom: 6, left: 6, right: 55 };
+        // 移除右側預留的寬度空間 (原本右側預留 55 像素給價格文字，現在改為極小邊距)
+        const padding = { top: 18, bottom: 6, left: 6, right: 6 };
         const chartH = height - padding.top - padding.bottom;
         const chartW = width - padding.left - padding.right;
 
@@ -794,20 +793,15 @@ canvas { display: block; width: 100%; height: 100%; }
         ctx.clearRect(0, 0, width, height);
 
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
-        ctx.fillStyle = '#64748b';
-        ctx.font = '8px JetBrains Mono';
-        ctx.textAlign = 'left';
         ctx.lineWidth = 1;
 
         const gridLines = 3;
         for (let i = 0; i <= gridLines; i++) {
             const y = padding.top + (chartH / gridLines) * i;
-            const pVal = maxP - (priceRange / gridLines) * i;
             ctx.beginPath();
             ctx.moveTo(padding.left, y);
             ctx.lineTo(width - padding.right, y);
             ctx.stroke();
-            ctx.fillText(pVal.toFixed(1), width - padding.right + 3, y + 3);
         }
 
         const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
