@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>⚡ 極速多週期多頭排列儀表板 (交易量前100)</title>
+<title>⚡ 極速多週期多頭排列儀表板 (成交量前100)</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@700;800;900&display=swap');
 :root {
@@ -263,7 +263,7 @@ canvas { display: block; width: 100%; height: 100%; }
 <body>
 <div class="app-header">
     <div class="header-top">
-        <div class="header-title">⚡ 多週期多頭排列儀表板 (交易量前100)</div>
+        <div class="header-title">⚡ 多週期多頭排列儀表板 (成交量前100)</div>
         <button id="scanBtn" class="scan-btn">啟動極速掃描</button>
     </div>
 </div>
@@ -279,7 +279,7 @@ canvas { display: block; width: 100%; height: 100%; }
 <div class="dashboard">
     <div class="stat-card">
         <div class="val" id="statTotal" style="color:var(--manga-cyan)">0</div>
-        <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">掃描目標數 (交易量前100)</div>
+        <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">掃描目標數 (成交量前100)</div>
     </div>
     <div class="stat-card entry">
         <div class="val" id="statEntry">0</div>
@@ -331,7 +331,6 @@ canvas { display: block; width: 100%; height: 100%; }
     const API_BASE = 'https://fapi.binance.com';
     const P0 = 5, P1 = 30, P2 = 45, P3 = 60;
     
-    // 依照要求調整：1D 18根、4H 30根、1H 50根
     const COUNT_15M = 150;
     const COUNT_1H = 50;
     const COUNT_4H = 30;
@@ -444,7 +443,7 @@ canvas { display: block; width: 100%; height: 100%; }
         const m30 = ma30[idx], m45 = ma45[idx], m60 = ma60[idx];
         return (m30 !== null && price >= m30) && (m45 !== null && price >= m45) && (m60 !== null && price >= m60);
     }
-    function checkIsFirstBarLightning(klinesRaw, is4hOr1d) {
+    function checkIsFirstBarLightning(klinesRaw, useMA5) {
         const totalLen = klinesRaw.length;
         if (totalLen < 60) return false;
         const closes = klinesRaw.map(k => parseFloat(k[4]));
@@ -459,7 +458,7 @@ canvas { display: block; width: 100%; height: 100%; }
         let isNowAbove = false;
         let isPrevAbove = false;
 
-        if (is4hOr1d) {
+        if (useMA5) {
             isNowAbove = checkAboveMAs5_30_45_60(closes, ma5Arr, ma1Arr, ma2Arr, ma3Arr, nowIdx);
             isPrevAbove = checkAboveMAs5_30_45_60(closes, ma5Arr, ma1Arr, ma2Arr, ma3Arr, prevIdx);
         } else {
@@ -530,7 +529,7 @@ canvas { display: block; width: 100%; height: 100%; }
             if (bull4hReal) matchCount++;
             if (bull1dReal) matchCount++;
 
-            const lightning1h = checkIsFirstBarLightning(klines1h, false);
+            const lightning1h = checkIsFirstBarLightning(klines1h, true);
             const lightning4h = checkIsFirstBarLightning(klines4h, true);
             const lightning1d = checkIsFirstBarLightning(klines1d, true);
 
@@ -734,7 +733,7 @@ canvas { display: block; width: 100%; height: 100%; }
                         ${distText}
                     </div>
                     <div class="detail-row">
-                        24H 漲跌幅: <span class="${chg24Class}">${chg24Sign}${item.priceChange24h.toFixed(2)}%</span> | 24H 成交額: <span style="color:#00f0ff;">$${formatVolumeText(item.quoteVolume24h)}</span>
+                        24H 成交額: <span style="color:#00f0ff;">$${formatVolumeText(item.quoteVolume24h)}</span> | 24H 漲跌幅: <span class="${chg24Class}">${chg24Sign}${item.priceChange24h.toFixed(2)}%</span>
                     </div>
                 </div>
                 <div style="text-align:right;">
@@ -774,7 +773,6 @@ canvas { display: block; width: 100%; height: 100%; }
         const width = rect.width;
         const height = rect.height;
 
-        // 移除右側預留的寬度空間 (原本右側預留 55 像素給價格文字，現在改為極小邊距)
         const padding = { top: 18, bottom: 6, left: 6, right: 6 };
         const chartH = height - padding.top - padding.bottom;
         const chartW = width - padding.left - padding.right;
@@ -936,7 +934,7 @@ canvas { display: block; width: 100%; height: 100%; }
 
             let isNowAbove = false;
             let isPrevAbove = false;
-            if (periodType === '4h' || periodType === '1d') {
+            if (periodType === '1h' || periodType === '4h' || periodType === '1d') {
                 isNowAbove = checkAboveMAs5_30_45_60(closesAll, ma5All, ma30All, ma45All, ma60All, absoluteIdx);
                 isPrevAbove = checkAboveMAs5_30_45_60(closesAll, ma5All, ma30All, ma45All, ma60All, absoluteIdx - 1);
             } else {
