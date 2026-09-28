@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>⚡ 極速多週期多頭排列儀表板 (成交量前100)</title>
+<title>⚡ 極速多週期多頭排列儀表板 (成交額前100)</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@700;800;900&display=swap');
 :root {
@@ -187,7 +187,7 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
 .header-title-group { display: flex; align-items: center; gap: 6px; }
 .symbol-title { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; font-weight: 800; color: #fff; }
 .symbol-rank-tag { font-size: 0.65rem; color: var(--manga-cyan); font-weight: 800; }
-.legend-bar { display: flex; gap: 6px; font-size: 0.55rem; font-family: 'JetBrains Mono', monospace; flex-wrap: wrap; }
+.legend-bar { display: flex; gap: 6px; font-size: 0.52rem; font-family: 'JetBrains Mono', monospace; flex-wrap: wrap; }
 .legend-item { display: flex; align-items: center; gap: 2px; }
 .legend-color { width: 5px; height: 5px; border-radius: 2px; }
 .close-btn {
@@ -229,12 +229,28 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
     overflow: hidden;
     min-height: 0;
 }
+.charts-wrapper.single-view {
+    display: block !important;
+}
+.charts-wrapper.single-view .chart-panel {
+    display: none;
+    width: 100%;
+    height: 100%;
+    border: none !important;
+}
+.charts-wrapper.single-view .chart-panel.active-single {
+    display: block;
+}
+
 .chart-panel {
     position: relative;
     border-right: 1px solid rgba(255, 255, 255, 0.08);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     min-height: 0;
+    cursor: pointer;
+    transition: background-color 0.2s;
 }
+.chart-panel:hover { background: rgba(0, 240, 255, 0.03); }
 .chart-panel:nth-child(2) { border-right: none; }
 .chart-panel:nth-child(4) { border-right: none; }
 .chart-panel:nth-child(3), .chart-panel:nth-child(4) { border-bottom: none; }
@@ -254,7 +270,7 @@ canvas { display: block; width: 100%; height: 100%; }
     .chart-box { max-height: 100vh; max-height: 100dvh; border-radius: 0; border: none; }
     .chart-header { padding: 4px 8px; }
     .symbol-title { font-size: 0.8rem; }
-    .legend-bar { font-size: 0.5rem; gap: 4px; }
+    .legend-bar { font-size: 0.45rem; gap: 3px; }
     .nav-btn { width: 28px; height: 28px; font-size: 0.9rem; opacity: 0.6; }
     .tab-btn { font-size: 0.55rem; padding: 6px 1px; }
 }
@@ -263,7 +279,7 @@ canvas { display: block; width: 100%; height: 100%; }
 <body>
 <div class="app-header">
     <div class="header-top">
-        <div class="header-title">⚡ 多週期多頭排列儀表板 (成交量前100)</div>
+        <div class="header-title">⚡ 多週期多頭排列儀表板 (成交額前100)</div>
         <button id="scanBtn" class="scan-btn">啟動極速掃描</button>
     </div>
 </div>
@@ -279,7 +295,7 @@ canvas { display: block; width: 100%; height: 100%; }
 <div class="dashboard">
     <div class="stat-card">
         <div class="val" id="statTotal" style="color:var(--manga-cyan)">0</div>
-        <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">掃描目標數 (成交量前100)</div>
+        <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">掃描目標數 (成交額前100)</div>
     </div>
     <div class="stat-card entry">
         <div class="val" id="statEntry">0</div>
@@ -302,6 +318,10 @@ canvas { display: block; width: 100%; height: 100%; }
                 <div class="legend-item"><div class="legend-color" style="background:#ffea00"></div>30MA</div>
                 <div class="legend-item"><div class="legend-color" style="background:#ff9100"></div>45MA</div>
                 <div class="legend-item"><div class="legend-color" style="background:#ff007f"></div>60MA</div>
+                <div class="legend-item"><div class="legend-color" style="background:#00ff66"></div>5VM</div>
+                <div class="legend-item"><div class="legend-color" style="background:#ffea00"></div>20VM</div>
+                <div class="legend-item"><div class="legend-color" style="background:#00f0ff"></div>MACD</div>
+                <div class="legend-item"><div class="legend-color" style="background:#ffea00"></div>Signal</div>
             </div>
             <button id="closeModalBtn" class="close-btn" aria-label="關閉">✕</button>
         </div>
@@ -336,10 +356,10 @@ canvas { display: block; width: 100%; height: 100%; }
     const COUNT_4H = 30;
     const COUNT_1D = 18;
 
-    const FETCH_LIMIT_15M = COUNT_15M + P3;
-    const FETCH_LIMIT_1H = COUNT_1H + P3;
-    const FETCH_LIMIT_4H = COUNT_4H + P3;
-    const FETCH_LIMIT_1D = COUNT_1D + P3;
+    const FETCH_LIMIT_15M = COUNT_15M + P3 + 35;
+    const FETCH_LIMIT_1H = COUNT_1H + P3 + 35;
+    const FETCH_LIMIT_4H = COUNT_4H + P3 + 35;
+    const FETCH_LIMIT_1D = COUNT_1D + P3 + 35;
 
     let results15M = [];
     let results1H = [];
@@ -350,6 +370,7 @@ canvas { display: block; width: 100%; height: 100%; }
     let activeTab = '15m';
     let tickerMap = new Map();
     let currentIndex = -1;
+    let maximizedPeriod = null;
     const klinesCache = new Map();
 
     const dom = {
@@ -408,6 +429,54 @@ canvas { display: block; width: 100%; height: 100%; }
             ma[i] = sum / period;
         }
         return ma;
+    }
+
+    function calculateEMA(data, period) {
+        const len = data.length;
+        const ema = new Array(len).fill(null);
+        if (len === 0) return ema;
+        const multiplier = 2 / (period + 1);
+        let sum = 0;
+        let initCount = Math.min(period, len);
+        for (let i = 0; i < initCount; i++) sum += data[i];
+        let prevEMA = sum / initCount;
+        ema[initCount - 1] = prevEMA;
+        for (let i = initCount; i < len; i++) {
+            prevEMA = (data[i] - prevEMA) * multiplier + prevEMA;
+            ema[i] = prevEMA;
+        }
+        return ema;
+    }
+
+    function calculateMACD(closes, fastPeriod = 12, slowPeriod = 26, signalPeriod = 9) {
+        const fastEMA = calculateEMA(closes, fastPeriod);
+        const slowEMA = calculateEMA(closes, slowPeriod);
+        const macdLine = new Array(closes.length).fill(null);
+        for (let i = 0; i < closes.length; i++) {
+            if (fastEMA[i] !== null && slowEMA[i] !== null) {
+                macdLine[i] = fastEMA[i] - slowEMA[i];
+            }
+        }
+        const validMacdSubset = [];
+        const validIndices = [];
+        for (let i = 0; i < macdLine.length; i++) {
+            if (macdLine[i] !== null) {
+                validMacdSubset.push(macdLine[i]);
+                validIndices.push(i);
+            }
+        }
+        const signalSubset = calculateEMA(validMacdSubset, signalPeriod);
+        const signalLine = new Array(closes.length).fill(null);
+        const histogram = new Array(closes.length).fill(null);
+        for (let j = 0; j < validIndices.length; j++) {
+            const origIdx = validIndices[j];
+            const sigVal = signalSubset[j];
+            signalLine[origIdx] = sigVal;
+            if (sigVal !== null) {
+                histogram[origIdx] = macdLine[origIdx] - sigVal;
+            }
+        }
+        return { macdLine, signalLine, histogram };
     }
 
     function formatVolumeText(volume) {
@@ -592,6 +661,7 @@ canvas { display: block; width: 100%; height: 100%; }
             return;
         }
 
+        // 修改處：依據 24 小時成交額 (quoteVolume) 由大到小排序，取前 100 名
         const candidateSymbols = allTickers
             .filter(d => d.symbol.endsWith('USDT'))
             .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
@@ -747,11 +817,23 @@ canvas { display: block; width: 100%; height: 100%; }
     }
 
     function renderCanvasChart(canvas, wrapper, ctx, klinesRaw, showCount, periodType) {
+        if (maximizedPeriod && maximizedPeriod !== periodType) return;
+
         const closesAll = klinesRaw.map(k => parseFloat(k[4]));
+        const volumesAll = klinesRaw.map(k => parseFloat(k[7]));
+
         const ma5All = calculateSMA(closesAll, P0);
         const ma30All = calculateSMA(closesAll, P1);
         const ma45All = calculateSMA(closesAll, P2);
         const ma60All = calculateSMA(closesAll, P3);
+
+        const vol5All = calculateSMA(volumesAll, 5);
+        const vol20All = calculateSMA(volumesAll, 20);
+
+        const macdRes = calculateMACD(closesAll, 12, 26, 9);
+        const macdAll = macdRes.macdLine;
+        const signalAll = macdRes.signalLine;
+        const histAll = macdRes.histogram;
 
         const actualShowCount = Math.min(showCount, klinesRaw.length);
         const showStartIndex = klinesRaw.length - actualShowCount;
@@ -761,6 +843,12 @@ canvas { display: block; width: 100%; height: 100%; }
         const showMA30 = ma30All.slice(-actualShowCount);
         const showMA45 = ma45All.slice(-actualShowCount);
         const showMA60 = ma60All.slice(-actualShowCount);
+        const showVols = volumesAll.slice(-actualShowCount);
+        const showVol5 = vol5All.slice(-actualShowCount);
+        const showVol20 = vol20All.slice(-actualShowCount);
+        const showMacd = macdAll.slice(-actualShowCount);
+        const showSignal = signalAll.slice(-actualShowCount);
+        const showHist = histAll.slice(-actualShowCount);
 
         const rect = wrapper.getBoundingClientRect();
         if (rect.width === 0 || rect.height === 0) return;
@@ -773,8 +861,14 @@ canvas { display: block; width: 100%; height: 100%; }
         const width = rect.width;
         const height = rect.height;
 
-        const padding = { top: 18, bottom: 6, left: 6, right: 6 };
-        const chartH = height - padding.top - padding.bottom;
+        const padding = { top: 16, bottom: 4, left: 4, right: 4 };
+        const totalH = height - padding.top - padding.bottom;
+        
+        const chartH = totalH * 0.50;
+        const volAreaTop = padding.top + chartH + 12;
+        const volH = totalH * 0.23;
+        const macdAreaTop = volAreaTop + volH + 12;
+        const macdH = totalH * 0.23;
         const chartW = width - padding.left - padding.right;
 
         let minP = Infinity, maxP = -Infinity;
@@ -783,19 +877,39 @@ canvas { display: block; width: 100%; height: 100%; }
             if (l < minP) minP = l;
             if (h > maxP) maxP = h;
         });
-
         const priceRange = maxP - minP || 1;
         const getYPrice = (p) => padding.top + chartH - ((p - minP) / priceRange) * chartH;
+
+        let maxVol = 0;
+        showVols.forEach((v, idx) => {
+            if (v > maxVol) maxVol = v;
+            const v5 = showVol5[idx];
+            const v20 = showVol20[idx];
+            if (v5 !== null && v5 > maxVol) maxVol = v5;
+            if (v20 !== null && v20 > maxVol) maxVol = v20;
+        });
+        maxVol = maxVol || 1;
+        const getYVol = (v) => volAreaTop + volH - (v / maxVol) * volH;
+
+        let maxMacdVal = 0;
+        showMacd.forEach((v, idx) => {
+            const s = showSignal[idx];
+            const h = showHist[idx];
+            if (v !== null && Math.abs(v) > maxMacdVal) maxMacdVal = Math.abs(v);
+            if (s !== null && Math.abs(s) > maxMacdVal) maxMacdVal = Math.abs(s);
+            if (h !== null && Math.abs(h) > maxMacdVal) maxMacdVal = Math.abs(h);
+        });
+        maxMacdVal = maxMacdVal || 0.0001;
+        const getYMacd = (val) => macdAreaTop + macdH / 2 - (val / maxMacdVal) * (macdH / 2);
+
         const barWidth = chartW / actualShowCount;
 
         ctx.clearRect(0, 0, width, height);
 
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
         ctx.lineWidth = 1;
-
-        const gridLines = 3;
-        for (let i = 0; i <= gridLines; i++) {
-            const y = padding.top + (chartH / gridLines) * i;
+        for (let i = 0; i <= 3; i++) {
+            const y = padding.top + (chartH / 3) * i;
             ctx.beginPath();
             ctx.moveTo(padding.left, y);
             ctx.lineTo(width - padding.right, y);
@@ -807,7 +921,6 @@ canvas { display: block; width: 100%; height: 100%; }
         showK.forEach((k, i) => {
             const timestamp = parseInt(k[0]);
             const date = new Date(timestamp);
-            
             const utcDay = date.getUTCDay();
             const utcHour = date.getUTCHours();
             const utcMin = date.getUTCMinutes();
@@ -841,7 +954,7 @@ canvas { display: block; width: 100%; height: 100%; }
                     ctx.font = 'bold 8px JetBrains Mono';
                     ctx.fillStyle = '#9d4edd';
                     ctx.textAlign = 'center';
-                    ctx.fillText('週一', x, padding.top - 5);
+                    ctx.fillText('週一', x, padding.top - 4);
                     ctx.restore();
                 } else if (isDailyStart) {
                     ctx.strokeStyle = 'rgba(0, 240, 255, 0.45)';
@@ -857,7 +970,7 @@ canvas { display: block; width: 100%; height: 100%; }
                     ctx.font = '7px JetBrains Mono';
                     ctx.fillStyle = '#00f0ff';
                     ctx.textAlign = 'center';
-                    ctx.fillText(`週${dayNames[utcDay]}`, x, padding.top - 5);
+                    ctx.fillText(`週${dayNames[utcDay]}`, x, padding.top - 4);
                     ctx.restore();
                 }
             }
@@ -866,12 +979,10 @@ canvas { display: block; width: 100%; height: 100%; }
         ctx.setLineDash([]);
         ctx.lineWidth = 1;
 
-        const drawLine = (dataArray, color, width = 1, isDashed = false) => {
+        const drawLine = (dataArray, color, width = 1) => {
             ctx.save();
             ctx.strokeStyle = color;
             ctx.lineWidth = width;
-            if (isDashed) ctx.setLineDash([3, 2]);
-            else ctx.setLineDash([]);
             ctx.beginPath();
             let started = false;
             dataArray.forEach((val, i) => {
@@ -955,6 +1066,91 @@ canvas { display: block; width: 100%; height: 100%; }
                 ctx.restore();
             }
         });
+
+        showK.forEach((k, i) => {
+            const open = parseFloat(k[1]), close = parseFloat(k[4]);
+            const vol = showVols[i];
+            const x = padding.left + i * barWidth + barWidth / 2;
+            const isUp = close >= open;
+            const bw = Math.max(barWidth * 0.7, 1);
+            const yVol = getYVol(vol);
+            const yBottom = volAreaTop + volH;
+
+            ctx.fillStyle = isUp ? 'rgba(0, 255, 102, 0.45)' : 'rgba(255, 42, 109, 0.45)';
+            ctx.fillRect(x - bw / 2, yVol, bw, yBottom - yVol);
+        });
+
+        const drawVolLine = (dataArray, color) => {
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            let started = false;
+            dataArray.forEach((val, i) => {
+                if (val === null) return;
+                const x = padding.left + i * barWidth + barWidth / 2;
+                const y = getYVol(val);
+                if (!started) {
+                    ctx.moveTo(x, y);
+                    started = true;
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+            ctx.stroke();
+            ctx.restore();
+        };
+
+        drawVolLine(showVol5, '#00ff66');
+        drawVolLine(showVol20, '#ffea00');
+
+        const zeroY = getYMacd(0);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([2, 2]);
+        ctx.beginPath();
+        ctx.moveTo(padding.left, zeroY);
+        ctx.lineTo(width - padding.right, zeroY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        showHist.forEach((hVal, i) => {
+            if (hVal === null) return;
+            const x = padding.left + i * barWidth + barWidth / 2;
+            const yVal = getYMacd(hVal);
+            const bw = Math.max(barWidth * 0.7, 1);
+            ctx.fillStyle = hVal >= 0 ? 'rgba(0, 255, 102, 0.6)' : 'rgba(255, 42, 109, 0.6)';
+            
+            if (hVal >= 0) {
+                ctx.fillRect(x - bw / 2, yVal, bw, zeroY - yVal);
+            } else {
+                ctx.fillRect(x - bw / 2, zeroY, bw, yVal - zeroY);
+            }
+        });
+
+        const drawMacdLine = (dataArray, color) => {
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            let started = false;
+            dataArray.forEach((val, i) => {
+                if (val === null) return;
+                const x = padding.left + i * barWidth + barWidth / 2;
+                const y = getYMacd(val);
+                if (!started) {
+                    ctx.moveTo(x, y);
+                    started = true;
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+            ctx.stroke();
+            ctx.restore();
+        };
+
+        drawMacdLine(showMacd, '#00f0ff');
+        drawMacdLine(showSignal, '#ffea00');
     }
 
     function loadAndDrawCharts(symbol) {
@@ -969,10 +1165,10 @@ canvas { display: block; width: 100%; height: 100%; }
     }
 
     function updatePanelTags() {
-        dom.tagText15m.innerText = `15M (${COUNT_15M})`;
-        dom.tagText1h.innerText = `1H (${COUNT_1H})`;
-        dom.tagText4h.innerText = `4H (${COUNT_4H})`;
-        dom.tagText1d.innerText = `1D (${COUNT_1D})`;
+        dom.tagText15m.innerText = `15M (${COUNT_15M}) [VOL/MACD]`;
+        dom.tagText1h.innerText = `1H (${COUNT_1H}) [VOL/MACD]`;
+        dom.tagText4h.innerText = `4H (${COUNT_4H}) [VOL/MACD]`;
+        dom.tagText1d.innerText = `1D (${COUNT_1D}) [VOL/MACD]`;
     }
 
     function openChartModal(index) {
@@ -991,6 +1187,10 @@ canvas { display: block; width: 100%; height: 100%; }
     }
 
     function closeChartModal() {
+        maximizedPeriod = null;
+        dom.chartsWrapper.classList.remove('single-view');
+        ['15m', '1h', '4h', '1d'].forEach(p => document.getElementById(`wrapper${p}`).classList.remove('active-single'));
+
         dom.chartModal.classList.remove('active');
         dom.chartModal.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('modal-open');
@@ -1005,6 +1205,30 @@ canvas { display: block; width: 100%; height: 100%; }
         if (newIndex >= currentList.length) newIndex = 0;
         openChartModal(newIndex);
     }
+
+    ['15m', '1h', '4h', '1d'].forEach(period => {
+        const panel = document.getElementById(`wrapper${period}`);
+        panel.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (maximizedPeriod === period) {
+                maximizedPeriod = null;
+                dom.chartsWrapper.classList.remove('single-view');
+                ['15m', '1h', '4h', '1d'].forEach(p => document.getElementById(`wrapper${p}`).classList.remove('active-single'));
+            } else {
+                maximizedPeriod = period;
+                dom.chartsWrapper.classList.add('single-view');
+                ['15m', '1h', '4h', '1d'].forEach(p => {
+                    const pEl = document.getElementById(`wrapper${p}`);
+                    if (p === period) pEl.classList.add('active-single');
+                    else pEl.classList.remove('active-single');
+                });
+            }
+            const currentList = getCurrentList();
+            if (currentIndex !== -1 && currentList[currentIndex]) {
+                loadAndDrawCharts(currentList[currentIndex].symbol);
+            }
+        });
+    });
 
     let touchStartX = 0, touchStartY = 0;
     let touchEndX = 0, touchEndY = 0;
