@@ -353,8 +353,8 @@ canvas { display: block; width: 100%; height: 100%; }
     
     const COUNT_15M = 150;
     const COUNT_1H = 50;
-    const COUNT_4H = 30;
-    const COUNT_1D = 18;
+    const COUNT_4H = 40; // 已更新為 40 根
+    const COUNT_1D = 30; // 已更新為 30 根
 
     const FETCH_LIMIT_15M = COUNT_15M + P3 + 35;
     const FETCH_LIMIT_1H = COUNT_1H + P3 + 35;
@@ -661,7 +661,6 @@ canvas { display: block; width: 100%; height: 100%; }
             return;
         }
 
-        // 修改處：依據 24 小時成交額 (quoteVolume) 由大到小排序，取前 100 名
         const candidateSymbols = allTickers
             .filter(d => d.symbol.endsWith('USDT'))
             .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
