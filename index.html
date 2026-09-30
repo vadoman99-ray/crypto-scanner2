@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>⚡ 極速多週期多頭排列儀表板 (成交額前100)</title>
+<title>⚡ 極速多週期多頭排列儀表板 (成交額>1億)</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@700;800;900&display=swap');
 :root {
@@ -279,7 +279,7 @@ canvas { display: block; width: 100%; height: 100%; }
 <body>
 <div class="app-header">
     <div class="header-top">
-        <div class="header-title">⚡ 多週期多頭排列儀表板 (成交額前100)</div>
+        <div class="header-title">⚡ 多週期多頭排列儀表板 (成交額>1億)</div>
         <button id="scanBtn" class="scan-btn">啟動極速掃描</button>
     </div>
 </div>
@@ -295,7 +295,7 @@ canvas { display: block; width: 100%; height: 100%; }
 <div class="dashboard">
     <div class="stat-card">
         <div class="val" id="statTotal" style="color:var(--manga-cyan)">0</div>
-        <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">掃描目標數 (成交額前100)</div>
+        <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">篩選後標的數 (成交額>1億)</div>
     </div>
     <div class="stat-card entry">
         <div class="val" id="statEntry">0</div>
@@ -318,6 +318,7 @@ canvas { display: block; width: 100%; height: 100%; }
                 <div class="legend-item"><div class="legend-color" style="background:#ffea00"></div>30MA</div>
                 <div class="legend-item"><div class="legend-color" style="background:#ff9100"></div>45MA</div>
                 <div class="legend-item"><div class="legend-color" style="background:#ff007f"></div>60MA</div>
+                <div class="legend-item"><div class="legend-color" style="background:#9d4edd"></div>BOLL</div>
                 <div class="legend-item"><div class="legend-color" style="background:#00ff66"></div>5VM</div>
                 <div class="legend-item"><div class="legend-color" style="background:#ffea00"></div>20VM</div>
                 <div class="legend-item"><div class="legend-color" style="background:#00f0ff"></div>MACD</div>
@@ -352,9 +353,9 @@ canvas { display: block; width: 100%; height: 100%; }
     const P0 = 5, P1 = 30, P2 = 45, P3 = 60;
     
     const COUNT_15M = 150;
-    const COUNT_1H = 50;
-    const COUNT_4H = 40; // 已更新為 40 根
-    const COUNT_1D = 30; // 已更新為 30 根
+    const COUNT_1H = 60;
+    const COUNT_4H = 60;
+    const COUNT_1D = 60;
 
     const FETCH_LIMIT_15M = COUNT_15M + P3 + 35;
     const FETCH_LIMIT_1H = COUNT_1H + P3 + 35;
@@ -446,6 +447,27 @@ canvas { display: block; width: 100%; height: 100%; }
             ema[i] = prevEMA;
         }
         return ema;
+    }
+
+    function calculateBollingerBands(data, period = 30, stdMultiplier = 2) {
+        const len = data.length;
+        const middle = calculateSMA(data, period);
+        const upper = new Array(len).fill(null);
+        const lower = new Array(len).fill(null);
+
+        for (let i = period - 1; i < len; i++) {
+            const smaVal = middle[i];
+            if (smaVal === null) continue;
+            let sumSqDiff = 0;
+            for (let j = i - period + 1; j <= i; j++) {
+                const diff = data[j] - smaVal;
+                sumSqDiff += diff * diff;
+            }
+            const stdDev = Math.sqrt(sumSqDiff / period);
+            upper[i] = smaVal + stdMultiplier * stdDev;
+            lower[i] = smaVal - stdMultiplier * stdDev;
+        }
+        return { middle, upper, lower };
     }
 
     function calculateMACD(closes, fastPeriod = 12, slowPeriod = 26, signalPeriod = 9) {
@@ -661,13 +683,20 @@ canvas { display: block; width: 100%; height: 100%; }
             return;
         }
 
+        // 條件：USDT 結算 且 24小時成交額 (quoteVolume) 大於或等於 1 億 USDT (100,000,000)
         const candidateSymbols = allTickers
-            .filter(d => d.symbol.endsWith('USDT'))
-            .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
-            .slice(0, 100)
+            .filter(d => d.symbol.endsWith('USDT') && parseFloat(d.quoteVolume) >= 100000000)
+            .sort((a, b) => parseFloat(b.priceChangePercent) - parseFloat(a.priceChangePercent))
             .map(d => d.symbol);
 
         dom.statTotal.innerText = candidateSymbols.length;
+
+        if (candidateSymbols.length === 0) {
+            alert("目前沒有滿足「24小時成交值 > 1 億 USDT」的交易對。");
+            dom.scanBtn.disabled = false;
+            dom.scanBtn.innerText = "啟動極速掃描";
+            return;
+        }
 
         const blob = new Blob([workerCode], { type: 'application/javascript' });
         const worker = new Worker(URL.createObjectURL(blob));
@@ -709,13 +738,13 @@ canvas { display: block; width: 100%; height: 100%; }
                 resultsMulti = allMatches.filter(m => m.matchCount >= 2);
                 resultsLowRisk = allMatches.filter(m => m.isLightningMatch);
 
-                const sortByVolume = (a, b) => b.quoteVolume24h - a.quoteVolume24h;
-                results15M.sort(sortByVolume);
-                results1H.sort(sortByVolume);
-                results4H.sort(sortByVolume);
-                results1D.sort(sortByVolume);
-                resultsMulti.sort(sortByVolume);
-                resultsLowRisk.sort(sortByVolume);
+                const sortByChange = (a, b) => b.priceChange24h - a.priceChange24h;
+                results15M.sort(sortByChange);
+                results1H.sort(sortByChange);
+                results4H.sort(sortByChange);
+                results1D.sort(sortByChange);
+                resultsMulti.sort(sortByChange);
+                resultsLowRisk.sort(sortByChange);
 
                 dom.count15m.innerText = results15M.length;
                 dom.count1h.innerText = results1H.length;
@@ -802,7 +831,7 @@ canvas { display: block; width: 100%; height: 100%; }
                         ${distText}
                     </div>
                     <div class="detail-row">
-                        24H 成交額: <span style="color:#00f0ff;">$${formatVolumeText(item.quoteVolume24h)}</span> | 24H 漲跌幅: <span class="${chg24Class}">${chg24Sign}${item.priceChange24h.toFixed(2)}%</span>
+                        24H 漲跌幅: <span class="${chg24Class}">${chg24Sign}${item.priceChange24h.toFixed(2)}%</span> | 24H 成交額: <span style="color:#00f0ff;">$${formatVolumeText(item.quoteVolume24h)}</span>
                     </div>
                 </div>
                 <div style="text-align:right;">
@@ -826,6 +855,8 @@ canvas { display: block; width: 100%; height: 100%; }
         const ma45All = calculateSMA(closesAll, P2);
         const ma60All = calculateSMA(closesAll, P3);
 
+        const bollAll = calculateBollingerBands(closesAll, 30, 2);
+
         const vol5All = calculateSMA(volumesAll, 5);
         const vol20All = calculateSMA(volumesAll, 20);
 
@@ -842,6 +873,9 @@ canvas { display: block; width: 100%; height: 100%; }
         const showMA30 = ma30All.slice(-actualShowCount);
         const showMA45 = ma45All.slice(-actualShowCount);
         const showMA60 = ma60All.slice(-actualShowCount);
+        const showBollUpper = bollAll.upper.slice(-actualShowCount);
+        const showBollLower = bollAll.lower.slice(-actualShowCount);
+
         const showVols = volumesAll.slice(-actualShowCount);
         const showVol5 = vol5All.slice(-actualShowCount);
         const showVol20 = vol20All.slice(-actualShowCount);
@@ -871,10 +905,14 @@ canvas { display: block; width: 100%; height: 100%; }
         const chartW = width - padding.left - padding.right;
 
         let minP = Infinity, maxP = -Infinity;
-        showK.forEach((k) => {
+        showK.forEach((k, idx) => {
             const l = parseFloat(k[3]), h = parseFloat(k[2]);
             if (l < minP) minP = l;
             if (h > maxP) maxP = h;
+            const bu = showBollUpper[idx];
+            const bl = showBollLower[idx];
+            if (bu !== null && bu > maxP) maxP = bu;
+            if (bl !== null && bl < minP) minP = bl;
         });
         const priceRange = maxP - minP || 1;
         const getYPrice = (p) => padding.top + chartH - ((p - minP) / priceRange) * chartH;
@@ -915,69 +953,33 @@ canvas { display: block; width: 100%; height: 100%; }
             ctx.stroke();
         }
 
-        const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
-
-        showK.forEach((k, i) => {
-            const timestamp = parseInt(k[0]);
-            const date = new Date(timestamp);
-            const utcDay = date.getUTCDay();
-            const utcHour = date.getUTCHours();
-            const utcMin = date.getUTCMinutes();
-
-            const isMondayStart = (utcDay === 1 && utcHour === 0);
-            const isDailyStart = (utcHour === 0 && utcMin === 0);
-
-            if (periodType === '1d') {
-                if (isMondayStart) {
-                    ctx.strokeStyle = 'rgba(157, 78, 221, 0.9)';
-                    ctx.lineWidth = 1.6;
-                    ctx.setLineDash([3, 3]);
-                    const x = padding.left + i * barWidth + barWidth / 2;
-                    ctx.beginPath();
-                    ctx.moveTo(x, padding.top);
-                    ctx.lineTo(x, padding.top + chartH);
-                    ctx.stroke();
-                }
-            } else {
-                if (isMondayStart) {
-                    ctx.strokeStyle = 'rgba(157, 78, 221, 0.75)';
-                    ctx.lineWidth = 1.5;
-                    ctx.setLineDash([3, 3]);
-                    const x = padding.left + i * barWidth + barWidth / 2;
-                    ctx.beginPath();
-                    ctx.moveTo(x, padding.top);
-                    ctx.lineTo(x, padding.top + chartH);
-                    ctx.stroke();
-
-                    ctx.save();
-                    ctx.font = 'bold 8px JetBrains Mono';
-                    ctx.fillStyle = '#9d4edd';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('週一', x, padding.top - 4);
-                    ctx.restore();
-                } else if (isDailyStart) {
-                    ctx.strokeStyle = 'rgba(0, 240, 255, 0.45)';
-                    ctx.lineWidth = 1.2;
-                    ctx.setLineDash([3, 3]);
-                    const x = padding.left + i * barWidth + barWidth / 2;
-                    ctx.beginPath();
-                    ctx.moveTo(x, padding.top);
-                    ctx.lineTo(x, padding.top + chartH);
-                    ctx.stroke();
-
-                    ctx.save();
-                    ctx.font = '7px JetBrains Mono';
-                    ctx.fillStyle = '#00f0ff';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(`週${dayNames[utcDay]}`, x, padding.top - 4);
-                    ctx.restore();
-                }
-            }
-        });
-
         ctx.setLineDash([]);
         ctx.lineWidth = 1;
 
+        // 渲染 30 布林通道填色區帶
+        ctx.save();
+        ctx.beginPath();
+        let bollStarted = false;
+        showBollUpper.forEach((val, i) => {
+            if (val === null) return;
+            const x = padding.left + i * barWidth + barWidth / 2;
+            const y = getYPrice(val);
+            if (!bollStarted) { ctx.moveTo(x, y); bollStarted = true; }
+            else { ctx.lineTo(x, y); }
+        });
+        for (let i = showBollLower.length - 1; i >= 0; i--) {
+            const val = showBollLower[i];
+            if (val === null) continue;
+            const x = padding.left + i * barWidth + barWidth / 2;
+            const y = getYPrice(val);
+            ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(157, 78, 221, 0.06)';
+        ctx.fill();
+        ctx.restore();
+
+        // 渲染布林上下軌線（加粗、提高顯眼度）
         const drawLine = (dataArray, color, width = 1) => {
             ctx.save();
             ctx.strokeStyle = color;
@@ -998,6 +1000,9 @@ canvas { display: block; width: 100%; height: 100%; }
             ctx.stroke();
             ctx.restore();
         };
+
+        drawLine(showBollUpper, 'rgba(157, 78, 221, 0.95)', 1.5);
+        drawLine(showBollLower, 'rgba(157, 78, 221, 0.95)', 1.5);
 
         drawLine(showMA5, '#00ff66', 1);
         drawLine(showMA30, '#ffea00', 1);
@@ -1164,10 +1169,10 @@ canvas { display: block; width: 100%; height: 100%; }
     }
 
     function updatePanelTags() {
-        dom.tagText15m.innerText = `15M (${COUNT_15M}) [VOL/MACD]`;
-        dom.tagText1h.innerText = `1H (${COUNT_1H}) [VOL/MACD]`;
-        dom.tagText4h.innerText = `4H (${COUNT_4H}) [VOL/MACD]`;
-        dom.tagText1d.innerText = `1D (${COUNT_1D}) [VOL/MACD]`;
+        dom.tagText15m.innerText = `15M (${COUNT_15M}) [BOLL/VOL/MACD]`;
+        dom.tagText1h.innerText = `1H (${COUNT_1H}) [BOLL/VOL/MACD]`;
+        dom.tagText4h.innerText = `4H (${COUNT_4H}) [BOLL/VOL/MACD]`;
+        dom.tagText1d.innerText = `1D (${COUNT_1D}) [BOLL/VOL/MACD]`;
     }
 
     function openChartModal(index) {
