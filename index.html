@@ -8,7 +8,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&family=Noto+Sans+TC:wght@700;900&family=JetBrains+Mono:wght@700;800;900&display=swap');
 :root {
     --bg-dark: #060911;
-    --card-bg: rgba(15, 23, 42, 0.75);
+    --card-bg: rgba(15, 23, 42, 0.78);
     --border-color: rgba(0, 240, 255, 0.25);
     --manga-pink: #ff007f;
     --manga-purple: #9d4edd;
@@ -118,30 +118,101 @@ body.modal-open { overflow: hidden; position: fixed; width: 100%; height: 100%; 
 .stat-card.entry { border-color: rgba(255, 0, 127, 0.4); }
 .stat-card.entry .val { color: var(--manga-pink); text-shadow: 0 0 10px rgba(255, 0, 127, 0.3); }
 .container { padding: 0 16px; }
+
 .symbol-card {
     background: var(--card-bg);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-left: 4px solid var(--manga-green);
     border-radius: 12px;
-    padding: 14px 16px;
+    padding: 12px 14px;
     margin-bottom: 10px;
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: stretch;
+    gap: 10px;
     backdrop-filter: blur(10px);
     cursor: pointer;
     transition: border-color 0.2s, transform 0.2s, background-color 0.2s;
     will-change: transform;
 }
+.symbol-card.tier-high {
+    border-left-color: var(--manga-pink);
+    box-shadow: inset 3px 0 12px rgba(255, 0, 127, 0.14);
+}
+.symbol-card.tier-mid {
+    border-left-color: var(--manga-cyan);
+}
 .symbol-card:hover { border-color: var(--manga-cyan); background: rgba(0, 240, 255, 0.08); transform: translateY(-2px); }
 .symbol-card:active { transform: scale(0.98); }
-.symbol-name { font-family: 'JetBrains Mono', monospace; font-size: 1.15rem; font-weight: 800; }
-.symbol-price { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; color: var(--manga-yellow); font-weight: 700; }
-.detail-row { font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; color: #94a3b8; margin-top: 4px; }
-.badge-rank { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 255, 255, 0.1); color: #fff; }
-.badge-bull { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(0, 255, 102, 0.15); color: var(--manga-green); border: 1px solid var(--manga-green); }
-.badge-multi { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 0, 127, 0.15); color: var(--manga-pink); border: 1px solid var(--manga-pink); }
-.badge-lowrisk { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 234, 0, 0.2); color: var(--manga-yellow); border: 1px solid var(--manga-yellow); }
+
+.card-left { flex: 1; min-width: 0; }
+.card-right {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-end;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.symbol-name { font-family: 'JetBrains Mono', monospace; font-size: 1.12rem; font-weight: 900; }
+.symbol-price { font-family: 'JetBrains Mono', monospace; font-size: 1.08rem; color: var(--manga-yellow); font-weight: 800; }
+.detail-row { font-size: 0.76rem; font-family: 'JetBrains Mono', monospace; color: #94a3b8; margin-top: 5px; line-height: 1.35; }
+
+.badge-rank { font-size: 0.68rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 255, 255, 0.1); color: #cbd5e1; font-family: 'JetBrains Mono', monospace; }
+.badge-bull { font-size: 0.64rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(0, 255, 102, 0.14); color: var(--manga-green); border: 1px solid rgba(0, 255, 102, 0.65); }
+.badge-multi { font-size: 0.64rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 0, 127, 0.16); color: #ff66b2; border: 1px solid var(--manga-pink); }
+.badge-super { font-size: 0.64rem; padding: 2px 6px; border-radius: 4px; font-weight: 900; background: linear-gradient(90deg, rgba(255, 0, 127, 0.25), rgba(0, 240, 255, 0.2)); color: #fff; border: 1px solid var(--manga-cyan); }
+.badge-lowrisk { font-size: 0.64rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; background: rgba(255, 234, 0, 0.2); color: var(--manga-yellow); border: 1px solid var(--manga-yellow); }
+
+.tf-matrix {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    margin-top: 7px;
+}
+.tf-pill {
+    border-radius: 6px;
+    padding: 4px 4px;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(15, 23, 42, 0.55);
+}
+.tf-pill .tf-label {
+    font-size: 0.62rem;
+    font-weight: 800;
+    color: #64748b;
+    display: block;
+    line-height: 1.1;
+}
+.tf-pill .tf-sub {
+    font-size: 0.58rem;
+    font-weight: 700;
+    color: #475569;
+    display: block;
+    margin-top: 2px;
+    line-height: 1.1;
+}
+.tf-pill.active-tf {
+    background: rgba(0, 255, 102, 0.12);
+    border-color: rgba(0, 255, 102, 0.55);
+}
+.tf-pill.active-tf .tf-label { color: var(--manga-green); }
+.tf-pill.active-tf .tf-sub { color: #e2e8f0; }
+
+.tf-pill.active-htf {
+    background: rgba(255, 0, 127, 0.14);
+    border-color: rgba(255, 0, 127, 0.65);
+}
+.tf-pill.active-htf .tf-label { color: #ff66b2; }
+.tf-pill.active-htf .tf-sub { color: #fff; }
+
+.tf-pill.lightning-tf {
+    box-shadow: 0 0 8px rgba(255, 234, 0, 0.25);
+    border-color: var(--manga-yellow);
+}
+
 .val-up { color: var(--manga-green); }
 .val-down { color: var(--manga-red); }
 
@@ -333,260 +404,4 @@ canvas { display: block; width: 100%; height: 100%; }
             </div>
             <div class="chart-panel" id="wrapper1h" data-period="1h">
                 <span class="panel-tag" id="tagText1h">1H</span>
-                <canvas id="klineCanvas1h"></canvas>
-            </div>
-            <div class="chart-panel" id="wrapper4h" data-period="4h">
-                <span class="panel-tag" id="tagText4h">4H</span>
-                <canvas id="klineCanvas4h"></canvas>
-            </div>
-            <div class="chart-panel" id="wrapper1d" data-period="1d">
-                <span class="panel-tag" id="tagText1d">1D</span>
-                <canvas id="klineCanvas1d"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-(() => {
-    const API_BASE = 'https://fapi.binance.com';
-    const MIN_QUOTE_VOLUME = 100_000_000;
-    const P0 = 5, P1 = 30, P2 = 45, P3 = 60;
-
-    const COUNT_15M = 150;
-    const COUNT_1H = 60;
-    const COUNT_4H = 60;
-    const COUNT_1D = 60;
-
-    const FETCH_LIMIT_15M = COUNT_15M + P3 + 35;
-    const FETCH_LIMIT_1H = COUNT_1H + P3 + 35;
-    const FETCH_LIMIT_4H = COUNT_4H + P3 + 35;
-    const FETCH_LIMIT_1D = COUNT_1D + P3 + 35;
-
-    let results15M = [];
-    let results1H = [];
-    let results4H = [];
-    let results1D = [];
-    let resultsMulti = [];
-    let resultsLowRisk = [];
-    let activeTab = '15m';
-    let tickerMap = new Map();
-    let currentIndex = -1;
-    let maximizedPeriod = null;
-    let activeWorker = null;
-    const klinesCache = new Map();
-
-    const dom = {
-        scanBtn: document.getElementById('scanBtn'),
-        progress: document.getElementById('progress'),
-        statTotal: document.getElementById('statTotal'),
-        statEntry: document.getElementById('statEntry'),
-        count15m: document.getElementById('count15m'),
-        count1h: document.getElementById('count1h'),
-        count4h: document.getElementById('count4h'),
-        count1d: document.getElementById('count1d'),
-        countMulti: document.getElementById('countMulti'),
-        countLowRisk: document.getElementById('countLowRisk'),
-        tab15m: document.getElementById('tab15m'),
-        tab1h: document.getElementById('tab1h'),
-        tab4h: document.getElementById('tab4h'),
-        tab1d: document.getElementById('tab1d'),
-        tabMulti: document.getElementById('tabMulti'),
-        tabLowRisk: document.getElementById('tabLowRisk'),
-        symbolList: document.getElementById('symbolList'),
-        chartModal: document.getElementById('chartModal'),
-        symbolTitle: document.getElementById('symbolTitle'),
-        symbolRankTag: document.getElementById('symbolRankTag'),
-        closeModalBtn: document.getElementById('closeModalBtn'),
-        prevBtn: document.getElementById('prevBtn'),
-        nextBtn: document.getElementById('nextBtn'),
-        chartsWrapper: document.getElementById('chartsWrapper'),
-        wrapper15m: document.getElementById('wrapper15m'),
-        wrapper1h: document.getElementById('wrapper1h'),
-        wrapper4h: document.getElementById('wrapper4h'),
-        wrapper1d: document.getElementById('wrapper1d'),
-        canvas15m: document.getElementById('klineCanvas15m'),
-        canvas1h: document.getElementById('klineCanvas1h'),
-        canvas4h: document.getElementById('klineCanvas4h'),
-        canvas1d: document.getElementById('klineCanvas1d'),
-        tagText15m: document.getElementById('tagText15m'),
-        tagText1h: document.getElementById('tagText1h'),
-        tagText4h: document.getElementById('tagText4h'),
-        tagText1d: document.getElementById('tagText1d')
-    };
-
-    const ctx15m = dom.canvas15m.getContext('2d');
-    const ctx1h = dom.canvas1h.getContext('2d');
-    const ctx4h = dom.canvas4h.getContext('2d');
-    const ctx1d = dom.canvas1d.getContext('2d');
-
-    function calculateSMA(data, period) {
-        const len = data.length;
-        if (len < period) return new Array(len).fill(null);
-        const ma = new Array(len).fill(null);
-        let sum = 0;
-        for (let i = 0; i < period; i++) sum += data[i];
-        ma[period - 1] = sum / period;
-        for (let i = period; i < len; i++) {
-            sum += data[i] - data[i - period];
-            ma[i] = sum / period;
-        }
-        return ma;
-    }
-
-    function calculateEMA(data, period) {
-        const len = data.length;
-        const ema = new Array(len).fill(null);
-        if (len === 0) return ema;
-        const multiplier = 2 / (period + 1);
-        const initCount = Math.min(period, len);
-        let sum = 0;
-        for (let i = 0; i < initCount; i++) sum += data[i];
-        let prevEMA = sum / initCount;
-        ema[initCount - 1] = prevEMA;
-        for (let i = initCount; i < len; i++) {
-            prevEMA = (data[i] - prevEMA) * multiplier + prevEMA;
-            ema[i] = prevEMA;
-        }
-        return ema;
-    }
-
-    function calculateBollingerBands(data, period = 30, stdMultiplier = 2) {
-        const len = data.length;
-        const middle = calculateSMA(data, period);
-        const upper = new Array(len).fill(null);
-        const lower = new Array(len).fill(null);
-
-        for (let i = period - 1; i < len; i++) {
-            const smaVal = middle[i];
-            if (smaVal === null) continue;
-            let sumSqDiff = 0;
-            for (let j = i - period + 1; j <= i; j++) {
-                const diff = data[j] - smaVal;
-                sumSqDiff += diff * diff;
-            }
-            const stdDev = Math.sqrt(sumSqDiff / period);
-            upper[i] = smaVal + stdMultiplier * stdDev;
-            lower[i] = smaVal - stdMultiplier * stdDev;
-        }
-        return { middle, upper, lower };
-    }
-
-    function calculateMACD(closes, fastPeriod = 12, slowPeriod = 26, signalPeriod = 9) {
-        const fastEMA = calculateEMA(closes, fastPeriod);
-        const slowEMA = calculateEMA(closes, slowPeriod);
-        const macdLine = new Array(closes.length).fill(null);
-        const validMacdSubset = [];
-        const validIndices = [];
-
-        for (let i = 0; i < closes.length; i++) {
-            if (fastEMA[i] !== null && slowEMA[i] !== null) {
-                const val = fastEMA[i] - slowEMA[i];
-                macdLine[i] = val;
-                validMacdSubset.push(val);
-                validIndices.push(i);
-            }
-        }
-
-        const signalSubset = calculateEMA(validMacdSubset, signalPeriod);
-        const signalLine = new Array(closes.length).fill(null);
-        const histogram = new Array(closes.length).fill(null);
-
-        for (let j = 0; j < validIndices.length; j++) {
-            const origIdx = validIndices[j];
-            const sigVal = signalSubset[j];
-            signalLine[origIdx] = sigVal;
-            if (sigVal !== null) {
-                histogram[origIdx] = macdLine[origIdx] - sigVal;
-            }
-        }
-        return { macdLine, signalLine, histogram };
-    }
-
-    function checkAboveMAs5_30_45_60(closes, ma5, ma30, ma45, ma60, idx) {
-        if (idx < 0 || idx >= closes.length) return false;
-        const price = closes[idx];
-        return (ma5[idx] !== null && price >= ma5[idx]) &&
-               (ma30[idx] !== null && price >= ma30[idx]) &&
-               (ma45[idx] !== null && price >= ma45[idx]) &&
-               (ma60[idx] !== null && price >= ma60[idx]);
-    }
-
-    function checkAboveMAs30_45_60(closes, ma30, ma45, ma60, idx) {
-        if (idx < 0 || idx >= closes.length) return false;
-        const price = closes[idx];
-        return (ma30[idx] !== null && price >= ma30[idx]) &&
-               (ma45[idx] !== null && price >= ma45[idx]) &&
-               (ma60[idx] !== null && price >= ma60[idx]);
-    }
-
-    function formatVolumeText(volume) {
-        return (volume / 100_000_000).toFixed(2) + '億';
-    }
-
-    const workerCode = `
-    function calculateSMA(data, period) {
-        const len = data.length;
-        if (len < period) return new Array(len).fill(null);
-        const ma = new Array(len).fill(null);
-        let sum = 0;
-        for (let i = 0; i < period; i++) sum += data[i];
-        ma[period - 1] = sum / period;
-        for (let i = period; i < len; i++) {
-            sum += data[i] - data[i - period];
-            ma[i] = sum / period;
-        }
-        return ma;
-    }
-    function checkAboveMAs5_30_45_60(closes, ma5, ma30, ma45, ma60, idx) {
-        if (idx < 0 || idx >= closes.length) return false;
-        const price = closes[idx];
-        return (ma5[idx] !== null && price >= ma5[idx]) &&
-               (ma30[idx] !== null && price >= ma30[idx]) &&
-               (ma45[idx] !== null && price >= ma45[idx]) &&
-               (ma60[idx] !== null && price >= ma60[idx]);
-    }
-    function checkAboveMAs30_45_60(closes, ma30, ma45, ma60, idx) {
-        if (idx < 0 || idx >= closes.length) return false;
-        const price = closes[idx];
-        return (ma30[idx] !== null && price >= ma30[idx]) &&
-               (ma45[idx] !== null && price >= ma45[idx]) &&
-               (ma60[idx] !== null && price >= ma60[idx]);
-    }
-    function checkIsFirstBarLightning(klinesRaw, useMA5) {
-        const totalLen = klinesRaw.length;
-        if (totalLen < 60) return false;
-        const closes = klinesRaw.map(k => parseFloat(k[4]));
-        const ma1Arr = calculateSMA(closes, 30);
-        const ma2Arr = calculateSMA(closes, 45);
-        const ma3Arr = calculateSMA(closes, 60);
-        const ma5Arr = calculateSMA(closes, 5);
-
-        const nowIdx = totalLen - 1;
-        const prevIdx = totalLen - 2;
-
-        const isNowAbove = useMA5
-            ? checkAboveMAs5_30_45_60(closes, ma5Arr, ma1Arr, ma2Arr, ma3Arr, nowIdx)
-            : checkAboveMAs30_45_60(closes, ma1Arr, ma2Arr, ma3Arr, nowIdx);
-        const isPrevAbove = useMA5
-            ? checkAboveMAs5_30_45_60(closes, ma5Arr, ma1Arr, ma2Arr, ma3Arr, prevIdx)
-            : checkAboveMAs30_45_60(closes, ma1Arr, ma2Arr, ma3Arr, prevIdx);
-
-        return isNowAbove && !isPrevAbove;
-    }
-
-    function isBullishAlignment(klinesRaw) {
-        const totalLen = klinesRaw.length;
-        if (totalLen < 60) return null;
-        const closes = klinesRaw.map(k => parseFloat(k[4]));
-        const price = closes[totalLen - 1];
-        const ma1Arr = calculateSMA(closes, 30);
-        const ma2Arr = calculateSMA(closes, 45);
-        const ma3Arr = calculateSMA(closes, 60);
-        const ma1 = ma1Arr[totalLen - 1];
-        const ma2 = ma2Arr[totalLen - 1];
-        const ma3 = ma3Arr[totalLen - 1];
-        if (ma1 !== null && ma2 !== null && ma3 !== null && ma1 > ma2 && ma2 > ma3 && price >= ma3) {
-            const ma3DistPercent = ((price - ma3) / ma3) * 100;
-            const isAboveAllNow = checkAboveMAs30_45_60(closes, ma1Arr, ma2Arr, ma3Arr, totalLen - 1);
-            const isAboveAllPrev = checkAboveMAs3
+                <canvas id="klineCanvas1
